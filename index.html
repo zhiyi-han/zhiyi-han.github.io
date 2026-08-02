@@ -75,6 +75,12 @@
     font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit}
   .bigbtn:active{transform:scale(.9)}
   #actbtn{background:linear-gradient(135deg,#ffd166,var(--gold));display:none}
+  #dpad{position:fixed;z-index:26;left:calc(16px + env(safe-area-inset-left));bottom:calc(22px + env(safe-area-inset-bottom));
+    display:none;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:7px;touch-action:none}
+  .dbtn{border:none;border-radius:18px;background:rgba(255,255,255,.75);box-shadow:0 3px 10px rgba(0,0,0,.18);
+    font-size:23px;display:flex;align-items:center;justify-content:center;font-family:inherit;color:#5a6b8c;
+    padding:0;-webkit-user-select:none;user-select:none;touch-action:none;-webkit-touch-callout:none}
+  .dbtn.held{background:rgba(255,255,255,.98);transform:scale(.9);color:var(--blue)}
 
   /* ---------- panel ---------- */
   #panelwrap{position:fixed;inset:0;z-index:40;display:none;align-items:flex-end;justify-content:center;
@@ -158,6 +164,12 @@
 
 <!-- mobile controls -->
 <div id="joy"><div id="joybase"></div><div id="joyknob"></div></div>
+<div id="dpad">
+  <button class="dbtn" data-k="ArrowUp"    style="grid-area:1/2" aria-label="up">▲</button>
+  <button class="dbtn" data-k="ArrowLeft"  style="grid-area:2/1" aria-label="left">◀</button>
+  <button class="dbtn" data-k="ArrowRight" style="grid-area:2/3" aria-label="right">▶</button>
+  <button class="dbtn" data-k="ArrowDown"  style="grid-area:3/2" aria-label="down">▼</button>
+</div>
 <div id="mbtns">
   <button id="actbtn" class="bigbtn">⭐</button>
   <button id="jumpbtn" class="bigbtn">⬆️</button>
@@ -212,7 +224,7 @@ const I18N = {
   en: {
     otag: "Hi! I'm Max — a five-year-old explorer.<br>Walk around my little world and see what I love!",
     octrDesk: "🕹️ Move: <b>WASD / arrow keys</b> &nbsp;·&nbsp; 👀 Look: <b>drag mouse</b><br>⭐ Interact: <b>E</b> or click &nbsp;·&nbsp; ⬆️ Jump: <b>space</b>",
-    octrMob: "🕹️ Move: <b>left joystick</b> &nbsp;·&nbsp; 👀 Look: <b>swipe</b><br>⭐ Interact: <b>star button</b> or tap things",
+    octrMob: "🕹️ Move: <b>arrow buttons</b> or joystick &nbsp;·&nbsp; 👀 Look: <b>swipe</b><br>⭐ Interact: <b>star button</b> or tap things &nbsp;·&nbsp; ⬆️ Jump",
     start: "Start Exploring",
     explored: n => `${n}/7 explored`,
     walkCloser: "Walk closer to take a look! 🏃",
@@ -234,7 +246,7 @@ const I18N = {
   zh: {
     otag: "你好！我是 Max——一個五歲的小小探險家。<br>來我的小世界走走，看看我喜歡的東西吧！",
     octrDesk: "🕹️ 移動：<b>WASD／方向鍵</b> &nbsp;·&nbsp; 👀 視角：<b>拖動滑鼠</b><br>⭐ 互動：<b>E 鍵</b>或點擊 &nbsp;·&nbsp; ⬆️ 跳：<b>空白鍵</b>",
-    octrMob: "🕹️ 移動：<b>左側搖桿</b> &nbsp;·&nbsp; 👀 視角：<b>滑動畫面</b><br>⭐ 互動：<b>星星按鈕</b>或點按物件",
+    octrMob: "🕹️ 移動：<b>方向按鈕</b>或搖桿 &nbsp;·&nbsp; 👀 視角：<b>滑動畫面</b><br>⭐ 互動：<b>星星按鈕</b>或點按物件 &nbsp;·&nbsp; ⬆️ 跳",
     start: "開始探索",
     explored: n => `已探索 ${n}/7`,
     walkCloser: "走近一點看看吧！🏃",
@@ -1108,6 +1120,17 @@ const joy={active:false,id:null,cx:0,cy:0,dx:0,dy:0};
 const joyEl=$('#joy'), joyBase=$('#joybase'), joyKnob=$('#joyknob');
 if(isTouch){
   joyEl.style.display='block'; $('#mbtns').style.display='flex'; $('#actbtn').style.display='flex';
+  $('#dpad').style.display='grid';
+  document.querySelectorAll('.dbtn').forEach(b=>{
+    const k=b.dataset.k;
+    const press=e=>{ keys[k]=true; b.classList.add('held'); if(b.setPointerCapture&&e.pointerId!=null)b.setPointerCapture(e.pointerId); e.preventDefault(); };
+    const release=()=>{ keys[k]=false; b.classList.remove('held'); };
+    b.addEventListener('pointerdown',press);
+    b.addEventListener('pointerup',release);
+    b.addEventListener('pointercancel',release);
+    b.addEventListener('lostpointercapture',release);
+    b.addEventListener('contextmenu',e=>e.preventDefault());
+  });
   joyEl.addEventListener('touchstart',e=>{
     const t=e.changedTouches[0];
     joy.active=true; joy.id=t.identifier; joy.cx=t.clientX; joy.cy=t.clientY; joy.dx=joy.dy=0;
