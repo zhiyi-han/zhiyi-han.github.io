@@ -199,7 +199,7 @@ import * as THREE from 'three';
 
 /* =============== CONFIG =============== */
 const SITE_URL = 'https://zhiyihan.com';
-const AVATAR = { skin:0xf6d3ae, hair:0x453528, shirt:0x4f7fe0, shorts:0x35406b, shoes:0xf4f4f6, cheek:0xf5a98d };
+const AVATAR = { skin:0xf7d9bc, hair:0x24201d, shirt:0xf7f8fa, bow:0x8fb9e6, shorts:0x3a4a6b, shoes:0xf4f4f6, cheek:0xf5a98d };
 const ARTWORKS = [
   { id:'glala',  img:'assets/art/glala.jpg',  en:'Glala & Little Tiger',   zh:'Glala 和小老虎' },
   { id:'horse',  img:'assets/art/horse.jpg',  en:'General on Horseback',   zh:'騎馬的將軍' },
@@ -969,68 +969,66 @@ glowRing.rotation.x=-Math.PI/2; glowRing.position.y=.03; scene.add(glowRing);
 function buildAvatar(cfg){
   const g=new THREE.Group();
   const inner=new THREE.Group(); g.add(inner);
-  const skin=mat(cfg.skin), shirt=mat(cfg.shirt), shorts=mat(cfg.shorts), shoe=mat(cfg.shoes), hairM=mat(cfg.hair);
-  // legs
-  const legs=[];
+  const skin=mat(cfg.skin), shirt=mat(cfg.shirt), shorts=mat(cfg.shorts), shoe=mat(cfg.shoes), hairM=mat(cfg.hair), bowM=mat(cfg.bow||0x8fb9e6);
+  const legs=[], arms=[], eyes=[];
+  /* chubby mochi body */
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.46,22,18), shirt); body.position.y=.56; body.scale.set(1.08,.9,1); inner.add(body);
+  const pants=new THREE.Mesh(new THREE.SphereGeometry(.465,22,12,0,Math.PI*2,Math.PI*.55,Math.PI*.45), shorts);
+  pants.position.y=.56; pants.scale.set(1.09,.9,1.01); inner.add(pants);
   [-1,1].forEach(sd=>{
     const leg=new THREE.Group();
-    const thigh=new THREE.Mesh(new THREE.CapsuleGeometry(.1,.26,4,8), shorts);
-    thigh.position.y=-.2; thigh.castShadow=true; leg.add(thigh);
-    const foot=new THREE.Mesh(new THREE.SphereGeometry(.125,10,8), shoe);
-    foot.position.set(0,-.42,.05); foot.scale.set(1,.75,1.35); foot.castShadow=true; leg.add(foot);
-    leg.position.set(sd*.15,.52,0); inner.add(leg); legs.push(leg);
+    const ft=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8), shoe); ft.position.set(0,-.03,.05); ft.scale.set(1,.62,1.25); leg.add(ft);
+    leg.position.set(sd*.17,.10,.10); inner.add(leg); legs.push(leg);
   });
-  // body
-  const body=new THREE.Mesh(new THREE.SphereGeometry(.42,18,14), shirt);
-  body.position.y=.82; body.scale.set(1,.92,.86); body.castShadow=true; inner.add(body);
-  // little collar stripe
-  const stripe=new THREE.Mesh(new THREE.TorusGeometry(.33,.045,8,20), mat(0xffd23f));
-  stripe.position.y=1.02; stripe.rotation.x=Math.PI/2; inner.add(stripe);
-  // arms
-  const arms=[];
   [-1,1].forEach(sd=>{
     const arm=new THREE.Group();
-    const up=new THREE.Mesh(new THREE.CapsuleGeometry(.08,.24,4,8), shirt);
-    up.position.y=-.16; up.castShadow=true; arm.add(up);
-    const hand=new THREE.Mesh(new THREE.SphereGeometry(.085,9,8), skin);
-    hand.position.y=-.34; hand.castShadow=true; arm.add(hand);
-    arm.position.set(sd*.44,1.02,0); arm.rotation.z=sd*.16; inner.add(arm); arms.push(arm);
+    const sl=new THREE.Mesh(new THREE.CapsuleGeometry(.06,.04,4,8), shirt); sl.position.y=-.045; arm.add(sl);
+    const ha=new THREE.Mesh(new THREE.SphereGeometry(.062,9,8), skin); ha.position.y=-.115; arm.add(ha);
+    arm.position.set(sd*.455,.72,0); arm.rotation.z=sd*.5; inner.add(arm); arms.push(arm);
   });
-  // head
-  const head=new THREE.Group(); head.position.y=1.62; inner.add(head);
-  const skull=new THREE.Mesh(new THREE.SphereGeometry(.46,20,16), skin);
-  skull.castShadow=true; head.add(skull);
-  // hair: cap + fringe + side tufts
-  const cap=new THREE.Mesh(new THREE.SphereGeometry(.485,20,14,0,Math.PI*2,0,Math.PI*.55), hairM);
-  cap.rotation.x=-.22; cap.castShadow=true; head.add(cap);
-  [[-.3,.2,.33],[0,.26,.38],[.3,.2,.33]].forEach(p=>{
-    const tuft=new THREE.Mesh(new THREE.SphereGeometry(.14,9,8), hairM);
-    tuft.position.set(p[0],p[1],p[2]); tuft.scale.set(1,.8,.7); head.add(tuft);
-  });
-  [[-.44],[.44]].forEach(p=>{
-    const side=new THREE.Mesh(new THREE.SphereGeometry(.12,9,8), hairM);
-    side.position.set(p[0],.12,0); head.add(side);
-  });
-  // face
-  const eyes=[];
+  /* powder-blue bow tie */
+  const bow=new THREE.Group();
   [-1,1].forEach(sd=>{
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(.052,9,8), new THREE.MeshBasicMaterial({color:0x24262e}));
-    eye.position.set(sd*.17,.03,.42); head.add(eye); eyes.push(eye);
-    const glint=new THREE.Mesh(new THREE.SphereGeometry(.017,6,5), new THREE.MeshBasicMaterial({color:0xffffff}));
-    glint.position.set(sd*.17+.02,.06,.465); head.add(glint);
-    const brow=new THREE.Mesh(new THREE.BoxGeometry(.11,.024,.02), mat(cfg.hair));
-    brow.position.set(sd*.17,.16,.43); brow.rotation.z=sd*-.12; head.add(brow);
-    const cheek=new THREE.Mesh(new THREE.SphereGeometry(.06,8,7), new THREE.MeshLambertMaterial({color:cfg.cheek,transparent:true,opacity:.55}));
-    cheek.position.set(sd*.28,-.12,.36); cheek.scale.z=.4; head.add(cheek);
+    const w=new THREE.Mesh(new THREE.BoxGeometry(.143,.097,.055), bowM);
+    w.position.x=sd*.108; w.rotation.z=sd*.13; bow.add(w);
   });
-  const nose=new THREE.Mesh(new THREE.SphereGeometry(.04,8,7), mat(0xf0bd93));
-  nose.position.set(0,-.04,.455); head.add(nose);
-  const smile=new THREE.Mesh(new THREE.TorusGeometry(.1,.017,8,16,Math.PI*.7), new THREE.MeshBasicMaterial({color:0x24262e}));
-  smile.position.set(0,-.13,.42); smile.rotation.z=Math.PI*1.15; head.add(smile);
-  // name tag
-  const tag=textSprite('MAX ⭐',{fs:40,color:'#4f7fe0',stroke:'#dbe6ff',scale:.62});
-  tag.position.y=2.42; g.add(tag);
-  g.traverse(o=>o.userData.zone='welcome');   /* tapping Max opens About */
+  const knot=new THREE.Mesh(new THREE.BoxGeometry(.06,.068,.06), bowM); bow.add(knot);
+  bow.position.set(0,.895,.415); bow.rotation.x=.16; inner.add(bow);
+  /* head */
+  const head=new THREE.Group(); head.position.y=1.27; inner.add(head);
+  const skull=new THREE.Mesh(new THREE.SphereGeometry(.52,24,18), skin); skull.scale.set(1.1,.9,.98); head.add(skull);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.55,24,16,0,Math.PI*2,0,Math.PI*.5), hairM); cap.scale.set(1.1,.9,.98); cap.rotation.x=-.1; head.add(cap);
+  /* natural fringe with a soft side parting */
+  [[-.31,.31,.372,.072,.55],[-.22,.335,.392,.060,.38],[.01,.345,.417,.082,-.22],[.14,.332,.418,.086,-.38],[.26,.31,.398,.080,-.54],[.35,.285,.368,.070,-.66]].forEach(p=>{
+    const t=new THREE.Mesh(new THREE.SphereGeometry(p[3],9,8), hairM);
+    t.position.set(p[0],p[1],p[2]); t.scale.set(1.45,.52,.5); t.rotation.z=p[4]; head.add(t);
+  });
+  [[-.06,.52,.02,-.3],[.05,.54,.06,.2],[.14,.50,0,.5]].forEach(p=>{   /* sprouts */
+    const s=new THREE.Mesh(new THREE.ConeGeometry(.035,.12,6), hairM);
+    s.position.set(p[0],p[1],p[2]); s.rotation.z=p[3]; head.add(s);
+  });
+  [-1,1].forEach(sd=>{                                                /* ears */
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(.09,9,8), skin);
+    ear.position.set(sd*.575,-.09,.02); ear.scale.set(.55,1,.75); head.add(ear);
+  });
+  [-1,1].forEach(sd=>{
+    const eg=new THREE.Group();
+    const e=new THREE.Mesh(new THREE.SphereGeometry(.046,9,8), new THREE.MeshBasicMaterial({color:0x24262e})); eg.add(e);
+    eg.position.set(sd*.14,-.02,.487); head.add(eg); eyes.push(eg);
+    const gl=new THREE.Mesh(new THREE.SphereGeometry(.013,6,5), new THREE.MeshBasicMaterial({color:0xffffff}));
+    gl.position.set(sd*.14+.015,.008,.522); head.add(gl);
+    const cheekM=new THREE.Mesh(new THREE.SphereGeometry(.082,8,7), new THREE.MeshLambertMaterial({color:cfg.cheek,transparent:true,opacity:.55}));
+    cheekM.position.set(sd*.27,-.075,.43); cheekM.scale.z=.4; head.add(cheekM);
+  });
+  /* big happy grin */
+  const mouth=new THREE.Mesh(new THREE.SphereGeometry(.083,12,10), new THREE.MeshBasicMaterial({color:0x84403a}));
+  mouth.position.set(0,-.125,.45); mouth.scale.set(1.4,.75,.5); head.add(mouth);
+  const teeth=new THREE.Mesh(new THREE.BoxGeometry(.133,.036,.03), new THREE.MeshBasicMaterial({color:0xffffff}));
+  teeth.position.set(0,-.098,.505); head.add(teeth);
+  /* name tag */
+  const tag=textSprite('MAX \u2b50',{fs:40,color:'#4f7fe0',stroke:'#dbe6ff',scale:.62});
+  tag.position.y=2.05; g.add(tag);
+  g.traverse(o=>{ if(o.isMesh) o.castShadow=true; o.userData.zone='welcome'; });
   return { g, inner, legs, arms, head, eyes };
 }
 const max=buildAvatar(AVATAR);
@@ -1336,7 +1334,7 @@ function tick(){
       /* kick the ball */
       if(ball){
         const bd=new THREE.Vector3().subVectors(ball.position,max.g.position); bd.y=0;
-        if(bd.length()<.8){
+        if(bd.length()<.95){
           bd.normalize();
           ball.userData.vel.copy(bd.multiplyScalar(speed*1.5+2.2)); ball.userData.vel.y=2.4;
         }
@@ -1360,8 +1358,8 @@ function tick(){
   /* walk / idle animation */
   if(state.moving && state.onGround){
     const w=state.walkT;
-    max.legs[0].rotation.x=Math.sin(w)*.75; max.legs[1].rotation.x=-Math.sin(w)*.75;
-    max.arms[0].rotation.x=-Math.sin(w)*.6; max.arms[1].rotation.x=Math.sin(w)*.6;
+    max.legs[0].rotation.x=Math.sin(w)*.7; max.legs[1].rotation.x=-Math.sin(w)*.7;
+    max.arms[0].rotation.x=-Math.sin(w)*.55; max.arms[1].rotation.x=Math.sin(w)*.55;
     max.inner.position.y=Math.abs(Math.sin(w*1))*.06;
     max.head.rotation.z=Math.sin(w*.5)*.04;
   }else{
@@ -1369,9 +1367,9 @@ function tick(){
     max.legs.forEach(l=>l.rotation.x*= (1-e));
     max.arms.forEach(a=>a.rotation.x*= (1-e));
     max.inner.position.y=Math.sin(t*2.2)*.025+.01;
-    max.arms[0].rotation.z=-.16-Math.sin(t*2.2)*.05;
-    max.arms[1].rotation.z=.16+Math.sin(t*2.2)*.05;
-    if(!state.onGround) max.legs.forEach(l=>l.rotation.x=-.4);
+    max.arms[0].rotation.z=-.5-Math.sin(t*2.2)*.06;
+    max.arms[1].rotation.z=.5+Math.sin(t*2.2)*.06;
+    if(!state.onGround) max.legs.forEach(l=>l.rotation.x=-.3);
   }
   /* blink */
   state.blink-=dt;
@@ -1507,6 +1505,7 @@ window.__max={
   teleport(id){ const p=zones[id].pos; max.g.position.set(p.x*.82,0,p.z*.82); },
   openPanel, closePanel, setLang, cam,
   start(){ $('#startbtn').click(); },
+  skipFly(){ flyT=1; },
   state:()=>({ pos:max.g.position.toArray(), visited:[...visited], started, lang })
 };
 
