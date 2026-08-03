@@ -189,6 +189,7 @@
 <div id="logo" class="hud" role="button" style="cursor:pointer"><div class="m">M</div><b>Max's World</b></div>
 <div id="dirwrap"><div id="dir"><h3 id="dirtitle"></h3><div id="dirlist"></div></div></div>
 <div id="topbtns" class="hud">
+  <button id="sndbtn" class="roundbtn">🔊</button>
   <button id="langbtn" class="roundbtn">中文</button>
   <button id="helpbtn" class="roundbtn">?</button>
 </div>
@@ -562,7 +563,8 @@ function pineTree(s=1){
   });
   return g;
 }
-[[-14,-25,1.2],[8,-28,1],[24,-16,1.1],[30,4,.9],[26,17,1.15],[6,30,1],[-12,28,1.2],[-26,17,1],[-30,-2,1.05],[-24,-16,.95],[16,25,.9],[-4,-31,.9]].forEach((p,i)=>{
+const TREE_POS=[[-14,-25,1.2],[8,-28,1],[24,-16,1.1],[30,4,.9],[26,17,1.15],[6,30,1],[-12,28,1.2],[-26,17,1],[-30,-2,1.05],[-24,-16,.95],[16,25,.9],[-4,-31,.9]];
+TREE_POS.forEach((p,i)=>{
   const t = i%3===2 ? pineTree(p[2]) : puffTree(p[2], i%2?0x58b368:0x6fc97e);
   t.position.set(p[0],0,p[1]); t.rotation.y=rand(0,6); world.add(t);
 });
@@ -712,6 +714,37 @@ for(let i=0;i<8;i++){
   mr.position.set(Math.cos(a)*r,0,Math.sin(a)*r); mr.scale.setScalar(rand(.8,1.3));
   world.add(mr);
 }
+
+/* bees humming around two little flower patches */
+const beeSwarms=[];
+[[40,16],[195,17]].forEach(([aDeg,r])=>{
+  const [bx,bz]=polar(aDeg,r);
+  const g=new THREE.Group(); g.position.set(bx,0,bz);
+  [[.4,.2],[-.35,.45],[.05,-.4],[-.5,-.15]].forEach((o,i)=>{
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.24,5), mat(0x4e9e4a));
+    stem.position.set(o[0],.12,o[1]); g.add(stem);
+    const head=new THREE.Mesh(new THREE.IcosahedronGeometry(.09,0), mat([0xf7a8cc,0xffd166,0xf08080,0xb79ced][i%4]));
+    head.position.set(o[0],.27,o[1]); g.add(head);
+  });
+  const bees=[];
+  for(let i=0;i<3;i++){
+    const bee=new THREE.Group();
+    const body=new THREE.Mesh(new THREE.SphereGeometry(.09,8,7), mat(0xffd166));
+    body.scale.set(1.25,.9,.9); bee.add(body);
+    const stripe=new THREE.Mesh(new THREE.SphereGeometry(.093,8,7), mat(0x2b2b33));
+    stripe.scale.set(.4,.86,.86); bee.add(stripe);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.05,8,7), mat(0x2b2b33));
+    head.position.x=.13; bee.add(head);
+    [-1,1].forEach(sd=>{
+      const w=new THREE.Mesh(new THREE.CircleGeometry(.07,6),
+        new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.7,side:THREE.DoubleSide}));
+      w.position.set(-.02,.1,sd*.04); w.rotation.x=sd*.7; bee.add(w);
+    });
+    g.add(bee); bees.push({m:bee,ph:rand(0,6),r:rand(.5,1),h:rand(.7,1.3),sp:rand(2.2,3.4)});
+  }
+  world.add(g);
+  beeSwarms.push({x:bx,z:bz,bees});
+});
 
 /* Jupiter — Max's favourite planet, hanging in the sky */
 const jupiter=(()=>{
@@ -1291,7 +1324,7 @@ function confettiRain(){
 let actx=null;
 function ensureAudio(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }
 function note(freq,t0,dur=.16,type='triangle',vol=.12){
-  if(!actx) return;
+  if(!actx || !soundOn) return;
   const o=actx.createOscillator(), gn=actx.createGain();
   o.type=type; o.frequency.value=freq;
   gn.gain.setValueAtTime(0,actx.currentTime+t0);
@@ -1300,9 +1333,126 @@ function note(freq,t0,dur=.16,type='triangle',vol=.12){
   o.connect(gn); gn.connect(actx.destination);
   o.start(actx.currentTime+t0); o.stop(actx.currentTime+t0+dur+.05);
 }
+let soundOn=true;   /* restored from save at boot */
+
+/* gentle music-box loop (C pentatonic) + occasional birdsong */
+const MELODY=[523.25,0,659.25,0,783.99,0,880,0, 783.99,0,659.25,0,587.33,0,0,0,
+              659.25,0,783.99,0,1046.5,0,880,0, 783.99,0,659.25,0,523.25,0,0,0];
+const BASSLINE=[261.63,196,220,196];
+let musStep=0, musTimer=null;
+function startMusic(){
+  if(musTimer) return;
+  musTimer=setInterval(()=>{
+    if(!soundOn || !actx || document.hidden) return;
+    const f=MELODY[musStep%MELODY.length];
+    if(f) note(f,0,.55,'sine',.042);
+    if(musStep%8===0) note(BASSLINE[(musStep>>3)%BASSLINE.length],0,1.1,'triangle',.026);
+    musStep++;
+  },300);
+}
+function chirp(vol=.045){
+  if(!soundOn || !actx || document.hidden) return;
+  const base=rand(1700,2400), n=2+Math.floor(rand(0,3));
+  for(let i=0;i<n;i++){
+    note(base*rand(.95,1.1), i*.13, .07,'sine',vol);
+    note(base*1.3, i*.13+.05, .05,'sine',vol*.66);
+  }
+}
+setInterval(()=>{ if(started && Math.random()<.55) chirp(); },9000);
+
+function updateSndBtn(){ $('#sndbtn').textContent = soundOn ? '🔊' : '🔇'; }
+$('#sndbtn').onclick=()=>{
+  soundOn=!soundOn;
+  if(soundOn){ ensureAudio(); startMusic(); ding(); }
+  else setBeeLevel(0);
+  updateSndBtn(); saveGame();
+};
+
 const ding=()=>{ note(880,0); note(1318.5,.09,.22); };
 const goalSound=()=>{ note(659,0); note(784,.1); note(1047,.2,.3); };
 const fanfare=()=>{ [523,659,784,1047,1318].forEach((f,i)=>note(f,i*.12,.28)); };
+
+/* ---- positional ambience: quacks, bees, campfire, butterflies, tree birds ---- */
+function blip(f0,f1,t0,dur,type,vol){
+  if(!actx || !soundOn) return;
+  const o=actx.createOscillator(), g=actx.createGain(), T=actx.currentTime+t0;
+  o.type=type;
+  o.frequency.setValueAtTime(f0,T);
+  o.frequency.exponentialRampToValueAtTime(Math.max(40,f1),T+dur);
+  g.gain.setValueAtTime(0,T);
+  g.gain.linearRampToValueAtTime(vol,T+.02);
+  g.gain.exponentialRampToValueAtTime(.001,T+dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(T); o.stop(T+dur+.05);
+}
+let noiseBuf=null;
+function noiseHit(t0,dur,freq,q,vol){
+  if(!actx || !soundOn) return;
+  if(!noiseBuf){
+    noiseBuf=actx.createBuffer(1,actx.sampleRate,actx.sampleRate);
+    const d=noiseBuf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  }
+  const src=actx.createBufferSource(); src.buffer=noiseBuf; src.loop=true;
+  const bp=actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=freq; bp.Q.value=q;
+  const g=actx.createGain(), T=actx.currentTime+t0;
+  g.gain.setValueAtTime(0,T);
+  g.gain.linearRampToValueAtTime(vol,T+.012);
+  g.gain.exponentialRampToValueAtTime(.001,T+dur);
+  src.connect(bp); bp.connect(g); g.connect(actx.destination);
+  src.start(T); src.stop(T+dur+.05);
+}
+function quack(vol){
+  const n=2+(Math.random()<.4?1:0);
+  for(let i=0;i<n;i++) blip(rand(240,290),rand(150,175),i*.19,.13,'sawtooth',vol*rand(.8,1));
+}
+function crackle(vol){
+  const n=1+Math.floor(rand(0,3));
+  for(let i=0;i<n;i++) noiseHit(rand(0,.5),rand(.03,.07),rand(900,2400),3,vol*rand(.5,1));
+}
+function flit(vol){ noiseHit(0,.09,3200,1.6,vol); noiseHit(.11,.07,2800,1.6,vol*.7); }
+/* continuous bee hum whose loudness follows proximity */
+let beeOsc=null, beeGain=null;
+function setBeeLevel(v){
+  if(!actx) return;
+  if(!beeOsc){
+    beeOsc=actx.createOscillator(); beeGain=actx.createGain();
+    beeOsc.type='sawtooth'; beeOsc.frequency.value=165;
+    const lfo=actx.createOscillator(), lg=actx.createGain();
+    lfo.frequency.value=6.2; lg.gain.value=16;
+    lfo.connect(lg); lg.connect(beeOsc.frequency); lfo.start();
+    beeGain.gain.value=0;
+    beeOsc.connect(beeGain); beeGain.connect(actx.destination);
+    beeOsc.start();
+  }
+  beeGain.gain.linearRampToValueAtTime(v,actx.currentTime+.35);
+}
+setInterval(()=>{
+  if(!started || !actx || document.hidden) return;
+  if(!soundOn){ setBeeLevel(0); return; }
+  const p=max.g.position;
+  /* bee hum level = nearest swarm */
+  let bv=0;
+  beeSwarms.forEach(s=>{
+    const d=Math.hypot(p.x-s.x,p.z-s.z);
+    if(d<6.5) bv=Math.max(bv,.045*(1-d/6.5)+.006);
+  });
+  setBeeLevel(bv);
+  /* ducks by the pond */
+  const dPond=Math.hypot(p.x-pondCenter.x,p.z-pondCenter.z);
+  if(dPond<8.5 && Math.random()<.4) quack(.12*(1-dPond/8.5)+.02);
+  /* campfire crackle on the Nature Trail */
+  const dFire=Math.hypot(p.x-zones.nature.pos.x,p.z-zones.nature.pos.z);
+  if(dFire<7.5 && Math.random()<.65) crackle(.1*(1-dFire/7.5)+.01);
+  /* butterfly wing flits */
+  let bd=1e9;
+  butterflies.forEach(b=>{ bd=Math.min(bd,Math.hypot(p.x-b.position.x,p.z-b.position.z)); });
+  if(bd<3 && Math.random()<.5) flit(.05*(1-bd/3)+.008);
+  /* birdsong is denser near the trees on the rim */
+  let td=1e9;
+  TREE_POS.forEach(q=>{ td=Math.min(td,Math.hypot(p.x-q[0],p.z-q[1])); });
+  if(td<8 && Math.random()<.35) chirp(.07*(1-td/8)+.015);
+},800);
 
 /* =============== INPUT =============== */
 const keys={};
@@ -1419,7 +1569,7 @@ function handleTap(x,y){
 let started=false, panelOpen=false, currentPanel=null, celebrated=false;
 const visited=new Set();
 const SAVE_KEY='maxworld.v1';
-function saveGame(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({lang, visited:[...visited]})); }catch(e){} }
+function saveGame(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({lang, visited:[...visited], sound:soundOn})); }catch(e){} }
 const state={ vy:0, onGround:true, walkT:0, blink:rand(2,4), moving:false };
 
 /* stars HUD */
@@ -1572,6 +1722,7 @@ $('#startbtn').onclick=()=>{
     ding();
     setTimeout(()=>toast(T().menuTip),2600);
   }
+  startMusic();
   $('#tourhud').style.display='flex';
 };
 $('#helpbtn').onclick=()=>{
@@ -1747,6 +1898,11 @@ function tick(){
   const habA=t*.05+2.2;
   hab.position.set(Math.cos(habA)*23,8.8+Math.sin(t*.42)*.55,Math.sin(habA)*23);
   hab.rotation.y=-habA;
+  beeSwarms.forEach(s=>s.bees.forEach(b=>{
+    const a=t*b.sp+b.ph;
+    b.m.position.set(Math.cos(a)*b.r, b.h+Math.sin(t*7+b.ph)*.09, Math.sin(a)*b.r);
+    b.m.rotation.y=-a+Math.PI/2;
+  }));
   markers.forEach(mk=>{ mk.position.y=mk.userData.baseY+Math.sin(t*1.7+mk.userData.ph)*.28; });
   waterTexes.forEach(w=>w.offset.x-=dt*.22);
   flames.forEach((f,i)=>{ f.scale.y=1+Math.sin(t*11+i*2)*.2; f.scale.x=f.scale.z=1+Math.sin(t*13+i)*.1; });
@@ -1832,6 +1988,8 @@ let saved={};
 try{ saved=JSON.parse(localStorage.getItem(SAVE_KEY))||{}; }catch(e){}
 (saved.visited||[]).forEach(id=>{ if(zones[id]) visited.add(id); });
 if(visited.size>=7) celebrated=true;
+soundOn = saved.sound!==false;
+updateSndBtn();
 setLang(saved.lang || (/^zh/i.test(navigator.language||'')?'zh':'en'));
 updateStars();
 tick();
