@@ -6,6 +6,16 @@
 <meta name="theme-color" content="#6fc3f2">
 <title>Max's World · 歡迎來到 Max 的小世界</title>
 <meta name="description" content="Walk around Max's little 3D world — his drawings, numbers, LEGO engineering, sports and more. 走進 Max 的 3D 小世界。">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://zhiyihan.com/">
+<meta property="og:site_name" content="Max's World">
+<meta property="og:title" content="Max's World · 歡迎來到 Max 的小世界">
+<meta property="og:description" content="Walk around Max's little 3D world — his drawings, numbers, LEGO engineering, sports and more. 走進 Max 的 3D 小世界！">
+<meta property="og:image" content="https://zhiyihan.com/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%234f7fe0'/><text x='50' y='68' font-size='52' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'>M</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
@@ -75,6 +85,19 @@
     font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit}
   .bigbtn:active{transform:scale(.9)}
   #actbtn{background:linear-gradient(135deg,#ffd166,var(--gold));display:none}
+  /* ---------- zone directory ---------- */
+  #dirwrap{position:fixed;inset:0;z-index:41;display:none;align-items:center;justify-content:center;
+    background:rgba(20,30,60,.35);backdrop-filter:blur(3px)}
+  #dir{background:var(--card);width:min(420px,92%);max-height:82%;overflow-y:auto;border-radius:24px;
+    padding:20px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:var(--shadow)}
+  #dir h3{text-align:center;font-size:19px;margin:2px 0 14px}
+  .diritem{display:flex;align-items:center;gap:12px;width:100%;border:none;background:#f4f6fb;border-radius:16px;
+    padding:12px 14px;margin-bottom:8px;cursor:pointer;font-family:inherit;font-size:15.5px;font-weight:700;color:var(--ink);text-align:left}
+  .diritem:active{transform:scale(.97)}
+  .diritem .ic{font-size:22px}
+  .diritem .st2{margin-left:auto;font-size:17px;color:#d8dbe6}
+  .diritem .st2.on{color:var(--gold)}
+
   #dpad{position:fixed;z-index:26;left:calc(16px + env(safe-area-inset-left));bottom:calc(22px + env(safe-area-inset-bottom));
     display:none;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:7px;touch-action:none}
   .dbtn{border:none;border-radius:18px;background:rgba(255,255,255,.75);box-shadow:0 3px 10px rgba(0,0,0,.18);
@@ -130,6 +153,12 @@
     background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;font-size:19px;font-weight:800;letter-spacing:.5px;
     box-shadow:0 12px 30px rgba(79,127,224,.45);transition:transform .15s}
   #startbtn:active{transform:scale(.96)}
+  #tourbtn{margin-top:10px;width:100%;padding:13px;border:2.5px solid var(--blue);border-radius:18px;cursor:pointer;font-family:inherit;
+    font-size:17px;font-weight:800;background:#fff;color:var(--blue)}
+  #tourbtn:active{transform:scale(.96)}
+  #tournext{margin-top:16px;width:100%;padding:13px;border:none;border-radius:16px;cursor:pointer;font-family:inherit;
+    font-size:16.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--teal),var(--blue));display:none}
+  #tournext:active{transform:scale(.96)}
   #ocard .url{margin-top:12px;font-size:12px;font-weight:800;color:#b8bcc8;letter-spacing:1px}
   #olang{margin:2px auto 0;display:inline-flex;background:#f0f1f5;border-radius:999px;padding:3px}
   #olang button{border:none;background:transparent;font-family:inherit;font-weight:800;font-size:13px;color:#8b8f9e;
@@ -151,7 +180,8 @@
 <div id="scene"></div>
 
 <!-- HUD -->
-<div id="logo" class="hud"><div class="m">M</div><b>Max's World</b></div>
+<div id="logo" class="hud" role="button" style="cursor:pointer"><div class="m">M</div><b>Max's World</b></div>
+<div id="dirwrap"><div id="dir"><h3 id="dirtitle"></h3><div id="dirlist"></div></div></div>
 <div id="topbtns" class="hud">
   <button id="langbtn" class="roundbtn">中文</button>
   <button id="helpbtn" class="roundbtn">?</button>
@@ -185,6 +215,7 @@
     <p id="panelbody"></p>
     <div class="chips" id="panelchips"></div>
     <div id="panelgal"></div>
+    <button id="tournext"></button>
   </div></div>
 </div>
 
@@ -200,6 +231,7 @@
     <div class="tag" id="otag"></div>
     <div class="ctr" id="octr"></div>
     <button id="startbtn"></button>
+    <button id="tourbtn"></button>
     <div class="url">ZHIYIHAN.COM</div>
   </div>
 </div>
@@ -228,6 +260,9 @@ const I18N = {
     start: "Start Exploring",
     explored: n => `${n}/7 explored`,
     walkCloser: "Walk closer to take a look! 🏃",
+    dirTitle: "Where shall we go? 🗺️",
+    tourBtn: "🚶 Take me around",
+    tourNext: "Next stop ▶",
     allDone: "🎉 You explored all of Max's World!",
     thanks: "Thank you for visiting — Max ❤️",
     goal: "⚽ GOAL!!",
@@ -250,6 +285,9 @@ const I18N = {
     start: "開始探索",
     explored: n => `已探索 ${n}/7`,
     walkCloser: "走近一點看看吧！🏃",
+    dirTitle: "想去哪裡逛逛？🗺️",
+    tourBtn: "🚶 帶我逛逛",
+    tourNext: "下一站 ▶",
     allDone: "🎉 你探索完 Max 的整個世界啦！",
     thanks: "謝謝你的到訪 — Max ❤️",
     goal: "⚽ 入球啦！！",
@@ -981,7 +1019,7 @@ glowRing.rotation.x=-Math.PI/2; glowRing.position.y=.03; scene.add(glowRing);
 function buildAvatar(cfg){
   const g=new THREE.Group();
   const inner=new THREE.Group(); g.add(inner);
-  const skin=mat(cfg.skin), shirt=mat(cfg.shirt), shorts=mat(cfg.shorts), shoe=mat(cfg.shoes), hairM=mat(cfg.hair), bowM=mat(cfg.bow||0x8fb9e6);
+  const skin=mat(cfg.skin,{emissive:0xffd8b5,emissiveIntensity:.25}), shirt=mat(cfg.shirt), shorts=mat(cfg.shorts), shoe=mat(cfg.shoes), hairM=mat(cfg.hair), bowM=mat(cfg.bow||0x8fb9e6);
   const legs=[], arms=[], eyes=[];
   /* chubby mochi body */
   const body=new THREE.Mesh(new THREE.SphereGeometry(.46,22,18), shirt); body.position.y=.56; body.scale.set(1.08,.9,1); inner.add(body);
@@ -1111,7 +1149,7 @@ addEventListener('keydown',e=>{
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
   if(e.code==='KeyE') tryInteract();
   if(e.code==='Space') tryJump();
-  if(e.code==='Escape') closePanel();
+  if(e.code==='Escape'){ closePanel(); $('#dirwrap').style.display='none'; }
 });
 addEventListener('keyup',e=>keys[e.code]=false);
 
@@ -1218,6 +1256,8 @@ function handleTap(x,y){
 /* =============== GAME STATE / UI =============== */
 let started=false, panelOpen=false, currentPanel=null, celebrated=false;
 const visited=new Set();
+const SAVE_KEY='maxworld.v1';
+function saveGame(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({lang, visited:[...visited]})); }catch(e){} }
 const state={ vy:0, onGround:true, walkT:0, blink:rand(2,4), moving:false };
 
 /* stars HUD */
@@ -1262,10 +1302,12 @@ function openPanel(id){
       gal.appendChild(d);
     });
   }
+  $('#tournext').style.display = tour.active ? 'block' : 'none';
+  if(tour.active) $('#tournext').textContent=T().tourNext;
   $('#panelwrap').style.display='flex';
   /* collect star (7 themed zones only) */
   if(id!=='welcome' && !visited.has(id)){
-    visited.add(id); updateStars(); ding();
+    visited.add(id); updateStars(); saveGame(); ding();
     burst(max.g.position.clone(),30);
     if(visited.size===7 && !celebrated){
       celebrated=true;
@@ -1273,7 +1315,51 @@ function openPanel(id){
     }
   }
 }
-function closePanel(){ panelOpen=false; currentPanel=null; $('#panelwrap').style.display='none'; }
+function closePanel(){
+  panelOpen=false; currentPanel=null; $('#panelwrap').style.display='none';
+  if(tour.active && !tour.target) nextTourStop();   /* tour: closing a stop's panel moves on */
+}
+
+/* auto tour — Max walks zone to zone by himself */
+const tour={ active:false, queue:[], target:null, zone:null };
+function startTour(){
+  tour.active=true;
+  tour.queue=zoneDefs.map(z=>z.id);
+  tour.zone=null; tour.target=null;
+  nextTourStop();
+}
+function nextTourStop(){
+  const id=tour.queue.shift();
+  if(!id){ endTour(); toast(T().thanks); return; }
+  tour.zone=id;
+  const p=zones[id].pos;
+  tour.target=new THREE.Vector3(p.x*.8,0,p.z*.8);
+}
+function endTour(){ tour.active=false; tour.target=null; tour.zone=null; }
+$('#tournext').onclick=()=>closePanel();
+
+/* zone directory — tap the M logo to jump anywhere */
+function openDir(){
+  $('#dirtitle').textContent=T().dirTitle;
+  const list=$('#dirlist'); list.innerHTML='';
+  ['welcome',...zoneDefs.map(z=>z.id)].forEach(id=>{
+    const z=T().zones[id];
+    const b=document.createElement('button'); b.className='diritem';
+    b.innerHTML=`<span class="ic">${z.icon}</span><span>${z.t}</span>`+
+      (id==='welcome'?'':`<span class="st2${visited.has(id)?' on':''}">★</span>`);
+    b.onclick=()=>{
+      $('#dirwrap').style.display='none';
+      if(id==='welcome') max.g.position.set(0,0,2.2);
+      else{ const p=zones[id].pos; max.g.position.set(p.x*.8,0,p.z*.8); }
+      state.vy=0;
+      setTimeout(()=>openPanel(id),450);
+    };
+    list.appendChild(b);
+  });
+  $('#dirwrap').style.display='flex';
+}
+$('#logo').onclick=()=>{ if(started && !panelOpen) openDir(); };
+$('#dirwrap').addEventListener('pointerdown',e=>{ if(e.target.id==='dirwrap') $('#dirwrap').style.display='none'; });
 $('#panelclose').onclick=closePanel;
 $('#panelwrap').addEventListener('pointerdown',e=>{ if(e.target.id==='panelwrap') closePanel(); });
 $('#lightbox').onclick=()=>$('#lightbox').style.display='none';
@@ -1294,10 +1380,12 @@ function setLang(l){
   $('#startbtn').textContent=started ? (l==='zh'?'繼續探索':'Keep Exploring') : T().start;
   document.querySelectorAll('#olang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
   $('#langbtn').textContent = l==='en'?'中文':'EN';
+  $('#tourbtn').textContent=T().tourBtn;
   updateStars();
   if(activeZone) $('#hinttext').textContent=`${T().zones[activeZone].icon} ${T().zones[activeZone].t}`;
   if(panelOpen && currentPanel) openPanel(currentPanel);
   document.documentElement.lang = l==='en'?'en':'zh-Hant';
+  saveGame();
 }
 $('#langbtn').onclick=()=>setLang(lang==='en'?'zh':'en');
 document.querySelectorAll('#olang button').forEach(b=>b.onclick=()=>setLang(b.dataset.l));
@@ -1318,6 +1406,17 @@ $('#helpbtn').onclick=()=>{
   $('#startbtn').textContent = lang==='zh'?'繼續探索':'Keep Exploring';
   $('#overlay').style.display='flex';
   requestAnimationFrame(()=>$('#overlay').style.opacity=1);
+};
+$('#tourbtn').onclick=()=>{
+  ensureAudio();
+  $('#overlay').style.opacity=0;
+  setTimeout(()=>$('#overlay').style.display='none',650);
+  if(!started){
+    started=true;
+    flyT=0; flyFrom={dist:cam.dist,phi:cam.phi,theta:cam.theta};
+    ding();
+  }
+  startTour();
 };
 
 /* =============== MAIN LOOP =============== */
@@ -1342,7 +1441,24 @@ function tick(){
   const inputMag=Math.min(ilen,1);
   state.moving = started && !panelOpen && inputMag>.06;
 
-  if(state.moving){
+  /* auto tour: user input takes over, otherwise walk to the next stop */
+  if(tour.active && state.moving) endTour();
+  if(tour.active && !panelOpen && tour.target && flyT>=1){
+    const dirv=new THREE.Vector3().subVectors(tour.target,max.g.position); dirv.y=0;
+    if(dirv.length()<.45){
+      tour.target=null;
+      openPanel(tour.zone);
+    }else{
+      dirv.normalize();
+      const tspeed=3.8;
+      max.g.position.addScaledVector(dirv,tspeed*dt);
+      max.g.rotation.y=lerpAngle(max.g.rotation.y,Math.atan2(dirv.x,dirv.z),Math.min(1,12*dt));
+      state.walkT+=dt*tspeed*2.2;
+      state.moving=true;
+    }
+  }
+
+  if(state.moving && inputMag>.06){
     const fwd=new THREE.Vector3().subVectors(camTargetSmooth,camera.position); fwd.y=0; fwd.normalize();
     const right=new THREE.Vector3().crossVectors(fwd,new THREE.Vector3(0,1,0)).negate();
     const move=new THREE.Vector3().addScaledVector(fwd,-iy).addScaledVector(right,-ix);
@@ -1532,8 +1648,12 @@ window.__max={
   state:()=>({ pos:max.g.position.toArray(), visited:[...visited], started, lang })
 };
 
-/* boot */
-setLang('en');
+/* boot: restore saved language + progress */
+let saved={};
+try{ saved=JSON.parse(localStorage.getItem(SAVE_KEY))||{}; }catch(e){}
+(saved.visited||[]).forEach(id=>{ if(zones[id]) visited.add(id); });
+if(visited.size>=7) celebrated=true;
+setLang(saved.lang || (/^zh/i.test(navigator.language||'')?'zh':'en'));
 updateStars();
 tick();
 
