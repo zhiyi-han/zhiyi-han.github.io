@@ -153,9 +153,15 @@
     background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;font-size:19px;font-weight:800;letter-spacing:.5px;
     box-shadow:0 12px 30px rgba(79,127,224,.45);transition:transform .15s}
   #startbtn:active{transform:scale(.96)}
-  #tourbtn{margin-top:10px;width:100%;padding:13px;border:2.5px solid var(--blue);border-radius:18px;cursor:pointer;font-family:inherit;
-    font-size:17px;font-weight:800;background:#fff;color:var(--blue)}
-  #tourbtn:active{transform:scale(.96)}
+  #tourhud{position:fixed;z-index:22;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    display:none;align-items:center;gap:7px;border:none;border-radius:999px;padding:12px 22px;cursor:pointer;
+    font-family:inherit;font-size:15.5px;font-weight:800;color:#fff;white-space:nowrap;
+    background:linear-gradient(135deg,var(--teal),var(--blue));box-shadow:var(--shadow)}
+  #tourhud:active{transform:translateX(-50%) scale(.95)}
+  .dirtour{display:flex;align-items:center;justify-content:center;width:100%;border:none;border-radius:16px;
+    padding:13px 14px;margin-bottom:10px;cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;
+    color:#fff;background:linear-gradient(135deg,var(--teal),var(--blue))}
+  .dirtour:active{transform:scale(.97)}
   #tournext{margin-top:16px;width:100%;padding:13px;border:none;border-radius:16px;cursor:pointer;font-family:inherit;
     font-size:16.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--teal),var(--blue));display:none}
   #tournext:active{transform:scale(.96)}
@@ -190,6 +196,7 @@
 <div id="hint" class="hud"><span class="key">E</span><span id="hinttext"></span></div>
 <div id="toast" class="hud"></div>
 <div id="urltag" class="hud">zhiyihan.com</div>
+<button id="tourhud"></button>
 <div id="bigmsg"></div>
 
 <!-- mobile controls -->
@@ -231,7 +238,6 @@
     <div class="tag" id="otag"></div>
     <div class="ctr" id="octr"></div>
     <button id="startbtn"></button>
-    <button id="tourbtn"></button>
     <div class="url">ZHIYIHAN.COM</div>
   </div>
 </div>
@@ -263,6 +269,8 @@ const I18N = {
     dirTitle: "Where shall we go? 🗺️",
     tourBtn: "🚶 Take me around",
     tourNext: "Next stop ▶",
+    menuTip: "💡 Tap the M (top left) for a map of all zones",
+    tourStop: "✕ Stop tour",
     allDone: "🎉 You explored all of Max's World!",
     thanks: "Thank you for visiting — Max ❤️",
     goal: "⚽ GOAL!!",
@@ -288,6 +296,8 @@ const I18N = {
     dirTitle: "想去哪裡逛逛？🗺️",
     tourBtn: "🚶 帶我逛逛",
     tourNext: "下一站 ▶",
+    menuTip: "💡 點左上角 M 可以打開地圖",
+    tourStop: "✕ 結束導覽",
     allDone: "🎉 你探索完 Max 的整個世界啦！",
     thanks: "謝謝你的到訪 — Max ❤️",
     goal: "⚽ 入球啦！！",
@@ -569,6 +579,158 @@ for(let i=0;i<9;i++){
   rock.position.set(Math.cos(a)*r,.12,Math.sin(a)*r); rock.scale.y=.7; rock.rotation.set(rand(0,3),rand(0,3),0);
   rock.castShadow=true; world.add(rock);
 }
+
+/* ---- ambient life: pond & ducks, windmill, rainbow, balloon, butterflies, birds, bushes, mushrooms ---- */
+const polar=(aDeg,r)=>{ const a=aDeg*Math.PI/180; return [Math.cos(a)*r, Math.sin(a)*r]; };
+
+/* duck pond (between Nature Trail and Kindness Tree) */
+const pondCenter=new THREE.Vector3(...(()=>{const [x,z]=polar(140,13);return [x,0,z];})());
+{
+  const pond=new THREE.Group();
+  const water=new THREE.Mesh(new THREE.CircleGeometry(2.6,24), new THREE.MeshLambertMaterial({color:0x63b8e8}));
+  water.rotation.x=-Math.PI/2; water.position.y=.03; pond.add(water);
+  const rim=new THREE.Mesh(new THREE.RingGeometry(2.6,3.05,24), mat(0xd9c58f));
+  rim.rotation.x=-Math.PI/2; rim.position.y=.025; pond.add(rim);
+  [[.9,-.7,.3],[-.6,.9,.22],[-1.4,-.4,.18]].forEach(p=>{
+    const lily=new THREE.Mesh(new THREE.CircleGeometry(p[2],10), mat(0x4e9e4a));
+    lily.rotation.x=-Math.PI/2; lily.position.set(p[0],.06,p[1]); pond.add(lily);
+  });
+  pond.position.copy(pondCenter); world.add(pond);
+}
+const ducks=[];
+function duck(s){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.28*s,10,8), mat(0xfffbe8));
+  body.scale.set(1.25,.85,1); body.position.y=.2*s; body.castShadow=true; g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.15*s,10,8), mat(0xfffbe8));
+  head.position.set(.26*s,.5*s,0); g.add(head);
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(.055*s,.15*s,6), mat(0xffa32e));
+  beak.rotation.z=-Math.PI/2; beak.position.set(.45*s,.48*s,0); g.add(beak);
+  [-1,1].forEach(sd=>{
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.024*s,6,5), new THREE.MeshBasicMaterial({color:0x24262e}));
+    eye.position.set(.3*s,.55*s,sd*.09*s); g.add(eye);
+  });
+  return g;
+}
+[{r:1.2,sp:.5,ph:0,s:1},{r:1.8,sp:-.35,ph:2.4,s:.72}].forEach(d=>{
+  const g=duck(d.s); world.add(g); ducks.push({g,...d});
+});
+
+/* windmill (between Number Land and Builder's Corner) */
+const millHub=new THREE.Group();
+{
+  const wm=new THREE.Group();
+  const tower=new THREE.Mesh(new THREE.CylinderGeometry(.5,.85,3.4,8), mat(0xf4efe6));
+  tower.position.y=1.7; tower.castShadow=true; wm.add(tower);
+  const roof=new THREE.Mesh(new THREE.ConeGeometry(.75,.9,8), mat(0xe66a5a));
+  roof.position.y=3.85; roof.castShadow=true; wm.add(roof);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(.4,.62,.06), mat(0x8a6242));
+  door.position.set(0,.32,.83); wm.add(door);
+  millHub.position.set(0,3.3,.62); wm.add(millHub);
+  for(let i=0;i<4;i++){
+    const blade=new THREE.Mesh(new THREE.BoxGeometry(.32,1.7,.05), mat(0xf7f8fa));
+    const pv=new THREE.Group(); pv.rotation.z=i*Math.PI/2;
+    blade.position.y=1.05; blade.castShadow=true; pv.add(blade); millHub.add(pv);
+  }
+  const hubCap=new THREE.Mesh(new THREE.SphereGeometry(.14,8,7), mat(0x8a6242)); millHub.add(hubCap);
+  const [x,z]=polar(-14,26); wm.position.set(x,0,z); wm.lookAt(0,0,0);
+  world.add(wm);
+}
+
+/* rainbow (behind the field, between Sports Park and Nature Trail) */
+{
+  const rb=new THREE.Group();
+  [[0xf08080,5.4],[0xffd166,4.95],[0x9ad98f,4.5],[0x8fb9e6,4.05]].forEach(([c,r])=>{
+    const arc=new THREE.Mesh(new THREE.TorusGeometry(r,.22,8,36,Math.PI),
+      new THREE.MeshLambertMaterial({color:c,transparent:true,opacity:.85}));
+    rb.add(arc);
+  });
+  [-1,1].forEach(sd=>{
+    const puffG=new THREE.Group();
+    [[0,0,.55],[.45,.2,.4],[-.45,.18,.42]].forEach(p=>{
+      const b=new THREE.Mesh(new THREE.SphereGeometry(p[2],10,8), mat(0xffffff));
+      b.position.set(p[0],p[1],0); puffG.add(b);
+    });
+    puffG.position.set(sd*4.7,.15,0); rb.add(puffG);
+  });
+  const [x,z]=polar(89,29); rb.position.set(x,0,z); rb.lookAt(0,0,0);
+  world.add(rb);
+}
+
+/* drifting hot-air balloon */
+const hab=new THREE.Group();
+{
+  const envelope=new THREE.Mesh(new THREE.SphereGeometry(1.15,14,12), mat(0xf08080));
+  envelope.position.y=2.3; envelope.scale.set(1,1.12,1); envelope.castShadow=true; hab.add(envelope);
+  const band=new THREE.Mesh(new THREE.TorusGeometry(1.02,.16,8,18), mat(0xffd166));
+  band.rotation.x=Math.PI/2; band.position.y=2.05; hab.add(band);
+  const basket=new THREE.Mesh(new THREE.BoxGeometry(.55,.42,.55), mat(0xa9764e));
+  basket.position.y=.55; basket.castShadow=true; hab.add(basket);
+  [-1,1].forEach(sx=>[-1,1].forEach(sz=>{
+    const rope=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.75,4), mat(0xd9c58f));
+    rope.position.set(sx*.24,1.12,sz*.24); hab.add(rope);
+  }));
+  scene.add(hab);
+}
+
+/* little birds circling high above */
+const birdFlock=new THREE.Group(); scene.add(birdFlock);
+const birdY=[];
+for(let i=0;i<3;i++){
+  const b=new THREE.Group();
+  [-1,1].forEach(sd=>{
+    const wing=new THREE.Mesh(new THREE.CircleGeometry(.34,3), new THREE.MeshBasicMaterial({color:0x5a6b8c,side:THREE.DoubleSide}));
+    wing.position.x=sd*.28; wing.rotation.x=-Math.PI/2; b.add(wing);
+  });
+  const a=i*2.1, r=25-i*1.6, y=10.5+i*.8;
+  b.position.set(Math.cos(a)*r,y,Math.sin(a)*r); birdY.push(y);
+  birdFlock.add(b);
+}
+
+/* bushes & mushrooms */
+for(let i=0;i<10;i++){
+  const a=rand(0,Math.PI*2), r=rand(9,WORLD_R-3);
+  const bush=new THREE.Group();
+  [[0,0,.42],[.36,-.05,.3],[-.34,-.04,.3]].forEach(p=>{
+    const m=new THREE.Mesh(new THREE.SphereGeometry(p[2],9,7), mat(i%2?0x58b368:0x6fc97e));
+    m.position.set(p[0],.26+p[1],0); m.castShadow=true; bush.add(m);
+  });
+  if(i%3===0) [[.15,.5,.18],[-.2,.42,.05],[.02,.55,-.14]].forEach(p=>{
+    const berry=new THREE.Mesh(new THREE.SphereGeometry(.05,6,5), mat(0xe6455a));
+    berry.position.set(p[0],p[1],p[2]); bush.add(berry);
+  });
+  bush.position.set(Math.cos(a)*r,0,Math.sin(a)*r); bush.rotation.y=rand(0,6);
+  world.add(bush);
+}
+for(let i=0;i<8;i++){
+  const a=rand(0,Math.PI*2), r=rand(22,WORLD_R-2);
+  const mr=new THREE.Group();
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.06,.09,.2,7), mat(0xf6f1e4));
+  stem.position.y=.1; mr.add(stem);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.16,9,7,0,Math.PI*2,0,Math.PI*.55), mat(i%2?0xe66a5a:0xeaa83a));
+  cap.position.y=.16; cap.castShadow=true; mr.add(cap);
+  mr.position.set(Math.cos(a)*r,0,Math.sin(a)*r); mr.scale.setScalar(rand(.8,1.3));
+  world.add(mr);
+}
+
+/* Jupiter — Max's favourite planet, hanging in the sky */
+const jupiter=(()=>{
+  const c=document.createElement('canvas'); c.width=256; c.height=128;
+  const x=c.getContext('2d');
+  const bands=['#e8d5b5','#d9b98c','#f0e2c8','#c9a06e','#e8d5b5','#d4ae80','#f0e2c8','#caa678','#e3ceac'];
+  const bh=c.height/bands.length;
+  bands.forEach((col,i)=>{ x.fillStyle=col; x.fillRect(0,i*bh,c.width,bh+1); });
+  x.globalAlpha=.35; x.fillStyle='#b98d5e';
+  for(let i=0;i<7;i++){ const y=rand(10,118); x.fillRect(0,y,c.width,rand(1.5,4)); }
+  x.globalAlpha=1;
+  /* Great Red Spot */
+  x.fillStyle='#cf6a4e'; x.beginPath(); x.ellipse(170,84,20,11,0,0,7); x.fill();
+  x.fillStyle='#e08a6a'; x.beginPath(); x.ellipse(170,84,13,7,0,0,7); x.fill();
+  const g=new THREE.Mesh(new THREE.SphereGeometry(4.2,24,18),
+    new THREE.MeshLambertMaterial({map:canvasTexture(c), fog:false}));
+  g.position.set(-40,11,-46); g.rotation.z=.18;
+  scene.add(g); return g;
+})();
 
 /* clouds */
 const clouds = new THREE.Group(); scene.add(clouds);
@@ -1088,7 +1250,7 @@ scene.add(max.g);
 
 /* =============== BUTTERFLIES =============== */
 const butterflies=[];
-[[0xf7a8cc],[0xffd166],[0x9db8f0]].forEach((c,i)=>{
+[[0xf7a8cc],[0xffd166],[0x9db8f0],[0xffffff],[0xb79ced],[0x9ad98f]].forEach((c,i)=>{
   const b=new THREE.Group();
   const wingG=new THREE.PlaneGeometry(.16,.22);
   const wl=new THREE.Mesh(wingG,new THREE.MeshLambertMaterial({color:c[0],side:THREE.DoubleSide}));
@@ -1322,10 +1484,14 @@ function closePanel(){
 
 /* auto tour — Max walks zone to zone by himself */
 const tour={ active:false, queue:[], target:null, zone:null };
+function updateTourHud(){
+  $('#tourhud').textContent = tour.active ? T().tourStop : T().tourBtn;
+}
 function startTour(){
   tour.active=true;
   tour.queue=zoneDefs.map(z=>z.id);
   tour.zone=null; tour.target=null;
+  updateTourHud();
   nextTourStop();
 }
 function nextTourStop(){
@@ -1335,13 +1501,17 @@ function nextTourStop(){
   const p=zones[id].pos;
   tour.target=new THREE.Vector3(p.x*.8,0,p.z*.8);
 }
-function endTour(){ tour.active=false; tour.target=null; tour.zone=null; }
+function endTour(){ tour.active=false; tour.target=null; tour.zone=null; updateTourHud(); }
 $('#tournext').onclick=()=>closePanel();
+$('#tourhud').onclick=()=>{ tour.active ? endTour() : startTour(); };
 
 /* zone directory — tap the M logo to jump anywhere */
 function openDir(){
   $('#dirtitle').textContent=T().dirTitle;
   const list=$('#dirlist'); list.innerHTML='';
+  const tb=document.createElement('button'); tb.className='dirtour'; tb.textContent=T().tourBtn;
+  tb.onclick=()=>{ $('#dirwrap').style.display='none'; startTour(); };
+  list.appendChild(tb);
   ['welcome',...zoneDefs.map(z=>z.id)].forEach(id=>{
     const z=T().zones[id];
     const b=document.createElement('button'); b.className='diritem';
@@ -1380,7 +1550,7 @@ function setLang(l){
   $('#startbtn').textContent=started ? (l==='zh'?'繼續探索':'Keep Exploring') : T().start;
   document.querySelectorAll('#olang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
   $('#langbtn').textContent = l==='en'?'中文':'EN';
-  $('#tourbtn').textContent=T().tourBtn;
+  updateTourHud();
   updateStars();
   if(activeZone) $('#hinttext').textContent=`${T().zones[activeZone].icon} ${T().zones[activeZone].t}`;
   if(panelOpen && currentPanel) openPanel(currentPanel);
@@ -1400,23 +1570,14 @@ $('#startbtn').onclick=()=>{
     started=true;
     flyT=0; flyFrom={dist:cam.dist,phi:cam.phi,theta:cam.theta};
     ding();
+    setTimeout(()=>toast(T().menuTip),2600);
   }
+  $('#tourhud').style.display='flex';
 };
 $('#helpbtn').onclick=()=>{
   $('#startbtn').textContent = lang==='zh'?'繼續探索':'Keep Exploring';
   $('#overlay').style.display='flex';
   requestAnimationFrame(()=>$('#overlay').style.opacity=1);
-};
-$('#tourbtn').onclick=()=>{
-  ensureAudio();
-  $('#overlay').style.opacity=0;
-  setTimeout(()=>$('#overlay').style.display='none',650);
-  if(!started){
-    started=true;
-    flyT=0; flyFrom={dist:cam.dist,phi:cam.phi,theta:cam.theta};
-    ding();
-  }
-  startTour();
 };
 
 /* =============== MAIN LOOP =============== */
@@ -1479,8 +1640,8 @@ function tick(){
         }
       }
     }
-  }else{
-    state.walkT=0;
+  }else if(!(tour.active && tour.target)){
+    state.walkT=0;   /* keep the walk cycle running while the tour is walking */
   }
 
   /* jump physics */
@@ -1568,6 +1729,24 @@ function tick(){
 
   /* ---- ambient animations ---- */
   clouds.rotation.y+=dt*.0045;
+
+  /* ---- ambient life ---- */
+  millHub.rotation.z+=dt*1.1;
+  jupiter.rotation.y+=dt*.04;
+  ducks.forEach(d=>{
+    const a=t*d.sp+d.ph;
+    d.g.position.set(pondCenter.x+Math.cos(a)*d.r,.04+Math.sin(t*2.1+d.ph)*.035,pondCenter.z+Math.sin(a)*d.r);
+    d.g.rotation.y=-a+(d.sp>0?0:Math.PI);
+  });
+  birdFlock.rotation.y+=dt*.07;
+  birdFlock.children.forEach((b,i)=>{
+    b.position.y=birdY[i]+Math.sin(t*1.2+i*2)*.5;
+    b.children[0].rotation.z=Math.sin(t*8+i)*.45;
+    b.children[1].rotation.z=-Math.sin(t*8+i)*.45;
+  });
+  const habA=t*.05+2.2;
+  hab.position.set(Math.cos(habA)*23,8.8+Math.sin(t*.42)*.55,Math.sin(habA)*23);
+  hab.rotation.y=-habA;
   markers.forEach(mk=>{ mk.position.y=mk.userData.baseY+Math.sin(t*1.7+mk.userData.ph)*.28; });
   waterTexes.forEach(w=>w.offset.x-=dt*.22);
   flames.forEach((f,i)=>{ f.scale.y=1+Math.sin(t*11+i*2)*.2; f.scale.x=f.scale.z=1+Math.sin(t*13+i)*.1; });
