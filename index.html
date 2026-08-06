@@ -158,6 +158,8 @@
     font-family:inherit;font-size:15.5px;font-weight:800;color:#fff;white-space:nowrap;
     background:linear-gradient(135deg,var(--teal),var(--blue));box-shadow:var(--shadow)}
   #tourhud:active{transform:translateX(-50%) scale(.95)}
+  /* on touch devices lift it clear of the D-pad / jump buttons */
+  body.touch #tourhud{bottom:calc(214px + env(safe-area-inset-bottom));padding:10px 18px;font-size:14.5px}
   .dirtour{display:flex;align-items:center;justify-content:center;width:100%;border:none;border-radius:16px;
     padding:13px 14px;margin-bottom:10px;cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;
     color:#fff;background:linear-gradient(135deg,var(--teal),var(--blue))}
@@ -1323,6 +1325,41 @@ function confettiRain(){
 /* =============== AUDIO (tiny chimes) =============== */
 let actx=null;
 function ensureAudio(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }
+
+/* mobile audio unlock: WebAudio must be resumed inside a user gesture, and on
+   iOS a looping (near-)silent <audio> keeps the session in playback mode so
+   sound works even with the ringer switch on silent */
+let audioUnlocked=false;
+function silentWavURL(){
+  const n=2205, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,22050,true); v.setUint32(28,44100,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  w(36,'data'); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+}
+function unlockAudio(){
+  ensureAudio();
+  if(!actx) return;
+  if(actx.state==='suspended') actx.resume();
+  if(!audioUnlocked){
+    audioUnlocked=true;
+    try{
+      const s=actx.createBufferSource();
+      s.buffer=actx.createBuffer(1,1,22050);
+      s.connect(actx.destination); s.start(0);
+    }catch(e){}
+    try{
+      const au=new Audio(silentWavURL());
+      au.loop=true; au.volume=.01; au.setAttribute('playsinline','');
+      au.play().catch(()=>{ audioUnlocked=false; });
+    }catch(e){}
+  }
+  if(soundOn && started) startMusic();
+}
+['pointerdown','touchend','click'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && actx && actx.state==='suspended') actx.resume(); });
 function note(freq,t0,dur=.16,type='triangle',vol=.12){
   if(!actx || !soundOn) return;
   const o=actx.createOscillator(), gn=actx.createGain();
@@ -1469,6 +1506,7 @@ addEventListener('keyup',e=>keys[e.code]=false);
 const joy={active:false,id:null,cx:0,cy:0,dx:0,dy:0};
 const joyEl=$('#joy'), joyBase=$('#joybase'), joyKnob=$('#joyknob');
 if(isTouch){
+  document.body.classList.add('touch');
   joyEl.style.display='block'; $('#mbtns').style.display='flex'; $('#actbtn').style.display='flex';
   $('#dpad').style.display='grid';
   document.querySelectorAll('.dbtn').forEach(b=>{
