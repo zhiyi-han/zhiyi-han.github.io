@@ -274,6 +274,9 @@ const I18N = {
     tourNext: "Next stop ▶",
     menuTip: "💡 Tap the M (top left) for a map of all zones",
     tourStop: "✕ Stop tour",
+    rocketHint: "Fly to Jupiter!",
+    jupiterMsg: "🪐 Welcome to Jupiter!",
+    backMsg: "What a trip! 🚀",
     allDone: "🎉 You explored all of Max's World!",
     thanks: "Thank you for visiting — Max ❤️",
     goal: "⚽ GOAL!!",
@@ -301,6 +304,9 @@ const I18N = {
     tourNext: "下一站 ▶",
     menuTip: "💡 點左上角 M 可以打開地圖",
     tourStop: "✕ 結束導覽",
+    rocketHint: "搭火箭飛去木星！",
+    jupiterMsg: "🪐 歡迎來到木星！",
+    backMsg: "旅行真棒！🚀",
     allDone: "🎉 你探索完 Max 的整個世界啦！",
     thanks: "謝謝你的到訪 — Max ❤️",
     goal: "⚽ 入球啦！！",
@@ -767,6 +773,54 @@ const jupiter=(()=>{
   scene.add(g); return g;
 })();
 
+/* rocket that launches from the field up to Jupiter (orange + grey) */
+const ROCKET_PAD=(()=>{const [x,z]=polar(246,14);return new THREE.Vector3(x,0,z);})();
+const rocket=new THREE.Group(), rocketFlame=new THREE.Group();
+{
+  const pad=new THREE.Mesh(new THREE.CylinderGeometry(1.35,1.5,.16,18), mat(0x7d8590));
+  pad.position.set(ROCKET_PAD.x,.08,ROCKET_PAD.z); pad.receiveShadow=true; world.add(pad);
+  const padRing=new THREE.Mesh(new THREE.TorusGeometry(1.1,.05,6,18), mat(0xe8863a));
+  padRing.rotation.x=-Math.PI/2; padRing.position.set(ROCKET_PAD.x,.17,ROCKET_PAD.z); world.add(padRing);
+
+  const nozzle=new THREE.Mesh(new THREE.CylinderGeometry(.2,.34,.32,10), mat(0x5a6270));
+  nozzle.position.y=.32; rocket.add(nozzle);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.44,.5,2.1,12), mat(0xe8863a));
+  body.position.y=1.5; body.castShadow=true; rocket.add(body);
+  const belt=new THREE.Mesh(new THREE.CylinderGeometry(.485,.485,.22,12), mat(0x9aa2ad));
+  belt.position.y=1.06; rocket.add(belt);
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.45,.95,12), mat(0x9aa2ad));
+  nose.position.y=3.02; nose.castShadow=true; rocket.add(nose);
+  for(let i=0;i<3;i++){
+    const fin=new THREE.Mesh(new THREE.BoxGeometry(.09,.85,.55), mat(0x7d8590));
+    const a=i*Math.PI*2/3;
+    fin.position.set(Math.cos(a)*.52,.62,Math.sin(a)*.52);
+    fin.rotation.y=-a; fin.rotation.x=.12; fin.castShadow=true;
+    rocket.add(fin);
+  }
+  const ringP=new THREE.Mesh(new THREE.TorusGeometry(.17,.045,8,14), mat(0x9aa2ad));
+  ringP.position.set(0,1.85,.47); rocket.add(ringP);
+  const glass=new THREE.Mesh(new THREE.CircleGeometry(.15,12), new THREE.MeshLambertMaterial({color:0xbfe4ff}));
+  glass.position.set(0,1.85,.472); rocket.add(glass);
+  const f1=new THREE.Mesh(new THREE.ConeGeometry(.3,1,10), new THREE.MeshBasicMaterial({color:0xffb703}));
+  f1.rotation.x=Math.PI; f1.position.y=-.42; rocketFlame.add(f1);
+  const f2=new THREE.Mesh(new THREE.ConeGeometry(.16,.65,8), new THREE.MeshBasicMaterial({color:0xfff3c4}));
+  f2.rotation.x=Math.PI; f2.position.y=-.28; rocketFlame.add(f2);
+  rocketFlame.position.y=.2; rocketFlame.visible=false; rocket.add(rocketFlame);
+  rocket.position.copy(ROCKET_PAD);
+  world.add(rocket);
+}
+let rocketPhase=0, rocketT=0;   /* 0 idle on pad, 1 flying, 2 arrived/hidden */
+let riding=false, rocketNear=false;
+rocket.traverse(o=>{ o.userData.rocket=true; });
+function boardRocket(){
+  if(riding || rocketPhase!==0 || panelOpen) return;
+  riding=true; endTour();
+  max.g.visible=false;
+  rocketPhase=1; rocketT=0; rocketFlame.visible=true;
+  ding();
+  rocketNear=false; $('#hint').style.display='none';
+}
+
 /* clouds */
 const clouds = new THREE.Group(); scene.add(clouds);
 for(let i=0;i<8;i++){
@@ -946,6 +1000,73 @@ function buildNumbers(z){
     ch.rotation.y=rand(-.4,.4);
     g.add(ch);
   }
+  /* Fourteen — the skateboarder: 2x7 blocks, top 4 green, bottom 10 white */
+  {
+    const s=.62, f=new THREE.Group();
+    const deck=new THREE.Mesh(new THREE.BoxGeometry(1.55,.09,.6), mat(0xffd166));
+    deck.position.y=.21; deck.castShadow=true; f.add(deck);
+    [[-.55,-.2],[-.55,.2],[.55,-.2],[.55,.2]].forEach(p=>{
+      const wl=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.09,10), mat(0x30363f));
+      wl.rotation.x=Math.PI/2; wl.position.set(p[0],.1,p[1]); wl.castShadow=true; f.add(wl);
+    });
+    const baseY=.48;
+    /* stubby legs + shoes standing on the deck */
+    [-1,1].forEach(sd=>{
+      const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.07,.12,4,8), mat(0xf4f4f6));
+      leg.position.set(sd*.31,.42,0); leg.castShadow=true; f.add(leg);
+      const shoe=new THREE.Mesh(new THREE.SphereGeometry(.115,10,8), mat(0xffffff));
+      shoe.position.set(sd*.31,.3,.06); shoe.scale.set(1,.62,1.4); shoe.castShadow=true; f.add(shoe);
+    });
+    for(let row=0;row<7;row++){
+      for(let col=0;col<2;col++){
+        const b=new THREE.Mesh(new THREE.BoxGeometry(s*.97,s*.97,s*.97), mat(row>=5?0x3f9e57:0xf4f4f6));
+        b.position.set((col-.5)*s, baseY+s/2+row*s, 0);
+        b.castShadow=true; f.add(b);
+      }
+    }
+    const nc=makeCanvas(256,128), nx=nc.getContext('2d');
+    nx.fillStyle='rgba(255,255,255,.95)';
+    nx.font='800 104px "Baloo 2",sans-serif'; nx.textAlign='center'; nx.textBaseline='middle';
+    nx.fillText('14',128,66);
+    const decal=new THREE.Mesh(new THREE.PlaneGeometry(s*1.7,s*.85),
+      new THREE.MeshBasicMaterial({map:canvasTexture(nc),transparent:true}));
+    decal.position.set(0, baseY+s/2+5*s, s/2+.005); f.add(decal);
+    /* googly eyes low on the white blocks (2nd row from the bottom) */
+    const eyeY=baseY+s/2+1*s+.08;
+    [[-.16],[.16]].forEach(p=>{
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.078,.012,6,14), mat(0xb9c0cc));
+      ring.position.set(p[0], eyeY, s/2+.008); f.add(ring);
+      const ew=new THREE.Mesh(new THREE.SphereGeometry(.075,8,7), new THREE.MeshLambertMaterial({color:0xffffff}));
+      ew.position.set(p[0], eyeY, s/2+.01); f.add(ew);
+      const pu=new THREE.Mesh(new THREE.SphereGeometry(.036,7,6), new THREE.MeshLambertMaterial({color:0x222222}));
+      pu.position.set(p[0], eyeY, s/2+.075); f.add(pu);
+    });
+    /* smiling mouth under the eyes */
+    const smile=new THREE.Mesh(new THREE.TorusGeometry(.1,.016,8,16,Math.PI*.72),
+      new THREE.MeshBasicMaterial({color:0x24262e}));
+    smile.position.set(0, eyeY-.14, s/2+.01);
+    smile.rotation.z=Math.PI*1.14;
+    f.add(smile);
+    /* green arms reaching out from the 3rd white row */
+    const armY=baseY+s/2+2*s;
+    [-1,1].forEach(sd=>{
+      const arm=new THREE.Group();
+      const up=new THREE.Mesh(new THREE.CapsuleGeometry(.07,.3,4,8), mat(0x3f9e57));
+      up.position.y=-.17; up.castShadow=true; arm.add(up);
+      const hand=new THREE.Mesh(new THREE.SphereGeometry(.095,8,7), mat(0x3f9e57));
+      hand.position.y=-.36; hand.castShadow=true; arm.add(hand);
+      arm.position.set(sd*(s+.02), armY, 0);
+      arm.rotation.z=sd*.85;
+      f.add(arm);
+    });
+    /* green skater helmet */
+    const helmet=new THREE.Mesh(new THREE.SphereGeometry(.72,16,10,0,Math.PI*2,0,Math.PI*.52), mat(0x2f8547));
+    helmet.scale.set(1,.62,.9); helmet.position.set(0, baseY+7*s-.04, 0);
+    helmet.castShadow=true; f.add(helmet);
+    f.position.set(3.7,0,.15); f.rotation.y=-.22;
+    g.add(f);
+  }
+
   // the 604 & 603 camera-code buddies
   const mini=(txt,x,z2)=>{
     const c=makeCanvas(256,140), ctx=c.getContext('2d');
@@ -1594,6 +1715,8 @@ function handleTap(x,y){
   const hits=raycaster.intersectObjects([world,max.g],true);
   for(const h of hits){
     let o=h.object, zid=null;
+    let ro=h.object;
+    while(ro){ if(ro.userData && ro.userData.rocket){ if(rocketNear) boardRocket(); else toast(T().walkCloser); return; } ro=ro.parent; }
     while(o){ if(o.userData && o.userData.zone){ zid=o.userData.zone; break; } o=o.parent; }
     if(zid){
       const zp=zones[zid].pos;
@@ -1724,8 +1847,8 @@ $('#lightbox').onclick=()=>$('#lightbox').style.display='none';
 
 /* interact + jump */
 let activeZone=null;
-function tryInteract(){ if(!started) return; if(activeZone) openPanel(activeZone); }
-function tryJump(){ if(!started||panelOpen) return; if(state.onGround){ state.vy=6.3; state.onGround=false; } }
+function tryInteract(){ if(!started) return; if(rocketNear){ boardRocket(); return; } if(activeZone) openPanel(activeZone); }
+function tryJump(){ if(!started||panelOpen||riding) return; if(state.onGround){ state.vy=6.3; state.onGround=false; } }
 $('#actbtn').onclick=()=>tryInteract();
 $('#jumpbtn').onclick=()=>tryJump();
 $('#hint').onclick=()=>tryInteract();
@@ -1789,7 +1912,7 @@ function tick(){
   const ilen=Math.hypot(ix,iy);
   if(ilen>1){ ix/=ilen; iy/=ilen; }
   const inputMag=Math.min(ilen,1);
-  state.moving = started && !panelOpen && inputMag>.06;
+  state.moving = started && !panelOpen && !riding && inputMag>.06;
 
   /* auto tour: user input takes over, otherwise walk to the next stop */
   if(tour.active && state.moving) endTour();
@@ -1916,6 +2039,21 @@ function tick(){
   }
   glowRing.material.opacity=activeZone?(.3+Math.sin(t*3.5)*.14):0;
 
+  /* rocket boarding hint (only when no zone hint is showing) */
+  if(!riding && rocketPhase===0 && !activeZone && !panelOpen){
+    const dR=Math.hypot(max.g.position.x-ROCKET_PAD.x, max.g.position.z-ROCKET_PAD.z);
+    if(dR<2.8 && !rocketNear){
+      rocketNear=true;
+      $('#hinttext').textContent='🚀 '+T().rocketHint;
+      $('#hint').style.display='flex';
+      $('#hint').querySelector('.key').style.display=isTouch?'none':'inline-block';
+    }else if(dR>=2.8 && rocketNear){
+      rocketNear=false; $('#hint').style.display='none';
+    }
+  }else if(rocketNear){
+    rocketNear=false; if(!activeZone) $('#hint').style.display='none';
+  }
+
   /* ---- ambient animations ---- */
   clouds.rotation.y+=dt*.0045;
 
@@ -1941,6 +2079,33 @@ function tick(){
     b.m.position.set(Math.cos(a)*b.r, b.h+Math.sin(t*7+b.ph)*.09, Math.sin(a)*b.r);
     b.m.rotation.y=-a+Math.PI/2;
   }));
+  /* rocket launch cycle: pad -> Jupiter -> reset */
+  rocketT+=dt;
+  if(rocketPhase===1){
+    const e=Math.min(rocketT/7,1), k=e*e*(3-2*e);
+    const tgt=new THREE.Vector3(jupiter.position.x,jupiter.position.y-2.6,jupiter.position.z);
+    rocket.position.lerpVectors(ROCKET_PAD,tgt,k);
+    const v=new THREE.Vector3().subVectors(tgt,ROCKET_PAD).normalize();
+    const dir=new THREE.Vector3(0,1,0).lerp(v,Math.min(1,e*1.7)).normalize();
+    rocket.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    const fl=1+Math.sin(t*42)*.25;
+    rocketFlame.scale.set(1,fl,1);
+    if(riding){ max.g.position.copy(rocket.position); state.vy=0; }
+    if(e>=1){
+      rocketPhase=2; rocketT=0; rocket.visible=false; rocketFlame.visible=false;
+      if(riding){ bigMsg(T().jupiterMsg,2200); fanfare(); }
+    }
+  }else if(rocketPhase===2 && riding && rocketT>2.2){
+    /* bring Max home to the pad */
+    riding=false;
+    max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7);
+    max.g.visible=true; state.vy=0;
+    toast(T().backMsg);
+  }else if(rocketPhase===2 && !riding && rocketT>3){
+    rocketPhase=0; rocketT=0;
+    rocket.visible=true; rocket.quaternion.identity();
+    rocket.position.copy(ROCKET_PAD);
+  }
   markers.forEach(mk=>{ mk.position.y=mk.userData.baseY+Math.sin(t*1.7+mk.userData.ph)*.28; });
   waterTexes.forEach(w=>w.offset.x-=dt*.22);
   flames.forEach((f,i)=>{ f.scale.y=1+Math.sin(t*11+i*2)*.2; f.scale.x=f.scale.z=1+Math.sin(t*13+i)*.1; });
@@ -2015,6 +2180,7 @@ document.addEventListener('gesturestart',e=>e.preventDefault());
 /* debug/test hooks */
 window.__max={
   teleport(id){ const p=zones[id].pos; max.g.position.set(p.x*.82,0,p.z*.82); },
+  setPos(x,z){ max.g.position.set(x,0,z); },
   openPanel, closePanel, setLang, cam,
   start(){ $('#startbtn').click(); },
   skipFly(){ flyT=1; },
