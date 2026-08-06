@@ -276,6 +276,7 @@ const I18N = {
     tourStop: "✕ Stop tour",
     rocketHint: "Fly to Jupiter!",
     jupiterMsg: "🪐 Welcome to Jupiter!",
+    lookDown: "Look — Max's World is way down there! 🌍",
     backMsg: "What a trip! 🚀",
     allDone: "🎉 You explored all of Max's World!",
     thanks: "Thank you for visiting — Max ❤️",
@@ -306,6 +307,7 @@ const I18N = {
     tourStop: "✕ 結束導覽",
     rocketHint: "搭火箭飛去木星！",
     jupiterMsg: "🪐 歡迎來到木星！",
+    lookDown: "看！Max 的小世界在下面呢！🌍",
     backMsg: "旅行真棒！🚀",
     allDone: "🎉 你探索完 Max 的整個世界啦！",
     thanks: "謝謝你的到訪 — Max ❤️",
@@ -458,10 +460,10 @@ let renderer;
 try{
   renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
 }catch(e){ $('#fallback').style.display='flex'; throw e; }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isTouch?1.75:2));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = isTouch ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 $('#scene').appendChild(renderer.domElement);
 
@@ -718,7 +720,7 @@ for(let i=0;i<8;i++){
   const stem=new THREE.Mesh(new THREE.CylinderGeometry(.06,.09,.2,7), mat(0xf6f1e4));
   stem.position.y=.1; mr.add(stem);
   const cap=new THREE.Mesh(new THREE.SphereGeometry(.16,9,7,0,Math.PI*2,0,Math.PI*.55), mat(i%2?0xe66a5a:0xeaa83a));
-  cap.position.y=.16; cap.castShadow=true; mr.add(cap);
+  cap.position.y=.16; mr.add(cap);
   mr.position.set(Math.cos(a)*r,0,Math.sin(a)*r); mr.scale.setScalar(rand(.8,1.3));
   world.add(mr);
 }
@@ -810,7 +812,14 @@ const rocket=new THREE.Group(), rocketFlame=new THREE.Group();
   world.add(rocket);
 }
 let rocketPhase=0, rocketT=0;   /* 0 idle on pad, 1 flying, 2 arrived/hidden */
-let riding=false, rocketNear=false;
+let riding=false, rocketNear=false, rocketToastShown=false;
+const ROCK_UP=new THREE.Vector3(0,1,0);
+const ROCK_A0=Math.atan2(ROCKET_PAD.z-jupiter.position.z, ROCKET_PAD.x-jupiter.position.x);
+const _rp=new THREE.Vector3(), _rd=new THREE.Vector3();
+function rocketOrbitPos(a,out){
+  const J=jupiter.position;
+  return out.set(J.x+Math.cos(a)*6.5, J.y-1.2, J.z+Math.sin(a)*6.5);
+}
 rocket.traverse(o=>{ o.userData.rocket=true; });
 function boardRocket(){
   if(riding || rocketPhase!==0 || panelOpen) return;
@@ -1795,6 +1804,7 @@ function closePanel(){
 
 /* auto tour — Max walks zone to zone by himself */
 const tour={ active:false, queue:[], target:null, zone:null };
+const _tv=new THREE.Vector3();
 function updateTourHud(){
   $('#tourhud').textContent = tour.active ? T().tourStop : T().tourBtn;
 }
@@ -1917,7 +1927,7 @@ function tick(){
   /* auto tour: user input takes over, otherwise walk to the next stop */
   if(tour.active && state.moving) endTour();
   if(tour.active && !panelOpen && tour.target && flyT>=1){
-    const dirv=new THREE.Vector3().subVectors(tour.target,max.g.position); dirv.y=0;
+    const dirv=_tv.subVectors(tour.target,max.g.position); dirv.y=0;
     if(dirv.length()<.45){
       tour.target=null;
       openPanel(tour.zone);
@@ -2079,33 +2089,48 @@ function tick(){
     b.m.position.set(Math.cos(a)*b.r, b.h+Math.sin(t*7+b.ph)*.09, Math.sin(a)*b.r);
     b.m.rotation.y=-a+Math.PI/2;
   }));
-  /* rocket launch cycle: pad -> Jupiter -> reset */
+  /* rocket trip: pad -> ascent -> one lap around Jupiter -> glide home */
   rocketT+=dt;
-  if(rocketPhase===1){
+  if(rocketPhase===1){            /* ascent */
     const e=Math.min(rocketT/7,1), k=e*e*(3-2*e);
-    const tgt=new THREE.Vector3(jupiter.position.x,jupiter.position.y-2.6,jupiter.position.z);
-    rocket.position.lerpVectors(ROCKET_PAD,tgt,k);
-    const v=new THREE.Vector3().subVectors(tgt,ROCKET_PAD).normalize();
-    const dir=new THREE.Vector3(0,1,0).lerp(v,Math.min(1,e*1.7)).normalize();
-    rocket.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
-    const fl=1+Math.sin(t*42)*.25;
-    rocketFlame.scale.set(1,fl,1);
-    if(riding){ max.g.position.copy(rocket.position); state.vy=0; }
+    rocketOrbitPos(ROCK_A0,_rp);
+    rocket.position.lerpVectors(ROCKET_PAD,_rp,k);
+    _rd.subVectors(_rp,ROCKET_PAD).normalize();
+    _rp.set(0,1,0).lerp(_rd,Math.min(1,e*1.7)).normalize();
+    rocket.quaternion.setFromUnitVectors(ROCK_UP,_rp);
+    rocketFlame.scale.set(1,1+Math.sin(t*42)*.25,1);
     if(e>=1){
-      rocketPhase=2; rocketT=0; rocket.visible=false; rocketFlame.visible=false;
+      rocketPhase=2; rocketT=0;
       if(riding){ bigMsg(T().jupiterMsg,2200); fanfare(); }
     }
-  }else if(rocketPhase===2 && riding && rocketT>2.2){
-    /* bring Max home to the pad */
-    riding=false;
-    max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7);
-    max.g.visible=true; state.vy=0;
-    toast(T().backMsg);
-  }else if(rocketPhase===2 && !riding && rocketT>3){
-    rocketPhase=0; rocketT=0;
-    rocket.visible=true; rocket.quaternion.identity();
-    rocket.position.copy(ROCKET_PAD);
+  }else if(rocketPhase===2){      /* slow sightseeing lap around Jupiter */
+    const e=Math.min(rocketT/8.5,1);
+    const a=ROCK_A0+e*Math.PI*2;
+    rocket.position.copy(rocketOrbitPos(a,_rp));
+    _rd.set(-Math.sin(a),0,Math.cos(a));
+    rocket.quaternion.setFromUnitVectors(ROCK_UP,_rd);
+    rocketFlame.scale.set(.5,.5+Math.sin(t*30)*.1,.5);
+    if(riding && !rocketToastShown && rocketT>3.8){ rocketToastShown=true; toast(T().lookDown); }
+    if(e>=1){ rocketPhase=3; rocketT=0; }
+  }else if(rocketPhase===3){      /* glide back down and land */
+    const e=Math.min(rocketT/6,1), k=e*e*(3-2*e);
+    rocket.position.lerpVectors(rocketOrbitPos(ROCK_A0,_rp),ROCKET_PAD,k);
+    _rd.set(-Math.sin(ROCK_A0),0,Math.cos(ROCK_A0)).lerp(ROCK_UP,Math.min(1,e*2.2)).normalize();
+    rocket.quaternion.setFromUnitVectors(ROCK_UP,_rd);
+    rocketFlame.scale.set(1,.8+Math.sin(t*38)*.2,1);
+    if(e>=1){
+      rocketPhase=0; rocketT=0; rocketToastShown=false;
+      rocket.quaternion.identity(); rocket.position.copy(ROCKET_PAD);
+      rocketFlame.visible=false;
+      if(riding){
+        riding=false;
+        max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7);
+        max.g.visible=true; state.vy=0;
+        toast(T().backMsg);
+      }
+    }
   }
+  if(riding){ max.g.position.copy(rocket.position); state.vy=0; }
   markers.forEach(mk=>{ mk.position.y=mk.userData.baseY+Math.sin(t*1.7+mk.userData.ph)*.28; });
   waterTexes.forEach(w=>w.offset.x-=dt*.22);
   flames.forEach((f,i)=>{ f.scale.y=1+Math.sin(t*11+i*2)*.2; f.scale.x=f.scale.z=1+Math.sin(t*13+i)*.1; });
@@ -2162,7 +2187,15 @@ function tick(){
     if(t>4 && t<7){ perfAcc+=dt; perfN++; }
     else if(t>=7 && perfN>5){
       perfChecked=true;
-      if(perfAcc/perfN>.045) renderer.setPixelRatio(1);
+      const avg=perfAcc/perfN;
+      if(avg>.05){
+        /* really struggling: lowest resolution + no shadows */
+        renderer.setPixelRatio(1);
+        renderer.shadowMap.enabled=false; sun.castShadow=false;
+        scene.traverse(o=>{ if(o.material) (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true); });
+      }else if(avg>.033){
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.35));
+      }
     }
   }
 
