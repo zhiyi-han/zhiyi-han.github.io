@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js';
 import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js';
 import { EXTRA_SCENES } from './scenes/registry.js';
+import { mergeStatic } from './perf.js';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -993,6 +994,20 @@ zoneDefs.forEach(z=>{
   tagZone(sign,z.id);
   world.add(sign);
 });
+
+/* ---- perf: bake static meshes into merged buffers (far fewer draw calls).
+        Disable with ?nomerge for A/B comparison. ---- */
+if(!location.search.includes('nomerge')){
+  const skipSet=new Set([
+    rocket, millHub, welcomeGroup.userData.balloon,
+    ...ducks.map(d=>d.g),
+    ...beeSwarms.flatMap(s=>s.bees.map(b=>b.m)),
+    ...markers, ...flames, ...heartMeshes,
+  ]);
+  const zoneRoots=new Set(Object.values(zoneGroups));
+  zoneRoots.forEach(g=>mergeStatic(g,{skip:skipSet}));
+  mergeStatic(world,{skip:skipSet, stop:zoneRoots, skipTagged:true});
+}
 scene.updateMatrixWorld(true);
 /* interactive glow ring */
 const glowRing=new THREE.Mesh(new THREE.RingGeometry(5.6,6.1,48), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,side:THREE.DoubleSide}));
@@ -1872,7 +1887,9 @@ window.__max={
   openPanel, closePanel, setLang, cam,
   start(){ $('#startbtn').click(); },
   skipFly(){ flyT=1; },
-  state:()=>({ pos:max.g.position.toArray(), visited:[...visited], started, lang })
+  state:()=>({ pos:max.g.position.toArray(), visited:[...visited], started, lang }),
+  info:()=>({ calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
+              geometries:renderer.info.memory.geometries, pixelRatio:renderer.getPixelRatio() })
 };
 
 /* boot: restore saved language + progress */
