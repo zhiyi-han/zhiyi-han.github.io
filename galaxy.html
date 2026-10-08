@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05071a">
+<title>Max's Galaxy Adventure · Max 的銀河大冒險</title>
+<meta name="description" content="Fly Max's spaceship from Earth to all nine planets, explore inside Saturn, and reveal the invisible dark matter. 坐上 Max 的太空船，飛遊九大行星！">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://zhiyihan.com/galaxy.html">
+<meta property="og:site_name" content="Max's World">
+<meta property="og:title" content="Max's Galaxy Adventure · Max 的銀河大冒險">
+<meta property="og:description" content="Fly Max's spaceship from Earth to all nine planets, explore inside Saturn, and reveal the invisible dark matter.">
+<meta property="og:image" content="https://zhiyihan.com/assets/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%234f7fe0'/><text x='50' y='68' font-size='52' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="galaxy.css">
+<script type="importmap">{"imports":{"three":"./three.module.min.js"}}</script>
+</head>
+<body>
+<div id="scene"></div>
+<div id="labels"></div>
+
+<!-- HUD -->
+<a id="backbtn" class="pill" href="./">← <span id="backtxt">Max's World</span></a>
+<div id="where" class="pill"></div>
+<div id="count" class="pill"></div>
+<div id="depth" class="pill"></div>
+<div id="topr">
+  <button id="dmbtn" class="rbtn" aria-label="Dark matter">👻</button>
+  <button id="sndbtn" class="rbtn" aria-label="Sound">🔊</button>
+  <button id="langbtn" class="rbtn">中文</button>
+</div>
+
+<div id="card">
+  <button id="cardx" aria-label="Close">✕</button>
+  <div id="chead"><div id="cicon"></div><div><h2 id="ctitle"></h2><div id="cbadge"></div></div></div>
+  <p id="ctext"></p>
+  <div id="cacts"></div>
+</div>
+
+<div id="bar"></div>
+<div id="toast"></div>
+<div id="bigmsg"></div>
+<div id="warp"><div id="warptxt"></div></div>
+
+<!-- intro -->
+<div id="overlay">
+  <div id="ocard">
+    <div class="olang"><button data-l="en">English</button><button data-l="zh">繁體中文</button></div>
+    <div class="oemoji">🚀🪐</div>
+    <h1 id="otitle"></h1>
+    <p id="otag"></p>
+    <button id="startbtn"></button>
+    <a id="obck" href="./"></a>
+  </div>
+</div>
+
+<div id="fallback"><div>This game needs WebGL.<br>此遊戲需要 WebGL 才能運行。<br><br><a href="./" style="color:#9db8f0">← Max's World</a></div></div>
+
+<script type="module" src="js/galaxy/galaxy.js"></script>
+</body>
+</html>

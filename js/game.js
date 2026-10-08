@@ -1503,6 +1503,10 @@ function openDir(){
   const tb=document.createElement('button'); tb.className='dirtour'; tb.textContent=T().tourBtn;
   tb.onclick=()=>{ $('#dirwrap').style.display='none'; startTour(); };
   list.appendChild(tb);
+  const gb=document.createElement('a'); gb.className='dirtour'; gb.href='galaxy.html';
+  gb.style.cssText='background:linear-gradient(135deg,#e8863a,#7a4fd0);text-decoration:none';
+  gb.textContent=T().galaxyBtn;
+  list.appendChild(gb);
   ['welcome',...zoneDefs.map(z=>z.id)].forEach(id=>{
     const z=T().zones[id];
     const b=document.createElement('button'); b.className='diritem';
