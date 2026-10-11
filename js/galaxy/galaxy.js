@@ -80,7 +80,7 @@ const UI={
   en:{
     title:"Max's Galaxy Adventure", tag:"Hop in Max's spaceship! Fly from Earth to all nine planets, explore inside Saturn, and find the invisible dark matter.",
     start:"🚀 Blast off!", back:"Max's World", backFull:"← Back to Max's World", home:"🏠 Back to Max's World",
-    visited:n=>`🪐 ${n}/9 planets visited`, fav1:"⭐ Max's #1 favourite planet!", fav2:"⭐ Max's #2 favourite planet!",
+    visited:n=>`🪐 ${n}/9 planets visited`, fav:n=>n===1?"⭐ Max's #1 favourite planet!":`⭐ Max's #${n} favourite planet!`,
     exploreSaturn:"🪐 Explore inside Saturn!", toSolar:"Solar System", galaxy:"Milky Way", dm:"Dark Matter",
     warp:"Warp speed! 🚀", flying:n=>`Flying to ${n}…`, here:"☀️ We are here!", allDone:"🎉 All nine planets!",
     dmOn:"👓 Ghost glasses ON — now you can see dark matter!", dmOff:"Dark matter is hiding again 👻",
@@ -91,7 +91,7 @@ const UI={
   zh:{
     title:"Max 的銀河大冒險", tag:"坐上 Max 的太空船！從地球出發，飛去九大行星，潛入土星裡面，再找找看不見的暗物質。",
     start:"🚀 出發！", back:"Max 的小世界", backFull:"← 回到 Max 的小世界", home:"🏠 回到 Max 的小世界",
-    visited:n=>`🪐 已到訪 ${n}/9 顆行星`, fav1:"⭐ Max 最喜歡的行星！", fav2:"⭐ Max 第二喜歡的行星！",
+    visited:n=>`🪐 已到訪 ${n}/9 顆行星`, fav:n=>n===1?"⭐ Max 最喜歡的行星！":`⭐ Max 第${'一二三四五六七八九'[n-1]}喜歡的行星！`,
     exploreSaturn:"🪐 進入土星探險！", toSolar:"太陽系", galaxy:"銀河系", dm:"暗物質",
     warp:"超光速飛行！🚀", flying:n=>`正在飛往${n}……`, here:"☀️ 我們在這裡！", allDone:"🎉 九大行星全部去過啦！",
     dmOn:"👓 戴上「幽靈眼鏡」——現在看得見暗物質了！", dmOff:"暗物質又躲起來了 👻",
@@ -310,16 +310,16 @@ const SEG=LOW?28:44;
 const sphere=(r,seg=SEG)=>new THREE.SphereGeometry(r,seg,Math.round(seg*.65));
 const BODY_DEFS=[
   {id:'sun',     r:5,    d:0,  color:'#ffb22e', em:'☀️', tex:()=>sunTex()},
-  {id:'mercury', r:.55,  d:11, color:'#a8a39c', tex:()=>rockyTex('#a8a39c',['#7d7872','#c9c4bd'],70)},
-  {id:'venus',   r:.95,  d:15.5,color:'#e3c78f', tex:()=>bandTex(['#e8cf9a','#dcbf86','#efdcae','#d9b77a','#e6cc94'],30)},
+  {id:'mercury', r:.55,  d:11, color:'#a8a39c', fav:8, tex:()=>rockyTex('#a8a39c',['#7d7872','#c9c4bd'],70)},
+  {id:'venus',   r:.95,  d:15.5,color:'#e3c78f', fav:6, tex:()=>bandTex(['#e8cf9a','#dcbf86','#efdcae','#d9b77a','#e6cc94'],30)},
   {id:'earth',   r:1,    d:21, color:'#2f7fd6', tex:earthTex, tilt:.41},
-  {id:'mars',    r:.7,   d:27, color:'#c1502e', tex:()=>rockyTex('#c1502e',['#8e3418','#d9774a','#6e2a14'],45,x=>{
+  {id:'mars',    r:.7,   d:27, color:'#c1502e', fav:7, tex:()=>rockyTex('#c1502e',['#8e3418','#d9774a','#6e2a14'],45,x=>{
                     x.fillStyle='#f4f1ea'; x.fillRect(0,0,512,12); x.fillRect(0,244,512,12); })},
   {id:'jupiter', r:3,    d:40, color:'#d9b48a', fav:2, tex:()=>bandTex(['#e9d6b5','#c99b6c','#f2e3c8','#b98352','#e8d1ae','#c4925f','#f0e0c4','#bf8d5d','#e5cfaa'],26,['#c8603f','#de8664',330,150,30,16])},
   {id:'saturn',  r:2.5,  d:54, color:'#e3cd96', fav:1, em:'🪐', tilt:.47, tex:()=>bandTex(['#ecdcae','#ddc48e','#f2e6c2','#cfb27a','#e7d4a2','#d8be86','#f3e7c6','#ccad74','#e2cd99','#ecdcae'],22)},
-  {id:'uranus',  r:1.55, d:66, color:'#a9e4ea', tilt:1.71, tex:()=>bandTex(['#b8eef0','#a9e4ea','#bff1f2','#a2dde6'],6)},
-  {id:'neptune', r:1.5,  d:76, color:'#3d6fd8', tilt:.49, tex:()=>bandTex(['#3d6fd8','#3563c9','#4a7fe0','#2f58b8','#4174d6'],14,['#24408f','#2f4fa0',300,110,26,14])},
-  {id:'pluto',   r:.38,  d:85, color:'#c9a483', tex:()=>rockyTex('#c9a483',['#a37b5a','#e0c4a6'],30,x=>{ x.fillStyle='#f3e6d2'; heartPath(x,300,140,42); })},
+  {id:'uranus',  r:1.55, d:66, color:'#a9e4ea', fav:5, tilt:1.71, tex:()=>bandTex(['#b8eef0','#a9e4ea','#bff1f2','#a2dde6'],6)},
+  {id:'neptune', r:1.5,  d:76, color:'#3d6fd8', fav:4, tilt:.49, tex:()=>bandTex(['#3d6fd8','#3563c9','#4a7fe0','#2f58b8','#4174d6'],14,['#24408f','#2f4fa0',300,110,26,14])},
+  {id:'pluto',   r:.38,  d:85, color:'#c9a483', fav:3, tex:()=>rockyTex('#c9a483',['#a37b5a','#e0c4a6'],30,x=>{ x.fillStyle='#f3e6d2'; heartPath(x,300,140,42); })},
 ];
 const bodies={};
 const PICK={solar:[],saturn:[],galaxy:[],inside:[]};
@@ -773,8 +773,7 @@ function arrive(id){
   }
   setWhere(whereFor(id));
   if(d.dive){ diveIn(); return; }
-  if(mode==='solar' && id==='saturn'){ bigMsg(T().fav1,2200); fanfare(); }
-  else if(mode==='solar' && id==='jupiter'){ bigMsg(T().fav2,2200); fanfare(); }
+  if(mode==='solar' && d.fav){ bigMsg(T().fav(d.fav),2200); fanfare(); }
   else chime();
   if(d.planet && !visited.has(id)){
     visited.add(id); savePrefs(); updateCount(); buildBar();
@@ -961,7 +960,7 @@ function showDestCard(id){
   cardRender=()=>{
     const dd=DEST[m][id];
     renderCard({icon:dd.em,dot:dd.dot,title:dd.name(),text:dd.fact(),
-      badge:dd.fav===1?T().fav1:dd.fav===2?T().fav2:null, actions:dd.actions?dd.actions():null});
+      badge:dd.fav?T().fav(dd.fav):null, actions:dd.actions?dd.actions():null});
   };
   cardRender();
 }
