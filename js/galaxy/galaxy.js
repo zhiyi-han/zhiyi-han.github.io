@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { rand, clamp, makeCanvas, canvasTexture } from '../helpers.js';
+import { createJupiter } from './jupiter.js';
+import { createMars } from './mars.js';
 
 /* ============================================================
    Max's Galaxy Adventure
@@ -644,9 +646,8 @@ function warp(cb,label){
 
 /* =============== camera =============== */
 const cam={theta:.6,phi:1.0,dist:150,tDist:150,tPhi:null,tTheta:null,target:new THREE.Vector3(),tTarget:new THREE.Vector3()};
-const DIST_LIMITS={solar:[2.5,260],saturn:[6,280],inside:[4,30],galaxy:[60,520]};
 let follow=null, lastDrag=-1e9;
-const clampDist=d=>clamp(d,DIST_LIMITS[mode][0],DIST_LIMITS[mode][1]);
+const clampDist=d=>clamp(d,MODES[mode].dist[0],MODES[mode].dist[1]);
 const angDiff=(a,b)=>{ let d=(b-a)%(Math.PI*2); if(d>Math.PI) d-=Math.PI*2; if(d<-Math.PI) d+=Math.PI*2; return d; };
 function updateCamera(dt){
   if(follow) follow(cam.tTarget);
@@ -654,7 +655,7 @@ function updateCamera(dt){
   cam.dist+=(cam.tDist-cam.dist)*(1-Math.exp(-dt*2.6));
   if(cam.tPhi!=null) cam.phi+=(cam.tPhi-cam.phi)*(1-Math.exp(-dt*2));
   if(cam.tTheta!=null) cam.theta+=angDiff(cam.theta,cam.tTheta)*(1-Math.exp(-dt*2));
-  if((!started||mode==='galaxy') && performance.now()-lastDrag>3000) cam.theta+=dt*.04;
+  if((!started||MODES[mode].autoSpin) && performance.now()-lastDrag>3000) cam.theta+=dt*.04;
   const sp=Math.sin(cam.phi);
   camera.position.set(cam.target.x+cam.dist*sp*Math.sin(cam.theta),cam.target.y+cam.dist*Math.cos(cam.phi),cam.target.z+cam.dist*sp*Math.cos(cam.theta));
   camera.lookAt(cam.target);
@@ -683,8 +684,8 @@ BODY_DEFS.forEach(b=>{
     focus:out=>{ target(_f); return out.copy(B.g.position).lerp(_f,.3); },
     camDist:b.id==='sun'?34:b.r*4.2+3.2,
     fact:()=>fact(b.id),
-    actions: b.id==='saturn' ? ()=>[{label:T().exploreSaturn,fn:enterSaturn}]
-           : b.id==='earth'  ? ()=>[{label:T().home,href:'./',alt:true}] : null,
+    actions: ()=> EXPLORE[b.id] ? [{label:EXPLORE[b.id].label(),fn:EXPLORE[b.id].enter}]
+                : b.id==='earth' ? [{label:T().home,href:'./',alt:true}] : null,
   };
 });
 DEST.solar.galaxyGo={name:()=>T().galaxy,em:'🌌',action:enterGalaxy};
@@ -731,7 +732,6 @@ const shipState={phase:'idle',from:new THREE.Vector3(),t:0,dur:3,dest:null,cruis
 const _a=new THREE.Vector3(), _b=new THREE.Vector3(), _c=new THREE.Vector3(), _end=new THREE.Vector3(),
       _ctrl=new THREE.Vector3(), _ahead=new THREE.Vector3(), _lv=new THREE.Vector3();
 const _dummy=new THREE.Object3D();
-const SHIP_SCALE={solar:.38,saturn:1,inside:1,galaxy:1};
 
 function bezier(p0,p1,p2,k,out){
   const u=1-k;
@@ -753,7 +753,7 @@ function travelTo(id){
   at=null;
   setWhere(T().flying(d.name()));
   follow=o=>o.copy(ship.position);
-  cam.tDist=clampDist(mode==='solar'?6:16); cam.tPhi=1.15; cam.tTheta=null;
+  cam.tDist=clampDist(MODES[mode].flyDist??16); cam.tPhi=1.15; cam.tTheta=null;
   setEngine(1); whoosh();
   markActive(id);
 }
@@ -764,7 +764,7 @@ function arrive(id){
   setEngine(d.cruise?.35:0);
   follow=o=>d.focus(o);
   d.focus(_a); d.target(_b);
-  cam.tTheta=Math.atan2(_b.x-_a.x,_b.z-_a.z)+.55;
+  cam.tTheta=Math.atan2(_b.x-_a.x,_b.z-_a.z)+(d.thetaOff??.55);
   cam.tPhi=d.phi??1.12; cam.tDist=clampDist(d.camDist);
   if(d.cruise){
     satTilt.worldToLocal(_a.copy(ship.position)); shipState.cruiseA=Math.atan2(_a.z,_a.x);
@@ -773,6 +773,7 @@ function arrive(id){
   }
   setWhere(whereFor(id));
   if(d.dive){ diveIn(); return; }
+  if(d.onArrive && d.onArrive()===true) return;
   if(mode==='solar' && d.fav){ bigMsg(T().fav(d.fav),2200); fanfare(); }
   else chime();
   if(d.planet && !visited.has(id)){
@@ -802,10 +803,8 @@ function updateShip(dt,t){
     ringPoint(shipState.cruiseA,ship.position);
     ringPoint(shipState.cruiseA+.02,_ahead);
     ship.lookAt(_ahead);
-  }else if(mode==='inside'){
-    ship.position.set(Math.sin(t*.7)*.3,Math.sin(t*1.3)*.2,0);
-    _dummy.position.copy(ship.position); _dummy.lookAt(Math.sin(t*.5)*1.5,-10,3);
-    ship.quaternion.slerp(_dummy.quaternion,1-Math.exp(-dt*3));
+  }else if(MODES[mode].hover){
+    MODES[mode].hover(dt,t);
   }else if(at && DEST[mode][at] && DEST[mode][at].target){
     const d=DEST[mode][at];
     d.target(_b); _b.y+=Math.sin(t*1.6)*.12*ship.scale.x;
@@ -814,7 +813,7 @@ function updateShip(dt,t){
     _dummy.position.copy(ship.position); _dummy.lookAt(_c);
     ship.quaternion.slerp(_dummy.quaternion,1-Math.exp(-dt*3));
   }
-  const burning=flying||shipState.phase==='cruise'||mode==='inside';
+  const burning=flying||shipState.phase==='cruise'||!!MODES[mode].burn;
   flame.visible=burning;
   if(burning){ const f=1+Math.sin(t*40)*.18; flame.scale.set(1,1,f*(flying?1.2:.7)); }
 }
@@ -822,23 +821,50 @@ function updateShip(dt,t){
 /* =============== modes =============== */
 function setMode(m){
   mode=m;
-  solarGroup.visible=m==='solar'; satGroup.visible=m==='saturn'; insideGroup.visible=m==='inside'; galaxyGroup.visible=m==='galaxy';
-  stars.visible=m!=='inside';
-  scene.background=m==='inside'?null:SPACE_BG;
-  scene.fog=m==='inside'?insideFog:null;
-  ship.visible=m!=='galaxy';
-  ship.scale.setScalar(SHIP_SCALE[m]);
-  shipState.phase='idle'; at=null; setEngine(m==='inside'?.25:0);
-  $('#dmbtn').style.display=(m==='solar'||m==='galaxy')?'':'none';
-  $('#depth').style.display=m==='inside'?'block':'none';
-  $('#count').style.display=m==='solar'?'block':'none';
+  const M=MODES[m];
+  for(const k in MODES) MODES[k].group.visible=k===m;
+  stars.visible=!M.noStars;
+  scene.background=M.noStars?null:SPACE_BG;
+  scene.fog=M.fog||null;
+  ship.visible=!M.noShip;
+  ship.scale.setScalar(M.shipScale);
+  shipState.phase='idle'; at=null; setEngine(M.engine||0);
+  $('#dmbtn').style.display=M.dm?'':'none';
+  $('#depth').style.display=M.depth?'block':'none';
+  $('#count').style.display=M.count?'block':'none';
   cam.tDist=clampDist(cam.tDist);
+  if(M.onEnter) M.onEnter();
   hideCard(); buildBar(); buildLabels(); setWhere(whereFor(null));
 }
-function enterSaturn(){
+/* switch to another mode through the warp curtain; setup() runs while hidden */
+function switchMode(m,setup,label){
   hideCard();
-  warp(()=>{
-    setMode('saturn');
+  warp(()=>{ setMode(m); if(setup) setup(); },label);
+}
+function backToSolar(pid){
+  switchMode('solar',()=>{
+    at=pid; markActive(pid);
+    DEST.solar[pid].target(ship.position);
+    follow=o=>DEST.solar[pid].focus(o);
+    cam.tDist=DEST.solar[pid].camDist; cam.tPhi=1.12;
+    setWhere(whereFor(pid));
+  });
+}
+function setView(o){
+  if(o.follow) follow=o.follow;
+  if(o.target) cam.target.set(o.target[0],o.target[1],o.target[2]);
+  if(o.dist!=null) cam.dist=o.dist;
+  if(o.tDist!=null) cam.tDist=o.tDist;
+  cam.tPhi=o.phi??cam.tPhi;
+  cam.tTheta=o.theta??null;
+}
+function hoverDown(dt,t){   /* ship hangs nose-down while sinking through clouds */
+  ship.position.set(Math.sin(t*.7)*.3,Math.sin(t*1.3)*.2,0);
+  _dummy.position.copy(ship.position); _dummy.lookAt(Math.sin(t*.5)*1.5,-10,3);
+  ship.quaternion.slerp(_dummy.quaternion,1-Math.exp(-dt*3));
+}
+function enterSaturn(){
+  switchMode('saturn',()=>{
     ship.position.set(0,14,118); ship.lookAt(0,0,0);
     follow=o=>o.set(0,0,0);
     cam.target.set(0,0,0); cam.dist=150; cam.tDist=125; cam.tPhi=1.2; cam.tTheta=.25;
@@ -846,17 +872,7 @@ function enterSaturn(){
     setTimeout(()=>toast(T().satHint),1500);
   });
 }
-function leaveSaturn(){
-  hideCard();
-  warp(()=>{
-    setMode('solar');
-    at='saturn'; markActive('saturn');
-    DEST.solar.saturn.target(ship.position);
-    follow=o=>DEST.solar.saturn.focus(o);
-    cam.tDist=DEST.solar.saturn.camDist; cam.tPhi=1.12;
-    setWhere(whereFor('saturn'));
-  });
-}
+function leaveSaturn(){ backToSolar('saturn'); }
 let depthKm=0, insideStage=0, boltT=2, boltLife=0, depthShown=-1;
 function diveIn(){
   warp(()=>{
@@ -914,6 +930,51 @@ function toggleDM(){
   buildBar();
 }
 
+/* =============== mode registry =============== */
+const MODES={
+  solar:{ group:solarGroup, dist:[2.5,260], shipScale:.38, flyDist:6, dm:true, count:true, update:updateSolar,
+    where:id=>id?'📍 '+DEST.solar[id].name():'☀️ '+T().toSolar,
+    labels:add=>BODY_DEFS.forEach(b=>{
+      const B=bodies[b.id];
+      add(nm(b.id)+(b.fav?' ⭐':''),out=>{ out.copy(B.g.position); out.y+=b.r*1.25+.35; return out; },b.fav?'fav':'',b.id);
+    }) },
+  saturn:{ group:satGroup, dist:[6,280], shipScale:1, update:updateSaturn,
+    where:id=>'🪐 '+nm('saturn')+(id?' · '+DEST.saturn[id].name():''),
+    labels:add=>{
+      Object.keys(satMoons).forEach(id=>{
+        const M=satMoons[id];
+        add(nm(id),out=>{ M.mesh.getWorldPosition(out); out.y+=M.r*1.4+.6; return out; },'',id);
+      });
+      add(nm('hexagon'),out=>satTilt.localToWorld(out.set(0,SATR*1.12,0)),'','hexagon');
+    } },
+  inside:{ group:insideGroup, dist:[4,30], shipScale:1, noStars:true, fog:insideFog, depth:true, burn:true, engine:.25,
+    hover:hoverDown, update:updateInside, where:()=>'🌀 '+nm('inside') },
+  galaxy:{ group:galaxyGroup, dist:[60,520], shipScale:1, noShip:true, dm:true, autoSpin:true, update:updateGalaxy,
+    where:()=>'🌌 '+nm('galaxy'),
+    labels:add=>add(T().here,out=>{ sunMarker.getWorldPosition(out); out.y+=4; return out; },'fav','solarBack') },
+};
+/* planets with a deep-exploration mode: solar card shows an "Explore" button */
+const EXPLORE={ saturn:{ label:()=>T().exploreSaturn, enter:enterSaturn } };
+
+/* plug-in explorers (js/galaxy/jupiter.js, mars.js) get this toolbox */
+const api={
+  THREE, scene, ship, LOW, rand, gauss, clamp, randDir, makeCanvas, canvasTexture, sphere,
+  bandTex, rockyTex, softTex, ringTex, makeRing, GLOW, hitMat, approachDir,
+  tone, noiseHit, thunder, whoosh, chime, toast, bigMsg, hoverDown,
+  L, T, nm, fact, switchMode, backToSolar, setView, travelTo,
+  setDepth:s=>{ $('#depth').textContent=s; }, getAt:()=>at, getMode:()=>mode,
+};
+function registerExplorer(ex){
+  Object.assign(NAMES,ex.names); Object.assign(FACTS,ex.facts);
+  for(const m in ex.modes){
+    const M=ex.modes[m];
+    MODES[m]=M; DEST[m]=M.dests; ORDER[m]=M.order; PICK[m]=M.pick||[];
+  }
+  EXPLORE[ex.planet]={ label:()=>nm(ex.exploreLabel), enter:ex.enter };
+}
+registerExplorer(createJupiter(api));
+registerExplorer(createMars(api));
+
 /* =============== DOM: bar, card, labels, top info =============== */
 function buildBar(){
   const bar=$('#bar'); bar.innerHTML='';
@@ -968,12 +1029,7 @@ function showRawCard(fn){ cardRender=()=>renderCard(fn()); cardRender(); }
 function hideCard(){ $('#card').style.display='none'; cardRender=null; }
 $('#cardx').onclick=hideCard;
 
-function whereFor(id){
-  if(mode==='galaxy') return '🌌 '+nm('galaxy');
-  if(mode==='inside') return '🌀 '+nm('inside');
-  if(mode==='saturn') return '🪐 '+nm('saturn')+(id?' · '+DEST.saturn[id].name():'');
-  return id?'📍 '+DEST.solar[id].name():'☀️ '+T().toSolar;
-}
+function whereFor(id){ return MODES[mode].where(id); }
 function setWhere(s){ $('#where').textContent=s; }
 function updateCount(){ $('#count').textContent=T().visited(visited.size); }
 
@@ -985,19 +1041,8 @@ function buildLabels(){
     if(dest) el.onclick=()=>travelTo(dest);
     host.appendChild(el); labels.push({el,get,vis:false});
   };
-  if(mode==='solar') BODY_DEFS.forEach(b=>{
-    const B=bodies[b.id];
-    add(nm(b.id)+(b.fav?' ⭐':''),out=>{ out.copy(B.g.position); out.y+=b.r*1.25+.35; return out; },b.fav?'fav':'',b.id);
-  });
-  if(mode==='saturn'){
-    Object.keys(satMoons).forEach(id=>{
-      const M=satMoons[id];
-      add(nm(id),out=>{ M.mesh.getWorldPosition(out); out.y+=M.r*1.4+.6; return out; },'',id);
-    });
-    add(nm('hexagon'),out=>satTilt.localToWorld(out.set(0,SATR*1.12,0)),'','hexagon');
-  }
-  if(mode==='galaxy') add(T().here,out=>{ sunMarker.getWorldPosition(out); out.y+=4; return out; },'fav','solarBack');
-  if(mode!=='galaxy') add(T().ship,out=>{ out.copy(ship.position); out.y+=ship.scale.x*.9+.25; return out; },'ship');
+  if(MODES[mode].labels) MODES[mode].labels(add);
+  if(!MODES[mode].noShip) add(T().ship,out=>{ out.copy(ship.position); out.y+=ship.scale.x*.9+.25; return out; },'ship');
 }
 function positionLabels(){
   const W=innerWidth, H=innerHeight;
@@ -1165,10 +1210,7 @@ const clock=new THREE.Clock(); let time=0;
 function tick(){
   requestAnimationFrame(tick);
   const dt=Math.min(clock.getDelta(),.05); time+=dt;
-  if(mode==='solar') updateSolar(dt);
-  else if(mode==='saturn') updateSaturn(dt);
-  else if(mode==='inside') updateInside(dt,time);
-  else updateGalaxy(dt,time);
+  MODES[mode].update(dt,time);
   updateShip(dt,time);
   updateDM(dt,time);
   updateCamera(dt);
@@ -1199,7 +1241,7 @@ $('#startbtn').onclick=begin;
 
 updateSolar(0);
 DEST.solar.earth.target(ship.position);
-ship.scale.setScalar(SHIP_SCALE.solar);
+ship.scale.setScalar(MODES.solar.shipScale);
 updateSndBtn();
 setMode('solar');
 applyLang();
