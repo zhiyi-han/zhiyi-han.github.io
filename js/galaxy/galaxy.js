@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { rand, clamp, makeCanvas, canvasTexture } from '../helpers.js';
 import { createJupiter } from './jupiter.js';
 import { createMars } from './mars.js';
+import { createMercury } from './mercury.js';
+import { createVenus } from './venus.js';
+import { createEarth } from './earth.js';
+import { createUranus } from './uranus.js';
+import { createNeptune } from './neptune.js';
+import { createPluto } from './pluto.js';
+import { createSun } from './sun.js';
+import { createTitan } from './titan.js';
 
 /* ============================================================
    Max's Galaxy Adventure
@@ -684,8 +692,12 @@ BODY_DEFS.forEach(b=>{
     focus:out=>{ target(_f); return out.copy(B.g.position).lerp(_f,.3); },
     camDist:b.id==='sun'?34:b.r*4.2+3.2,
     fact:()=>fact(b.id),
-    actions: ()=> EXPLORE[b.id] ? [{label:EXPLORE[b.id].label(),fn:EXPLORE[b.id].enter}]
-                : b.id==='earth' ? [{label:T().home,href:'./',alt:true}] : null,
+    actions: ()=>{
+      const a=[];
+      if(EXPLORE[b.id]) a.push({label:EXPLORE[b.id].label(),fn:EXPLORE[b.id].enter});
+      if(b.id==='earth') a.push({label:T().home,href:'./',alt:true});
+      return a.length?a:null;
+    },
   };
 });
 DEST.solar.galaxyGo={name:()=>T().galaxy,em:'🌌',action:enterGalaxy};
@@ -961,7 +973,7 @@ const api={
   THREE, scene, ship, LOW, rand, gauss, clamp, randDir, makeCanvas, canvasTexture, sphere,
   bandTex, rockyTex, softTex, ringTex, makeRing, GLOW, hitMat, approachDir,
   tone, noiseHit, thunder, whoosh, chime, toast, bigMsg, hoverDown,
-  L, T, nm, fact, switchMode, backToSolar, setView, travelTo,
+  L, T, nm, fact, switchMode, backToSolar, setView, travelTo, showRawCard,
   setDepth:s=>{ $('#depth').textContent=s; }, getAt:()=>at, getMode:()=>mode,
 };
 function registerExplorer(ex){
@@ -970,10 +982,22 @@ function registerExplorer(ex){
     const M=ex.modes[m];
     MODES[m]=M; DEST[m]=M.dests; ORDER[m]=M.order; PICK[m]=M.pick||[];
   }
-  EXPLORE[ex.planet]={ label:()=>nm(ex.exploreLabel), enter:ex.enter };
+  if(ex.planet) EXPLORE[ex.planet]={ label:()=>nm(ex.exploreLabel), enter:ex.enter };
 }
 registerExplorer(createJupiter(api));
 registerExplorer(createMars(api));
+[createMercury, createVenus, createEarth, createUranus, createNeptune, createPluto, createSun].forEach(f=>registerExplorer(f(api)));
+/* Saturn's explorer lives in this file, so its Titan landing is hooked in by hand */
+{
+  const titan=createTitan(api, satMoons.titan.mesh, LDIR);
+  registerExplorer(titan);
+  const tm=satMoons.titan.mesh;
+  DEST.saturn.landTitan={ name:()=>nm('landTitan'), em:'🛬',
+    target:out=>tm.getWorldPosition(out).addScaledVector(LDIR,2.8*1.3).setY(out.y+1),
+    center:out=>tm.getWorldPosition(out), focus:out=>tm.getWorldPosition(out), camDist:12,
+    onArrive:()=>{ titan.land(); return true; } };
+  ORDER.saturn.splice(ORDER.saturn.indexOf('solarFromSat'),0,'landTitan');
+}
 
 /* =============== DOM: bar, card, labels, top info =============== */
 function buildBar(){

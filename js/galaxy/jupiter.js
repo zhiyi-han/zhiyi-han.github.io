@@ -1,4 +1,5 @@
 import { createDive } from './dive.js';
+import { buildSurface } from './surface.js';
 
 /* ============================================================
    Jupiter up close: the Great Red Spot, the four big moons
@@ -14,6 +15,8 @@ export function createJupiter(api){
     redspot:['Great Red Spot','大紅斑'], io:['Io','木衛一'], europa:['Europa','木衛二'],
     ganymede:['Ganymede','木衛三'], callisto:['Callisto','木衛四'], aurora:['Northern Lights','北極光'],
     jrings:["Jupiter's Rings",'木星環'], jdive:['Dive into Jupiter','潛入木星'],
+    landEuropa:['Land on Europa','登陸木衛二'], euGround:['Europa','木衛二'],
+    europlume:['Water Fountain','水柱噴泉'], ridges:['Ice Ridges','冰脊'], jupSky:['Jupiter in the Sky','天上的木星'],
   };
   const facts = {
     redspot:["The Great Red Spot is a giant storm bigger than the whole Earth! People have watched it spinning for more than 150 years.",
@@ -33,6 +36,16 @@ export function createJupiter(api){
     jdive:["Diving into Jupiter! Its colourful stripes are clouds racing around the planet. Deep down, everything is squeezed so hard that hydrogen gas turns into liquid metal!",
       "潛入木星！那些彩色的條紋是繞著木星飛奔的雲。在很深很深的地方，壓力大到連氫氣都會變成液態金屬！"],
   };
+  Object.assign(facts, {
+    euGround:["We landed on Europa! The ice here may be many kilometres thick — and underneath is a giant salty ocean.",
+      "我們登陸木衛二了！這裡的冰層可能有好幾公里厚——冰下面是一個巨大的鹹水海洋。"],
+    europlume:["Scientists think Europa may spray giant fountains of water from its hidden ocean, out through cracks in the ice!",
+      "科學家認為，木衛二可能會把秘密海洋的水，從冰的裂縫裡噴出一條條巨大的水柱！"],
+    ridges:["Long double ridges and reddish-brown cracks crisscross Europa's ice, like lines on a cracked eggshell!",
+      "長長的雙冰脊和紅褐色的裂縫在木衛二的冰面上交錯，就像裂開的蛋殼上的花紋！"],
+    jupSky:["Look up — giant Jupiter fills Europa's sky, Great Red Spot and all!",
+      "抬頭看——巨大的木星把木衛二的天空都填滿了，連大紅斑都看得見！"],
+  });
   const TOASTS = {
     en:["🟠 Stripes of colourful clouds!","⚡ Lightning flashes in the storms!","🪩 An ocean of liquid metal hydrogen!"],
     zh:["🟠 一條條彩色的雲帶！","⚡ 風暴裡閃電在閃！","🪩 液態金屬氫組成的海洋！"],
@@ -141,6 +154,10 @@ export function createJupiter(api){
       target: out => tilt.localToWorld(out.copy(DIVE).multiplyScalar(JR*1.12)), center: out => out.set(0, 0, 0),
       focus: out => tilt.localToWorld(out.copy(DIVE).multiplyScalar(JR*1.12)), camDist: 16, fact: () => fact('jdive'),
       onArrive: () => { diveIn(); return true; } },
+    landEuropa: { name: () => nm('landEuropa'), em: '🛬',
+      target: out => moons.europa.mesh.getWorldPosition(out).addScaledVector(LD, 1.4*1.3).setY(out.y + 1),
+      center: out => moons.europa.mesh.getWorldPosition(out), focus: out => moons.europa.mesh.getWorldPosition(out), camDist: 10,
+      onArrive: () => { euSurf.land(); return true; } },
     back: { name: () => api.T().toSolar, em: '☀️', action: () => api.backToSolar('jupiter') },
   };
 
@@ -221,12 +238,59 @@ export function createJupiter(api){
     });
   }
 
+  /* ---------------- landing on Europa ---------------- */
+  const plume = (() => {
+    const g = new THREE.Group(), n = LOW ? 120 : 200, pos = new Float32Array(n*3);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.add(new THREE.Points(geo, new THREE.PointsMaterial({ map: GLOW, color: 0xe6f6ff, size: 2.4, transparent: true, opacity: .7,
+      blending: THREE.AdditiveBlending, depthWrite: false })));
+    g.userData = { geo, parts: [...Array(n)].map(() => ({ t: Math.random(), sp: rand(.18, .3), a: rand(0, 6), s: rand(.3, 1) })) };
+    return g;
+  })();
+  const ridges = (() => {
+    const g = new THREE.Group();
+    const shape = new THREE.Shape(); shape.moveTo(-1.6, 0); shape.lineTo(0, 1.6); shape.lineTo(1.6, 0);
+    [-2.2, 2.2].forEach(dx => {
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: 34, bevelEnabled: false }); geo.translate(dx, -.3, -17);
+      g.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0xc9a48a, flatShading: true })));
+    });
+    g.rotation.y = .7; return g;
+  })();
+  const euSurf = buildSurface(api, {
+    key: 'europaSurface', icon: '🧊', title: 'euGround', place: 'europa',
+    sky: {}, sun: { pos: [160, 50, -150], size: 9 }, sunI: 2.2, hemi: [0xd8ecff, 0x4a4040], hemiI: 1.2,
+    ground: [.56, .25, .84], craters: 4, hAmp: 1.2,
+    groundTint: (col, x, z) => {
+      if (Math.abs(Math.sin(x*.13 + z*.05)) < .05 || Math.abs(Math.sin(z*.11 - x*.03 + 1)) < .04 || Math.abs(Math.sin(x*.07 - z*.09 + 2)) < .035)
+        col.setHSL(.06, .4, .55);
+    },
+    rocks: { n: 60, color: 0xc8d8e8 }, hills: { color: 0xd0e2f0, hmin: 5, hmax: 12 },
+    objects: [
+      { id: 'europlume', em: '⛲', obj: plume, pos: [8, -12], hitR: 8, view: { side: 24, height: 12, cy: 14, camDist: 46, phi: 1.3, labelY: 34 },
+        update: (dt, t, g) => {
+          const arr = g.userData.geo.attributes.position.array;
+          g.userData.parts.forEach((p, i) => {
+            p.t += dt*p.sp; if (p.t > 1) p.t -= 1;
+            const h = 4*p.t*(1 - p.t)*30, r = p.t*7*p.s;
+            arr[i*3] = Math.cos(p.a)*r; arr[i*3+1] = h; arr[i*3+2] = Math.sin(p.a)*r;
+          });
+          g.userData.geo.attributes.position.needsUpdate = true;
+        } },
+      { id: 'ridges', em: '〰️', obj: ridges, pos: [-30, 12], hitR: 8, view: { side: 14, height: 7, cy: 1, camDist: 22, labelY: 4 } },
+    ],
+    skyBody: { id: 'jupSky', em: '🟠', pos: [-80, 95, -190], r: 55, tex: planet.material.map },
+    takeoff: () => api.switchMode('jupiter', () => {
+      moons.europa.mesh.getWorldPosition(api.ship.position).addScaledVector(LD, 7); api.ship.lookAt(0, 0, 0);
+      api.setView({ follow: v => moons.europa.mesh.getWorldPosition(v), tDist: 20, phi: 1.15 });
+    }),
+  });
+
   return {
     planet: 'jupiter', exploreLabel: 'exploreJupiter', enter, names, facts,
     modes: {
       jupiter: {
         group, dist: [6, 300], shipScale: 1, pick, update, dests,
-        order: ['redspot','io','europa','ganymede','callisto','aurora','jrings','jdive','back'],
+        order: ['redspot','io','europa','ganymede','callisto','aurora','jrings','jdive','landEuropa','back'],
         where: id => '🟠 ' + nm('jupiter') + (id ? ' · ' + dests[id].name() : ''),
         labels: add => {
           Object.keys(moons).forEach(id => {
@@ -237,6 +301,7 @@ export function createJupiter(api){
           add(nm('aurora'), out => tilt.localToWorld(out.set(0, JR*1.12, 0)), '', 'aurora');
         },
       },
+      europaSurface: euSurf.mode,
       jupInside: {
         group: dive.group, fog: dive.fog, dist: [4, 30], shipScale: 1, noStars: true, depth: true, burn: true, engine: .25,
         hover: api.hoverDown, update: dive.update, pick: [],
