@@ -1,15 +1,5 @@
 import * as THREE from 'three';
 import { rand, clamp, makeCanvas, canvasTexture } from '../helpers.js';
-import { createJupiter } from './jupiter.js';
-import { createMars } from './mars.js';
-import { createMercury } from './mercury.js';
-import { createVenus } from './venus.js';
-import { createEarth } from './earth.js';
-import { createUranus } from './uranus.js';
-import { createNeptune } from './neptune.js';
-import { createPluto } from './pluto.js';
-import { createSun } from './sun.js';
-import { createTitan } from './titan.js';
 
 /* ============================================================
    Max's Galaxy Adventure
@@ -982,21 +972,49 @@ function registerExplorer(ex){
     const M=ex.modes[m];
     MODES[m]=M; DEST[m]=M.dests; ORDER[m]=M.order; PICK[m]=M.pick||[];
   }
-  if(ex.planet) EXPLORE[ex.planet]={ label:()=>nm(ex.exploreLabel), enter:ex.enter };
+  if(ex.planet && !EXPLORE[ex.planet]) EXPLORE[ex.planet]={ label:()=>nm(ex.exploreLabel), enter:ex.enter };
 }
-registerExplorer(createJupiter(api));
-registerExplorer(createMars(api));
-[createMercury, createVenus, createEarth, createUranus, createNeptune, createPluto, createSun].forEach(f=>registerExplorer(f(api)));
-/* Saturn's explorer lives in this file, so its Titan landing is hooked in by hand */
+/* Explorers are loaded on demand: nothing is downloaded or built until Max
+   taps "Explore" on that planet, which keeps phone start-up fast. */
+const LAZY=[
+  { planet:'jupiter', file:'./jupiter.js', fn:'createJupiter', label:['🟠 Explore Jupiter!','🟠 進入木星探險！'] },
+  { planet:'mars',    file:'./mars.js',    fn:'createMars',    label:['🔴 Explore Mars!','🔴 進入火星探險！'] },
+  { planet:'mercury', file:'./mercury.js', fn:'createMercury', label:['⚪ Explore Mercury!','⚪ 進入水星探險！'] },
+  { planet:'venus',   file:'./venus.js',   fn:'createVenus',   label:['🟡 Explore Venus!','🟡 進入金星探險！'] },
+  { planet:'earth',   file:'./earth.js',   fn:'createEarth',   label:['🌍 Explore Earth & the Moon!','🌍 探索地球和月亮！'] },
+  { planet:'uranus',  file:'./uranus.js',  fn:'createUranus',  label:['🩵 Explore Uranus!','🩵 進入天王星探險！'] },
+  { planet:'neptune', file:'./neptune.js', fn:'createNeptune', label:['🔵 Explore Neptune!','🔵 進入海王星探險！'] },
+  { planet:'pluto',   file:'./pluto.js',   fn:'createPluto',   label:['🤎 Explore Pluto!','🤎 進入冥王星探險！'] },
+  { planet:'sun',     file:'./sun.js',     fn:'createSun',     label:['☀️ Fly close to the Sun!','☀️ 飛近太陽！'] },
+];
+const loaded={};
+function loadModule(file,fn,make){
+  if(!loaded[file]){
+    const slow=setTimeout(()=>toast(L()?'🚀 準備中……':'🚀 Getting ready…'),180);
+    loaded[file]=import(file).then(m=>{ clearTimeout(slow); const ex=make(m[fn]); registerExplorer(ex); return ex; })
+      .catch(e=>{ clearTimeout(slow); delete loaded[file]; toast(L()?'哎呀，載入失敗，請再試一次':'Oops, could not load — please try again'); throw e; });
+  }
+  return loaded[file];
+}
+LAZY.forEach(z=>{
+  EXPLORE[z.planet]={ label:()=>z.label[L()], enter:()=>{ if(warping) return; loadModule(z.file,z.fn,f=>f(api)).then(ex=>ex.enter()); } };
+});
+/* Saturn's explorer lives in this file, so its (lazy) Titan landing is hooked in by hand */
+NAMES.landTitan=['Land on Titan','登陸泰坦'];
 {
-  const titan=createTitan(api, satMoons.titan.mesh, LDIR);
-  registerExplorer(titan);
   const tm=satMoons.titan.mesh;
   DEST.saturn.landTitan={ name:()=>nm('landTitan'), em:'🛬',
     target:out=>tm.getWorldPosition(out).addScaledVector(LDIR,2.8*1.3).setY(out.y+1),
     center:out=>tm.getWorldPosition(out), focus:out=>tm.getWorldPosition(out), camDist:12,
-    onArrive:()=>{ titan.land(); return true; } };
+    onArrive:()=>{ loadModule('./titan.js','createTitan',f=>f(api,tm,LDIR)).then(t=>t.land()); return true; } };
   ORDER.saturn.splice(ORDER.saturn.indexOf('solarFromSat'),0,'landTitan');
+}
+/* once the game is running, quietly fetch explorer code in the background
+   (download only — scenes are still built on first visit) */
+function prefetchExplorers(){
+  const files=[...LAZY.map(z=>z.file),'./titan.js'];
+  const next=()=>{ const f=files.shift(); if(!f) return; import(f).catch(()=>{}).finally(()=>setTimeout(next,400)); };
+  setTimeout(next,4000);
 }
 
 /* =============== DOM: bar, card, labels, top info =============== */
@@ -1022,8 +1040,44 @@ function markActive(id){
     c.classList.toggle('active',c.dataset.id===id||!!(d&&d.isOn&&d.isOn()));
   });
 }
+/* =============== read-aloud (Max is five — he listens, we read) =============== */
+const canSpeak='speechSynthesis' in window;
+let cardSpeech='', speaking=false;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices();
+  if(lang==='zh') return vs.find(v=>/zh[-_]HK|yue/i.test(v.lang)) || vs.find(v=>/zh[-_](TW|Hant)/i.test(v.lang)) || vs.find(v=>/^zh/i.test(v.lang));
+  return vs.find(v=>/en[-_]GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang));
+}
+function setSpeaking(on){
+  speaking=on;
+  $('#cardspeak').classList.toggle('on',on);
+  if(master && soundOn) master.gain.setTargetAtTime(on?.35:1,actx.currentTime,.2);   /* duck the music while talking */
+}
+function stopSpeech(){ if(canSpeak){ speechSynthesis.cancel(); } setSpeaking(false); }
+function speak(text,force){
+  if(!canSpeak||!text||(!soundOn&&!force)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  const v=pickVoice();
+  if(v){ u.voice=v; u.lang=v.lang; } else u.lang=lang==='zh'?'zh-HK':'en-GB';
+  u.rate=lang==='zh'?.95:.9; u.pitch=1.05;
+  u.onstart=()=>setSpeaking(true);
+  u.onend=u.onerror=()=>setSpeaking(false);
+  speechSynthesis.speak(u);
+}
+function speakCard(force){ speak(cardSpeech,force); }
+function unlockSpeech(){
+  if(!canSpeak) return;
+  const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u);   /* iOS needs one utterance inside a tap */
+  speechSynthesis.getVoices();
+}
+if(canSpeak) speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
+else $('#cardspeak').style.display='none';
+$('#cardspeak').onclick=()=>{ if(speaking) stopSpeech(); else { ensureAudio(); speakCard(true); } };
+
 let cardRender=null;
 function renderCard(spec){
+  cardSpeech=spec.title+(lang==='zh'?'。':'. ')+spec.text;
   const icon=$('#cicon');
   icon.innerHTML=spec.icon?spec.icon:`<span class="cdot" style="background:${spec.dot}"></span>`;
   $('#ctitle').textContent=spec.title;
@@ -1047,10 +1101,10 @@ function showDestCard(id){
     renderCard({icon:dd.em,dot:dd.dot,title:dd.name(),text:dd.fact(),
       badge:dd.fav?T().fav(dd.fav):null, actions:dd.actions?dd.actions():null});
   };
-  cardRender();
+  cardRender(); speakCard();
 }
-function showRawCard(fn){ cardRender=()=>renderCard(fn()); cardRender(); }
-function hideCard(){ $('#card').style.display='none'; cardRender=null; }
+function showRawCard(fn){ cardRender=()=>renderCard(fn()); cardRender(); speakCard(); }
+function hideCard(){ $('#card').style.display='none'; cardRender=null; stopSpeech(); }
 $('#cardx').onclick=hideCard;
 
 function whereFor(id){ return MODES[mode].where(id); }
@@ -1090,7 +1144,7 @@ function applyLang(){
   document.querySelectorAll('.olang button').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));
   buildBar(); buildLabels(); updateCount();
   setWhere(shipState.phase==='flying'?T().flying(DEST[mode][shipState.dest].name()):whereFor(at));
-  if(cardRender) cardRender();
+  if(cardRender){ cardRender(); speakCard(); }
 }
 $('#langbtn').onclick=()=>{ lang=lang==='en'?'zh':'en'; savePrefs(); applyLang(); };
 document.querySelectorAll('.olang button').forEach(b=>b.onclick=()=>{ lang=b.dataset.l; savePrefs(); applyLang(); });
@@ -1098,7 +1152,7 @@ function updateSndBtn(){ $('#sndbtn').textContent=soundOn?'🔊':'🔇'; }
 $('#sndbtn').onclick=()=>{
   soundOn=!soundOn; ensureAudio();
   if(master) master.gain.setTargetAtTime(soundOn?1:0,actx.currentTime,.1);
-  if(soundOn) chime();
+  if(soundOn) chime(); else stopSpeech();
   updateSndBtn(); savePrefs();
 };
 $('#dmbtn').onclick=toggleDM;
@@ -1246,7 +1300,7 @@ function tick(){
 function begin(){
   if(started) return;
   started=true;
-  ensureAudio(); unlockIOS(); startPad(); startEngine();
+  ensureAudio(); unlockIOS(); unlockSpeech(); startPad(); startEngine(); prefetchExplorers();
   $('#overlay').style.opacity=0;
   setTimeout(()=>$('#overlay').style.display='none',600);
   at='earth'; markActive('earth');
@@ -1271,5 +1325,7 @@ setMode('solar');
 applyLang();
 tick();
 
+const BOOT_MS=Math.round(performance.now());
 window.__galaxy={ travelTo, setMode, state:()=>({mode,at,phase:shipState.phase,visited:[...visited],dmOn}),
-  info:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles}) };
+  info:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
+    geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,bootMs:BOOT_MS}) };
