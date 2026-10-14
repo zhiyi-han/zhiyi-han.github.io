@@ -53,7 +53,7 @@ export function createPluto(api){
       /* Pluto and Charon are tidally locked: the heart always faces away from Charon */
       o.planet.rotation.y = heartPhase - o.moons.charon.a - Math.PI;
       o.moons.charon.mesh.rotation.y = -o.moons.charon.a + Math.PI/2;
-      nh.position.set(-60 + ((t*1.4) % 120), 8, 26); nh.rotation.y += dt*.15;
+      nh.position.set(Math.sin(t*.023)*60, 8, 26); nh.rotation.y += dt*.15;
     },
     maxDist: 160, viewMul: 7,
   });
@@ -110,7 +110,7 @@ export function createPluto(api){
     },
     rocks: { n: 40, color: 0xbfa890 }, hills: { color: 0xcbb7a2, hmin: 12, hmax: 26 },
     objects: [ { id: 'icemountains', em: '🏔️', obj: mountains, pos: [-26, -30], hitR: 14, view: { side: 30, height: 10, cy: 7, camDist: 44, labelY: 22 } } ],
-    skyBody: { id: 'charonSky', em: '🌑', pos: [110, 80, -170], r: 22, tex: charonTex, phi: 1.36 },
+    skyBody: { id: 'charonSky', em: '🌑', pos: [110, 80, -170], r: 22, tex: charonTex },
     dests: {
       bluehaze: { name: () => api.nm('bluehaze'), em: '🌫️',
         target: out => out.copy(HAZE_DIR).multiplyScalar(-6).setY(3.5), center: out => out.copy(HAZE_DIR).multiplyScalar(200).setY(20),

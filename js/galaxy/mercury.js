@@ -78,7 +78,7 @@ export function createMercury(api){
       { id: 'freshcrater', em: '💥', obj: marker, pos: [16, -12], hitR: 8, view: { side: 14, height: 9, cy: 0, camDist: 26, phi: .9, labelY: 4 } },
       { id: 'scarp', em: '⛰️', obj: scarp, pos: [-24, -20], hitR: 8, view: { side: 16, height: 7, cy: 3, camDist: 30, labelY: 9 } },
     ],
-    sunDest: { id: 'bigsun', em: '☀️', phi: 1.45 },
+    sunDest: { id: 'bigsun', em: '☀️' },
     takeoff: () => api.switchMode('mercury', () => {
       o.planet.localToWorld(api.ship.position.set(0, .35, .94).multiplyScalar(12*1.4)); api.ship.lookAt(0, 0, 0);
       api.setView({ follow: v => v.set(0, 0, 0), tDist: 60, phi: 1.15 });

@@ -357,7 +357,8 @@ export function createMars(api){
       duskK = 0;
       api.ship.position.set(4, 9, 22); api.ship.lookAt(0, 0, 0);
       api.setView({ follow: o => o.set(0, 2, 0), target: [0, 2, 0], dist: 40, tDist: 30, phi: 1.2, theta: .5 });
-      setTimeout(() => api.travelTo('rover'), 2600);
+      setTimeout(() => { if (api.getMode() === 'marsSurface' && !api.getAt() && api.getPhase() !== 'flying')
+        api.showRawCard(() => ({ icon: '🛬', title: nm('land'), text: fact('land') })); }, 900);
     }, '🛬 ' + nm('land'));
   }
   function takeOff(){

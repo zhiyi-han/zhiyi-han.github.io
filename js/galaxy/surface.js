@@ -125,14 +125,14 @@ export function buildSurface(api, c){
       camDist: 16, phi, thetaOff: .15, fact: () => fact(id) };
     order.push(id);
   };
-  if (c.sunDest) { sun.userData.dest = c.sunDest.id; pick.push(sun); lookUp(c.sunDest.id, c.sunDest.em, SUN, c.sunDest.phi); }
+  if (c.sunDest) { sun.userData.dest = c.sunDest.id; pick.push(sun); lookUp(c.sunDest.id, c.sunDest.em, SUN); }
   if (c.skyBody) {
     const b = c.skyBody, pos = new THREE.Vector3(...b.pos);
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(b.r, 40, 28), new THREE.MeshLambertMaterial({ map: b.tex, fog: false }));
     mesh.position.copy(pos); if (b.tilt) mesh.rotation.z = b.tilt; group.add(mesh);
     if (b.ring) { const ring = b.ring(); ring.position.copy(pos); group.add(ring); }
     mesh.userData.dest = b.id; pick.push(mesh);
-    lookUp(b.id, b.em, pos, b.phi);
+    lookUp(b.id, b.em, pos);
     labelFns.push(add => add(nm(b.id), out => out.copy(pos).setY(pos.y + b.r + 6), '', b.id));
     b.mesh = mesh;
   }
@@ -149,7 +149,8 @@ export function buildSurface(api, c){
     api.switchMode(c.key, () => {
       api.ship.position.set(4, 9, 22); api.ship.lookAt(0, 0, 0);
       api.setView({ follow: o => o.set(0, 2, 0), target: [0, 2, 0], dist: 40, tDist: 30, phi: 1.2, theta: .5 });
-      setTimeout(() => api.showRawCard(() => ({ icon: c.icon, title: nm(c.title), text: fact(c.title) })), 900);
+      setTimeout(() => { if (api.getMode() === c.key && !api.getAt() && api.getPhase() !== 'flying')
+        api.showRawCard(() => ({ icon: c.icon, title: nm(c.title), text: fact(c.title) })); }, 900);
     }, c.icon + ' ' + nm(c.title));
   }
   const mode = {

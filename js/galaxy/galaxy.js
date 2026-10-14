@@ -78,7 +78,7 @@ const FACTS={
 };
 const UI={
   en:{
-    title:"Max's Galaxy Adventure", tag:"Hop in Max's spaceship! Fly from Earth to all nine planets, explore inside Saturn, and find the invisible dark matter.",
+    title:"Max's Galaxy Adventure", tag:"Hop in Max's spaceship! Visit all nine planets and the Sun, land on amazing worlds, and find the invisible dark matter.",
     start:"🚀 Blast off!", back:"Max's World", backFull:"← Back to Max's World", home:"🏠 Back to Max's World",
     visited:n=>`🪐 ${n}/9 planets visited`, fav:n=>n===1?"⭐ Max's #1 favourite planet!":`⭐ Max's #${n} favourite planet!`,
     exploreSaturn:"🪐 Explore inside Saturn!", toSolar:"Solar System", galaxy:"Milky Way", dm:"Dark Matter",
@@ -89,7 +89,7 @@ const UI={
     insideToasts:["☁️ Clouds made of ammonia ice!","⚡ Giant lightning storms!","💎 It might rain diamonds down here!"],
   },
   zh:{
-    title:"Max 的銀河大冒險", tag:"坐上 Max 的太空船！從地球出發，飛去九大行星，潛入土星裡面，再找找看不見的暗物質。",
+    title:"Max 的銀河大冒險", tag:"坐上 Max 的太空船！飛去九大行星和太陽，降落在神奇的星球上，再找找看不見的暗物質。",
     start:"🚀 出發！", back:"Max 的小世界", backFull:"← 回到 Max 的小世界", home:"🏠 回到 Max 的小世界",
     visited:n=>`🪐 已到訪 ${n}/9 顆行星`, fav:n=>n===1?"⭐ Max 最喜歡的行星！":`⭐ Max 第${'一二三四五六七八九'[n-1]}喜歡的行星！`,
     exploreSaturn:"🪐 進入土星探險！", toSolar:"太陽系", galaxy:"銀河系", dm:"暗物質",
@@ -238,6 +238,9 @@ const scene=new THREE.Scene();
 const SPACE_BG=new THREE.Color(0x05071a);
 scene.background=SPACE_BG;
 const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.05,5000);
+/* tall phone screens are very narrow: widen the view so the planet AND the ship both fit */
+function fitFov(){ const a=innerWidth/innerHeight; camera.fov=a<1?Math.min(78,55+(1-a)*42):55; camera.aspect=a; camera.updateProjectionMatrix(); }
+fitFov();
 scene.add(new THREE.AmbientLight(0xffffff,.42));
 
 /* =============== starfield (all modes except inside Saturn) =============== */
@@ -556,15 +559,18 @@ function ensureAudio(){
     if(actx.state==='suspended') actx.resume();
   }catch(e){}
 }
+function silentWavURL(){
+  const n=2205, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,22050,true); v.setUint32(28,44100,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  w(36,'data'); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+}
 function unlockIOS(){
   try{
-    const n=2205, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
-    const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
-    w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt ');
-    v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
-    v.setUint32(24,22050,true); v.setUint32(28,44100,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
-    w(36,'data'); v.setUint32(40,n*2,true);
-    const au=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/wav'})));
+    const au=new Audio(silentWavURL());
     au.loop=true; au.volume=.01; au.setAttribute('playsinline',''); au.play().catch(()=>{});
   }catch(e){}
 }
@@ -615,9 +621,9 @@ function startPad(){
   const oscs=CHORDS[0].map(f=>{ const o=actx.createOscillator(); o.type='sine'; o.frequency.value=f; o.connect(padGain); o.start(); return o; });
   padGain.gain.setTargetAtTime(.035,actx.currentTime,2);
   let ci=0;
-  setInterval(()=>{ ci=(ci+1)%CHORDS.length; oscs.forEach((o,i)=>o.frequency.setTargetAtTime(CHORDS[ci][i],actx.currentTime,1.2)); },8000);
+  setInterval(()=>{ if(actx.state!=='running') return; ci=(ci+1)%CHORDS.length; oscs.forEach((o,i)=>o.frequency.setTargetAtTime(CHORDS[ci][i],actx.currentTime,1.2)); },8000);
   const PENTA=[1046.5,1174.7,1318.5,1568,1760,2093];
-  setInterval(()=>{ if(Math.random()<.45) tone(PENTA[(Math.random()*PENTA.length)|0],0,.9,'sine',.025); },3500);
+  setInterval(()=>{ if(actx.state==='running' && Math.random()<.45) tone(PENTA[(Math.random()*PENTA.length)|0],0,.9,'sine',.025); },3500);
 }
 document.addEventListener('visibilitychange',()=>{
   if(!actx) return;
@@ -639,7 +645,10 @@ function warp(cb,label){
   warping=true; whoosh();
   $('#warptxt').textContent=label||T().warp;
   $('#warp').classList.add('on');
-  setTimeout(()=>{ cb(); setTimeout(()=>{ $('#warp').classList.remove('on'); warping=false; },350); },550);
+  setTimeout(()=>{
+    try{ cb(); }
+    finally{ setTimeout(()=>{ $('#warp').classList.remove('on'); warping=false; },350); }
+  },550);
 }
 
 /* =============== camera =============== */
@@ -657,7 +666,13 @@ function updateCamera(dt){
   const sp=Math.sin(cam.phi);
   camera.position.set(cam.target.x+cam.dist*sp*Math.sin(cam.theta),cam.target.y+cam.dist*Math.cos(cam.phi),cam.target.z+cam.dist*sp*Math.cos(cam.theta));
   camera.lookAt(cam.target);
+  /* when the info card covers the bottom of a tall screen, slide the view up so the subject stays visible */
+  const want=(cardH&&innerHeight>innerWidth)?Math.min(cardH*.5,innerHeight*.24):0;
+  viewShift+=(want-viewShift)*(1-Math.exp(-dt*5));
+  if(viewShift>.5) camera.setViewOffset(innerWidth,innerHeight,0,viewShift,innerWidth,innerHeight);
+  else if(camera.view&&camera.view.enabled) camera.clearViewOffset();
 }
+let viewShift=0, cardH=0;
 
 /* =============== destinations =============== */
 const _ap=new THREE.Vector3();
@@ -744,7 +759,11 @@ function travelTo(id){
   if(!started||warping) return;
   const d=DEST[mode][id]; if(!d) return;
   if(d.action){ d.action(); return; }
-  if(at===id && shipState.phase!=='flying'){ showDestCard(id); return; }
+  if(at===id && shipState.phase!=='flying'){
+    if(d.fact){ showDestCard(id); return; }
+    if(d.onArrive){ arrive(id); return; }
+  }
+  pendingTok++;
   hideCard();
   if(id==='sun') sunDir.copy(ship.position).setY(0).normalize();
   if(id==='rings'){ satTilt.worldToLocal(_a.copy(ship.position)); ringA=Math.atan2(_a.z,_a.x); }
@@ -851,6 +870,11 @@ function backToSolar(pid){
     cam.tDist=DEST.solar[pid].camDist; cam.tPhi=1.12;
     setWhere(whereFor(pid));
   });
+}
+function parkAt(id){
+  const d=DEST[mode][id]; if(!d) return;
+  at=id; shipState.phase='idle'; follow=o=>d.focus(o);
+  markActive(id); setWhere(whereFor(id));
 }
 function setView(o){
   if(o.follow) follow=o.follow;
@@ -964,7 +988,7 @@ const api={
   bandTex, rockyTex, softTex, ringTex, makeRing, GLOW, hitMat, approachDir,
   tone, noiseHit, thunder, whoosh, chime, toast, bigMsg, hoverDown,
   L, T, nm, fact, switchMode, backToSolar, setView, travelTo, showRawCard,
-  setDepth:s=>{ $('#depth').textContent=s; }, getAt:()=>at, getMode:()=>mode,
+  setDepth:s=>{ $('#depth').textContent=s; }, getAt:()=>at, getMode:()=>mode, getPhase:()=>shipState.phase, parkAt,
 };
 function registerExplorer(ex){
   Object.assign(NAMES,ex.names); Object.assign(FACTS,ex.facts);
@@ -987,17 +1011,27 @@ const LAZY=[
   { planet:'pluto',   file:'./pluto.js',   fn:'createPluto',   label:['🤎 Explore Pluto!','🤎 進入冥王星探險！'] },
   { planet:'sun',     file:'./sun.js',     fn:'createSun',     label:['☀️ Fly close to the Sun!','☀️ 飛近太陽！'] },
 ];
-const loaded={};
+const loaded={}, retries={};
+let pendingTok=0;   /* bumped by every new request, so a slow load can't hijack a later choice */
 function loadModule(file,fn,make){
   if(!loaded[file]){
     const slow=setTimeout(()=>toast(L()?'🚀 準備中……':'🚀 Getting ready…'),180);
-    loaded[file]=import(file).then(m=>{ clearTimeout(slow); const ex=make(m[fn]); registerExplorer(ex); return ex; })
-      .catch(e=>{ clearTimeout(slow); delete loaded[file]; toast(L()?'哎呀，載入失敗，請再試一次':'Oops, could not load — please try again'); throw e; });
+    /* a failed module fetch is cached by the browser for the page's life: retry under a fresh URL */
+    const n=retries[file]||0, url=n?file+'?r='+n:file;
+    loaded[file]=import(url).then(m=>{ clearTimeout(slow); const ex=make(m[fn]); registerExplorer(ex); return ex; })
+      .catch(e=>{ clearTimeout(slow); delete loaded[file]; retries[file]=n+1; toast(L()?'哎呀，載入失敗，請再試一次':'Oops, could not load — please try again'); throw e; });
   }
   return loaded[file];
 }
 LAZY.forEach(z=>{
-  EXPLORE[z.planet]={ label:()=>z.label[L()], enter:()=>{ if(warping) return; loadModule(z.file,z.fn,f=>f(api)).then(ex=>ex.enter()); } };
+  EXPLORE[z.planet]={ label:()=>z.label[L()], enter:()=>{
+    if(warping) return;
+    const tok=++pendingTok;
+    loadModule(z.file,z.fn,f=>f(api)).then(ex=>{
+      if(tok!==pendingTok||warping||mode!=='solar'||at!==z.planet) return;
+      ex.enter();
+    }).catch(()=>{});
+  } };
 });
 /* Saturn's explorer lives in this file, so its (lazy) Titan landing is hooked in by hand */
 NAMES.landTitan=['Land on Titan','登陸泰坦'];
@@ -1006,7 +1040,13 @@ NAMES.landTitan=['Land on Titan','登陸泰坦'];
   DEST.saturn.landTitan={ name:()=>nm('landTitan'), em:'🛬',
     target:out=>tm.getWorldPosition(out).addScaledVector(LDIR,2.8*1.3).setY(out.y+1),
     center:out=>tm.getWorldPosition(out), focus:out=>tm.getWorldPosition(out), camDist:12,
-    onArrive:()=>{ loadModule('./titan.js','createTitan',f=>f(api,tm,LDIR)).then(t=>t.land()); return true; } };
+    onArrive:()=>{
+      const tok=++pendingTok;
+      loadModule('./titan.js','createTitan',f=>f(api,tm,LDIR)).then(t=>{
+        if(tok===pendingTok && mode==='saturn' && at==='landTitan') t.land();
+      }).catch(()=>{ if(at==='landTitan'){ at=null; markActive(null); } });
+      return true;
+    } };
   ORDER.saturn.splice(ORDER.saturn.indexOf('solarFromSat'),0,'landTitan');
 }
 /* once the game is running, quietly fetch explorer code in the background
@@ -1038,6 +1078,7 @@ function markActive(id){
   document.querySelectorAll('#bar .chip').forEach(c=>{
     const d=DEST[mode][c.dataset.id];
     c.classList.toggle('active',c.dataset.id===id||!!(d&&d.isOn&&d.isOn()));
+    if(c.dataset.id===id) c.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
   });
 }
 /* =============== read-aloud (Max is five — he listens, we read) =============== */
@@ -1053,26 +1094,72 @@ function setSpeaking(on){
   $('#cardspeak').classList.toggle('on',on);
   if(master && soundOn) master.gain.setTargetAtTime(on?.35:1,actx.currentTime,.2);   /* duck the music while talking */
 }
-function stopSpeech(){ if(canSpeak){ speechSynthesis.cancel(); } setSpeaking(false); }
-function speak(text,force){
-  if(!canSpeak||!text||(!soundOn&&!force)) return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  const v=pickVoice();
-  if(v){ u.voice=v; u.lang=v.lang; } else u.lang=lang==='zh'?'zh-HK':'en-GB';
-  u.rate=lang==='zh'?.95:.9; u.pitch=1.05;
-  u.onstart=()=>setSpeaking(true);
-  u.onend=u.onerror=()=>setSpeaking(false);
-  speechSynthesis.speak(u);
+/* Recorded narration: natural neural voices pre-generated by tools/make_voice.py into
+   audio/voice/<lang>/<key>.m4a (AAC 32 kbps), keyed by a hash of the exact card text. Any card without
+   a recording (e.g. text edited later) falls back to the device's speech engine. */
+const VOICE_DIR='audio/voice/';
+let voiceSet=null;
+fetch(VOICE_DIR+'manifest.json').then(r=>r.ok?r.json():null)
+  .then(m=>{ if(m) voiceSet={en:new Set(m.en||[]),zh:new Set(m.zh||[])}; }).catch(()=>{});
+function textKey(str){   /* FNV-1a over UTF-8; tools/make_voice.py reads keys from voiceLines() */
+  let h=0x811c9dc5;
+  for(const b of new TextEncoder().encode(str)){ h^=b; h=Math.imul(h,0x01000193)>>>0; }
+  return h.toString(16).padStart(8,'0');
 }
+const voiceEl=new Audio(); voiceEl.preload='auto'; voiceEl.setAttribute('playsinline','');
+let voiceText='';
+voiceEl.onplaying=()=>{ if(voiceText) setSpeaking(true); };
+voiceEl.onended=()=>{ if(voiceText){ voiceText=''; setSpeaking(false); } };
+voiceEl.onerror=()=>{ if(voiceText){ const t=voiceText; voiceText=''; ttsSpeak(t); } };
+let curU=null;
+function stopSpeech(){
+  curU=null; if(canSpeak) speechSynthesis.cancel();
+  if(voiceText){ voiceText=''; voiceEl.pause(); }
+  setSpeaking(false);
+}
+function speak(text,force){
+  if(!text||(!soundOn&&!force)) return;
+  stopSpeech();
+  const key=textKey(text);
+  if(voiceSet && voiceSet[lang] && voiceSet[lang].has(key)){
+    voiceText=text;
+    voiceEl.src=VOICE_DIR+lang+'/'+key+'.m4a';
+    voiceEl.play().catch(()=>{ if(voiceText===text){ voiceText=''; ttsSpeak(text); } });
+    return;
+  }
+  ttsSpeak(text);
+}
+function ttsSpeak(text){
+  if(!canSpeak) return;
+  /* one utterance per sentence: some voices silently stop long utterances */
+  const parts=text.match(/[^。！？!?.]+(?:\.(?=\S)[^。！？!?.]*)*[。！？!?.]*/g)||[text];   /* keeps decimals like 2.5 whole */
+  const v=pickVoice();
+  parts.forEach((part,i)=>{
+    const u=new SpeechSynthesisUtterance(part.trim());
+    if(v){ u.voice=v; u.lang=v.lang; } else u.lang=lang==='zh'?'zh-HK':'en-GB';
+    u.rate=lang==='zh'?.95:.9; u.pitch=1.05;
+    const last=i===parts.length-1;
+    if(last) curU=u;
+    if(i===0) u.onstart=()=>{ if(curU) setSpeaking(true); };
+    if(last) u.onend=u.onerror=()=>{ if(curU===u){ curU=null; setSpeaking(false); } };
+    speechSynthesis.speak(u);
+  });
+}
+/* safety net: if the engine goes quiet without telling us, un-duck the music */
+setInterval(()=>{
+  const playing=voiceText && !voiceEl.paused;
+  const talking=canSpeak && (speechSynthesis.speaking||speechSynthesis.pending);
+  if(speaking && !playing && !talking){ curU=null; voiceText=''; setSpeaking(false); }
+},1200);
 function speakCard(force){ speak(cardSpeech,force); }
 function unlockSpeech(){
+  /* iOS only lets audio start later if it was started once inside a tap */
+  try{ voiceEl.src=silentWavURL(); voiceEl.play().then(()=>voiceEl.pause()).catch(()=>{}); }catch(e){}
   if(!canSpeak) return;
-  const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u);   /* iOS needs one utterance inside a tap */
+  const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u);
   speechSynthesis.getVoices();
 }
 if(canSpeak) speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
-else $('#cardspeak').style.display='none';
 $('#cardspeak').onclick=()=>{ if(speaking) stopSpeech(); else { ensureAudio(); speakCard(true); } };
 
 let cardRender=null;
@@ -1092,6 +1179,7 @@ function renderCard(spec){
     acts.appendChild(el);
   });
   $('#card').style.display='block';
+  cardH=$('#card').offsetHeight;
 }
 function showDestCard(id){
   const d=DEST[mode][id]; if(!d||!d.fact) return;
@@ -1104,7 +1192,7 @@ function showDestCard(id){
   cardRender(); speakCard();
 }
 function showRawCard(fn){ cardRender=()=>renderCard(fn()); cardRender(); speakCard(); }
-function hideCard(){ $('#card').style.display='none'; cardRender=null; stopSpeech(); }
+function hideCard(){ $('#card').style.display='none'; cardRender=null; cardH=0; stopSpeech(); }
 $('#cardx').onclick=hideCard;
 
 function whereFor(id){ return MODES[mode].where(id); }
@@ -1123,10 +1211,11 @@ function buildLabels(){
   if(!MODES[mode].noShip) add(T().ship,out=>{ out.copy(ship.position); out.y+=ship.scale.x*.9+.25; return out; },'ship');
 }
 function positionLabels(){
-  const W=innerWidth, H=innerHeight;
+  const W=innerWidth, H=innerHeight, hudTop=H>W?150:96;   /* keep labels clear of the top status pills */
   for(const l of labels){
     l.get(_lv).project(camera);
-    if(_lv.z>1||Math.abs(_lv.x)>1.1||Math.abs(_lv.y)>1.1){
+    const sy=(-_lv.y*.5+.5)*H;
+    if(_lv.z>1||Math.abs(_lv.x)>1.1||Math.abs(_lv.y)>1.1||sy<hudTop){
       if(l.vis){ l.el.style.display='none'; l.vis=false; }
       continue;
     }
@@ -1204,7 +1293,7 @@ function pick(x,y){
 }
 addEventListener('keydown',e=>{ if(e.code==='Escape') hideCard(); });
 addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  fitFov();
   renderer.setSize(innerWidth,innerHeight);
 });
 
@@ -1313,7 +1402,7 @@ function begin(){
   cam.tTheta=Math.atan2(_b.x-_a.x,_b.z-_a.z)+.55;
   setWhere(whereFor('earth'));
   chime();
-  setTimeout(()=>{ showDestCard('earth'); toast(T().tapHint); },1600);
+  setTimeout(()=>{ if(mode==='solar'&&at==='earth'&&shipState.phase!=='flying') showDestCard('earth'); toast(T().tapHint); },1600);
 }
 $('#startbtn').onclick=begin;
 
@@ -1325,7 +1414,20 @@ setMode('solar');
 applyLang();
 tick();
 
+/* every card's spoken text, for tools/make_voice.py (loads all explorers first) */
+async function voiceLines(){
+  await Promise.all([...LAZY.map(z=>loadModule(z.file,z.fn,f=>f(api))), loadModule('./titan.js','createTitan',f=>f(api,satMoons.titan.mesh,LDIR))]);
+  const out=[];
+  for(const id in FACTS){
+    if(!NAMES[id]) continue;
+    ['en','zh'].forEach((lg,i)=>{
+      const text=NAMES[id][i]+(lg==='zh'?'。':'. ')+FACTS[id][i];
+      out.push({id,lang:lg,key:textKey(text),text});
+    });
+  }
+  return out;
+}
 const BOOT_MS=Math.round(performance.now());
-window.__galaxy={ travelTo, setMode, state:()=>({mode,at,phase:shipState.phase,visited:[...visited],dmOn}),
+window.__galaxy={ voiceLines, travelTo, setMode, state:()=>({mode,at,phase:shipState.phase,visited:[...visited],dmOn}),
   info:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
     geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,bootMs:BOOT_MS}) };

@@ -66,7 +66,7 @@ export function createTitan(api, titanMesh, LD){
     },
     takeoff: () => api.switchMode('saturn', () => {
       titanMesh.getWorldPosition(api.ship.position).addScaledVector(LD, 9); api.ship.lookAt(0, 0, 0);
-      api.setView({ follow: v => titanMesh.getWorldPosition(v), tDist: 24, phi: 1.15 });
+      api.setView({ tDist: 24, phi: 1.15 }); api.parkAt('titan');
     }),
   });
   surf.group.add(rainPts);

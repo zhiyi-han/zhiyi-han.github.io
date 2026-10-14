@@ -10,8 +10,8 @@ export function createEarth(api){
     apollo:['Apollo 11','阿波羅 11 號'], footprints:['Footprints','腳印'], earthrise:['Earth in the Sky','天上的地球'],
   };
   const facts = {
-    hk:["This is Hong Kong — where Max lives! From space you can see the whole city by the sea, right next to China.",
-      "這裡是香港——Max 住的地方！從太空可以看到這個海邊的城市，就在中國旁邊。"],
+    hk:["This is Hong Kong — where Max lives! It's a big city by the sea, on the south coast of China.",
+      "這裡是香港——Max 住的地方！它是一個在中國南邊海岸的海邊大城市。"],
     iss:["Astronauts live on the International Space Station! It zooms around Earth 16 times every day — so they see 16 sunrises every day!",
       "太空人住在國際太空站上！它每天繞地球飛 16 圈——所以太空人每天可以看 16 次日出！"],
     moon:["The Moon is Earth's best friend. It always shows us the same face, and its gravity pulls the ocean to make the tides go up and down.",
@@ -136,11 +136,11 @@ export function createEarth(api){
       { id: 'apollo', em: '🚀', obj: lander, pos: [6, -6], hitR: 4, view: { side: 9, height: 4, cy: 2.5, camDist: 15, labelY: 6.5 } },
       { id: 'footprints', em: '👣', obj: steps, pos: [10, 2], hitR: 5, view: { side: 7, height: 6, cy: 0, camDist: 13, phi: .8, labelY: 2.5 } },
     ],
-    skyBody: { id: 'earthrise', em: '🌍', pos: [-120, 70, -170], r: 18, tex: earthTex, tilt: .41, phi: 1.42 },
+    skyBody: { id: 'earthrise', em: '🌍', pos: [-120, 70, -170], r: 18, tex: earthTex, tilt: .41 },
     takeoff: () => api.switchMode('earth', () => {
       moonM.mesh.getWorldPosition(api.ship.position).addScaledVector(o.LD, 10);
       api.ship.lookAt(0, 0, 0);
-      api.setView({ follow: v => moonM.mesh.getWorldPosition(v), tDist: 30, phi: 1.15 });
+      api.setView({ tDist: 30, phi: 1.15 }); api.parkAt('moon');
     }),
   });
 

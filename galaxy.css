@@ -24,6 +24,11 @@ body{
 .rbtn:active{transform:scale(.93)}
 .rbtn.on{background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff}
 @media(max-width:600px){
+  #card{padding:13px 14px;border-radius:20px}
+  #ctitle{font-size:19px}
+  #ctext{font-size:14.5px;line-height:1.5;max-height:24vh}
+  #cacts{margin-top:10px;gap:6px}
+  .act{padding:9px 12px;font-size:14px;border-radius:12px}
   #backtxt{display:none}
   #where{top:calc(60px + env(safe-area-inset-top));max-width:80vw;font-size:14px}
   #count,#depth{top:calc(104px + env(safe-area-inset-top))}

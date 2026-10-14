@@ -98,7 +98,7 @@ export function createVenus(api){
       { id: 'venera', em: '🛰️', obj: venera, pos: [8, -4], hitR: 3.5, view: { side: 8, height: 4, cy: 2, camDist: 14, labelY: 6 } },
       { id: 'vvolcano', em: '🌋', obj: volcano, pos: [-38, -52], hitR: 16, view: { side: 30, height: 12, cy: 8, camDist: 44, labelY: 18 } },
     ],
-    sunDest: { id: 'orangesky', em: '🟠', phi: 1.4 },
+    sunDest: { id: 'orangesky', em: '🟠' },
     takeoff: () => api.switchMode('venus', () => {
       o.tilt.localToWorld(api.ship.position.set(0, .3, .95).multiplyScalar(14*1.4)); api.ship.lookAt(0, 0, 0);
       api.setView({ follow: v => v.set(0, 0, 0), tDist: 70, phi: 1.15 });

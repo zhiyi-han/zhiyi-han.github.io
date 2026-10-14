@@ -48,7 +48,7 @@ export function createNeptune(api){
     moons: [ { id: 'triton', em: '🩷', tex: tritonTex, r: 2.6, d: 62, sp: -.06, a0: 1.4, lift: 10, camDist: 20 } ],
     update: (dt, t) => {
       scooters.forEach(s => { s.a += dt*s.sp; s.m.position.set(Math.cos(s.a)*R*1.03*s.k, s.y, Math.sin(s.a)*R*1.03*s.k); s.m.rotation.y = -s.a; });
-      voyager.position.set(-110 + ((t*1.6) % 220), 18, 52); voyager.rotation.y += dt*.1;
+      voyager.position.set(Math.sin(t*.015)*110, 18, 52); voyager.rotation.y += dt*.1;
     },
     maxDist: 220,
   });
@@ -135,11 +135,11 @@ export function createNeptune(api){
           });
         } },
     ],
-    skyBody: { id: 'neptuneSky', em: '🔵', pos: [-90, 85, -170], r: 42, tex: ntex, tilt: .49, phi: 1.32 },
+    skyBody: { id: 'neptuneSky', em: '🔵', pos: [-90, 85, -170], r: 42, tex: ntex, tilt: .49 },
     takeoff: () => api.switchMode('neptune', () => {
       tri.mesh.getWorldPosition(api.ship.position).addScaledVector(o.LD, 9);
       api.ship.lookAt(0, 0, 0);
-      api.setView({ follow: v => tri.mesh.getWorldPosition(v), tDist: 26, phi: 1.15 });
+      api.setView({ tDist: 26, phi: 1.15 }); api.parkAt('triton');
     }),
   });
 

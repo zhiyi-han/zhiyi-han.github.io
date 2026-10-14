@@ -116,7 +116,7 @@ export function createUranus(api){
         return g; } },
     takeoff: () => api.switchMode('uranus', () => {
       mir.mesh.getWorldPosition(api.ship.position).addScaledVector(o.LD, 6); api.ship.lookAt(0, 0, 0);
-      api.setView({ follow: v => mir.mesh.getWorldPosition(v), tDist: 18, phi: 1.15 });
+      api.setView({ tDist: 18, phi: 1.15 }); api.parkAt('miranda');
     }),
   });
 
@@ -145,6 +145,7 @@ export function createUranus(api){
       api.ship.position.set(0, 0, 0); api.ship.lookAt(0, -10, 3);
       api.setView({ follow: v => v.copy(api.ship.position), target: [0, 0, 0], dist: 10, tDist: 9, phi: 1.2, theta: .6 });
       dive.reset();
+      api.showRawCard(() => ({ icon: '🌀', title: api.nm('udive'), text: api.fact('udive') }));
     }, '🌀 ' + api.nm('udive'));
   }
   function leaveInside(){

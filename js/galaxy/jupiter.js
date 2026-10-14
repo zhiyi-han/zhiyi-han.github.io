@@ -228,6 +228,7 @@ export function createJupiter(api){
       api.ship.position.set(0, 0, 0); api.ship.lookAt(0, -10, 3);
       api.setView({ follow: o => o.copy(api.ship.position), target: [0, 0, 0], dist: 10, tDist: 9, phi: 1.2, theta: .6 });
       dive.reset();
+      api.showRawCard(() => ({ icon: '🌀', title: nm('jdive'), text: fact('jdive') }));
     }, '🌀 ' + nm('jdive'));
   }
   function leaveInside(){
@@ -281,7 +282,7 @@ export function createJupiter(api){
     skyBody: { id: 'jupSky', em: '🟠', pos: [-80, 95, -190], r: 55, tex: planet.material.map },
     takeoff: () => api.switchMode('jupiter', () => {
       moons.europa.mesh.getWorldPosition(api.ship.position).addScaledVector(LD, 7); api.ship.lookAt(0, 0, 0);
-      api.setView({ follow: v => moons.europa.mesh.getWorldPosition(v), tDist: 20, phi: 1.15 });
+      api.setView({ tDist: 20, phi: 1.15 }); api.parkAt('europa');
     }),
   });
 
