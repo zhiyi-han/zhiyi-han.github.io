@@ -4,11 +4,13 @@ export const SITE_URL = 'https://zhiyihan.com';
 export const AVATAR = { skin:0xf7d9bc, hair:0x24201d, shirt:0xf7f8fa, bow:0x8fb9e6, shorts:0x3a4a6b, shoes:0xf4f4f6, cheek:0xf5a98d };
 /* Max's drawings: assets/art/<id>.webp (full) and <id>-s.webp (small); `easel` ones also stand in the 3D gallery */
 export const ARTWORKS = [
-  { id:'bumblebee', easel:true, en:"Bumblebee's Space Adventure", zh:'Bumblebee 的太空之旅' },
+  { id:'bumblebee', easel:true, en:"Bumblebee's Space Adventure", zh:'Bumblebee 的太空之旅',
+    link:{ href:'stories.html#s03', en:"📖 Read Max's Bumblebee story", zh:'📖 讀滿滿的 Bumblebee 故事' } },
   { id:'lotte',     easel:true, en:'Lotte World',                 zh:'樂天世界' },
   { id:'earth',     easel:true, en:'Good Earth, Bad Earth',       zh:'好地球，壞地球' },
   { id:'sushi',     easel:true, en:'Knuckles Goes for Sushi',     zh:'Knuckles 的壽司之旅' },
-  { id:'sea',       easel:true, en:'Flood Rescue in Guangxi',     zh:'廣西洪水大救援' },
+  { id:'sea',       easel:true, en:'Flood Rescue in Guangxi',     zh:'廣西洪水大救援',
+    link:{ zone:'builder', en:"🧱 See Max's flood-control project", zh:'🧱 看看滿滿的治水大工程' } },
   { id:'monster',   easel:true, en:'The Big Red Monster',         zh:'紅色大怪獸' },
   { id:'pharaoh',   en:"The Pharaoh's Story",         zh:'埃及法老的故事' },
   { id:'aquarium',  en:'COEX Aquarium, Seoul',        zh:'首爾 COEX 水族館' },
@@ -30,7 +32,11 @@ export const I18N = {
     walkCloser: "Walk closer to take a look! 🏃",
     dirTitle: "Where shall we go? 🗺️",
     tourBtn: "🚶 Take me around",
-    galaxyBtn: "🌌 Max's Galaxy Adventure",
+    invite: {
+      story:  { icon:'📖', t:"Max's Story House", body:"Max and his mum made up twenty picture books and stories together — and every one can be read aloud!", go:'Go in 📖', next:'Next stop ▶' },
+      rocket: { icon:'🚀', t:'Last stop: the rocket!', body:"Would you like to fly into space and visit every planet?", go:'Blast off! 🚀', next:'End the tour' },
+    },
+    allDoneNext: "Next: hear a story in the Story House, or blast off to space! 📖🚀",
     tourNext: "Next stop ▶",
     menuTip: "💡 Tap the M (top left) for a map of all zones",
     tourStop: "✕ Stop tour",
@@ -69,7 +75,11 @@ export const I18N = {
     walkCloser: "走近一點看看吧！🏃",
     dirTitle: "想去哪裡逛逛？🗺️",
     tourBtn: "🚶 帶我逛逛",
-    galaxyBtn: "🌌 Max 的銀河大冒險",
+    invite: {
+      story:  { icon:'📖', t:'滿滿故事屋', body:'滿滿和媽媽一起創作了二十本繪本和故事，每一本都可以聽朗讀！', go:'進去看看 📖', next:'下一站 ▶' },
+      rocket: { icon:'🚀', t:'最後一站：火箭！', body:'要不要搭火箭去太空，飛遊九大行星？', go:'出發！🚀', next:'結束導覽' },
+    },
+    allDoneNext: "下一站：去故事屋聽故事，或者搭火箭去太空吧！📖🚀",
     tourNext: "下一站 ▶",
     menuTip: "💡 點左上角 M 可以打開地圖",
     tourStop: "✕ 結束導覽",

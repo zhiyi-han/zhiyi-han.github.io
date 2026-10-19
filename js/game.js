@@ -1591,7 +1591,7 @@ function openPanel(id){
     burst(max.g.position.clone(),30);
     if(visited.size===ZONE_COUNT && !celebrated){
       celebrated=true;
-      setTimeout(()=>{ bigMsg(T().allDone,2600); fanfare(); confettiRain(); setTimeout(()=>toast(T().thanks),2800); },600);
+      setTimeout(()=>{ bigMsg(T().allDone,2600); fanfare(); confettiRain(); setTimeout(()=>toast(T().allDoneNext),2800); },600);
     }
   }
 }
@@ -1609,7 +1609,7 @@ function updateTourHud(){
 }
 function startTour(){
   tour.active=true;
-  tour.queue=zoneDefs.map(z=>z.id);
+  tour.queue=[...zoneDefs.map(z=>z.id),'story','rocket'];   /* ends at the Story House, then the rocket */
   tour.zone=null; tour.target=null;
   updateTourHud();
   nextTourStop();
@@ -1618,13 +1618,47 @@ function nextTourStop(){
   const id=tour.queue.shift();
   if(!id){ endTour(); toast(T().thanks); return; }
   tour.zone=id;
+  if(id==='story'||id==='rocket'){
+    const at=id==='story'?STORY_DOOR:ROCKET_PAD;
+    tour.target=at.clone().addScaledVector(new THREE.Vector3(-at.x,0,-at.z).normalize(),id==='story'?1.0:2.0);
+    return;
+  }
   const p=zones[id].pos;
   tour.target=new THREE.Vector3(p.x*.8,0,p.z*.8);
 }
-function endTour(){ tour.active=false; tour.target=null; tour.zone=null; updateTourHud(); }
+function endTour(){ tour.active=false; tour.target=null; tour.zone=null; updateTourHud(); hideInvite(); }
+/* tour stop at the Story House / rocket: ask whether to go in */
+const inviteSpeech=(k,lg)=>{ const v=I18N[lg].invite[k]; return v.t+(/[。！？!?.]$/.test(v.t)?'':(lg==='zh'?'。':'.'))+(lg==='zh'?'':' ')+v.body; };
+function showInvite(k){
+  const v=T().invite[k];
+  $('#invic').textContent=v.icon; $('#invt').textContent=v.t; $('#invb').textContent=v.body;
+  $('#invgo').textContent=v.go; $('#invnext').textContent=v.next;
+  $('#invgo').onclick=()=>{ endTour(); k==='story' ? enterStories() : boardRocket(); };
+  $('#invnext').onclick=()=>{ hideInvite(); if(k==='rocket'){ endTour(); toast(T().thanks); } else nextTourStop(); };
+  $('#invite').style.display='block';
+  narrator.speak(inviteSpeech(k,lang));
+}
+function hideInvite(){ if($('#invite').style.display==='block'){ $('#invite').style.display='none'; narrator.stop(); } }
 $('#tournext').onclick=()=>closePanel();
 $('#tourhud').onclick=()=>{ tour.active ? endTour() : startTour(); };
 
+/* jump Max to a zone and open its card (map, gallery links) */
+function goToZone(id){
+  if(panelOpen) closePanel();
+  if(id==='welcome') max.g.position.set(0,0,2.2);
+  else{ const p=zones[id].pos; max.g.position.set(p.x*.8,0,p.z*.8); }
+  state.vy=0;
+  setTimeout(()=>openPanel(id),450);
+}
+/* walk-up places: stand Max by the Story House door or the rocket */
+function goToPortal(id){
+  if(panelOpen) closePanel();
+  const p=id==='story' ? STORY_DOOR.clone().addScaledVector(STORY_DIR,1.0)
+                       : ROCKET_PAD.clone().addScaledVector(new THREE.Vector3(-ROCKET_PAD.x,0,-ROCKET_PAD.z).normalize(),2.0);
+  max.g.position.set(p.x,0,p.z); state.vy=0;
+  const at=id==='story'?STORY_DOOR:ROCKET_PAD;
+  max.g.rotation.y=Math.atan2(at.x-p.x,at.z-p.z);
+}
 /* zone directory — tap the M logo to jump anywhere */
 function openDir(){
   $('#dirtitle').textContent=T().dirTitle;
@@ -1632,22 +1666,18 @@ function openDir(){
   const tb=document.createElement('button'); tb.className='dirtour'; tb.textContent=T().tourBtn;
   tb.onclick=()=>{ $('#dirwrap').style.display='none'; startTour(); };
   list.appendChild(tb);
-  const gb=document.createElement('a'); gb.className='dirtour'; gb.href='galaxy.html';
-  gb.style.cssText='background:linear-gradient(135deg,#e8863a,#7a4fd0);text-decoration:none';
-  gb.textContent=T().galaxyBtn;
-  list.appendChild(gb);
+  [['story',T().owStories,'linear-gradient(135deg,#f0a35e,#e0703a)'],['rocket',T().owGalaxy,'linear-gradient(135deg,#26306e,#7a4fd0)']].forEach(([id,[ic,name],bg])=>{
+    const pb=document.createElement('button'); pb.className='dirtour'; pb.style.background=bg;
+    pb.textContent=`${ic} ${name}`;
+    pb.onclick=()=>{ $('#dirwrap').style.display='none'; goToPortal(id); };
+    list.appendChild(pb);
+  });
   ['welcome',...zoneDefs.map(z=>z.id)].forEach(id=>{
     const z=T().zones[id];
     const b=document.createElement('button'); b.className='diritem';
     b.innerHTML=`<span class="ic">${z.icon}</span><span>${z.t}</span>`+
       (id==='welcome'?'':`<span class="st2${visited.has(id)?' on':''}">★</span>`);
-    b.onclick=()=>{
-      $('#dirwrap').style.display='none';
-      if(id==='welcome') max.g.position.set(0,0,2.2);
-      else{ const p=zones[id].pos; max.g.position.set(p.x*.8,0,p.z*.8); }
-      state.vy=0;
-      setTimeout(()=>openPanel(id),450);
-    };
+    b.onclick=()=>{ $('#dirwrap').style.display='none'; goToZone(id); };
     list.appendChild(b);
   });
   $('#dirwrap').style.display='flex';
@@ -1663,6 +1693,10 @@ function showArt(i){
   artAt=(i+ARTWORKS.length)%ARTWORKS.length;
   const a=ARTWORKS[artAt];
   $('#lbimg').src=artSrc(a,true); $('#lbcap').textContent=`${a[lang]}  ·  ${artAt+1}/${ARTWORKS.length}`;
+  const ln=$('#lblink');   /* some drawings lead on to a story or a zone */
+  ln.style.display=a.link?'inline-block':'none';
+  if(a.link){ ln.textContent=a.link[lang]; ln.href=a.link.href||'#';
+    ln.onclick=e=>{ e.stopPropagation(); if(a.link.zone){ e.preventDefault(); $('#lightbox').style.display='none'; goToZone(a.link.zone); } }; }
   $('#lightbox').style.display='flex';
   const nx=new Image(); nx.src=artSrc(ARTWORKS[(artAt+1)%ARTWORKS.length],true);
 }
@@ -1768,7 +1802,11 @@ function tick(){
     const dirv=_tv.subVectors(tour.target,max.g.position); dirv.y=0;
     if(dirv.length()<.45){
       tour.target=null;
-      openPanel(tour.zone);
+      if(tour.zone==='story'||tour.zone==='rocket'){
+        const at=tour.zone==='story'?STORY_DOOR:ROCKET_PAD;
+        max.g.rotation.y=Math.atan2(at.x-max.g.position.x,at.z-max.g.position.z);
+        showInvite(tour.zone);
+      }else openPanel(tour.zone);
     }else{
       dirv.normalize();
       const tspeed=3.8;
@@ -2057,6 +2095,7 @@ function voiceLines(){
   ['en','zh'].forEach(lg=>{
     const zs=I18N[lg].zones;
     for(const id in zs){ const z=zs[id], text=speechOf(z,lg); out.push({id:'world:'+id,lang:lg,key:textKey(text),text}); }
+    ['story','rocket'].forEach(k=>{ const text=inviteSpeech(k,lg); out.push({id:'world:invite-'+k,lang:lg,key:textKey(text),text}); });
   });
   return out;
 }
@@ -2084,7 +2123,8 @@ updateStars();
 /* back from the Galaxy game or the Story House: skip the intro and carry on
    where Max left — the rocket lands back on its pad, or he steps out of the cottage */
 {
-  const from=new URLSearchParams(location.search).get('from');
+  const qs=new URLSearchParams(location.search), from=qs.get('from');
+  const art=ARTWORKS.findIndex(a=>a.id===qs.get('art'));   /* ?art=bumblebee: show that drawing */
   if(from==='galaxy' || from==='stories'){
     history.replaceState(null,'',location.pathname);
     started=true; flyT=1;
@@ -2105,6 +2145,7 @@ updateStars();
       cam.theta=Math.atan2(-ROCKET_PAD.x,-ROCKET_PAD.z);
     }
     camTargetSmooth.copy(max.g.position).y+=1.15;
+    if(art>=0){ goToZone('gallery'); setTimeout(()=>showArt(art),900); }
   }
 }
 tick();

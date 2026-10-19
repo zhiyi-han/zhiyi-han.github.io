@@ -80,7 +80,7 @@ const FACTS={
 const UI={
   en:{
     title:"Max's Galaxy Adventure", tag:"Hop in Max's spaceship! Visit all nine planets and the Sun, land on amazing worlds, and find the invisible dark matter.",
-    start:"🚀 Blast off!", back:"Max's World", backFull:"← Back to Max's World", home:"🏠 Back to Max's World",
+    start:"🚀 Blast off!", back:"Max's World", backFull:"← Back to Max's World", home:"🏠 Back to Max's World", plutoStory:"📖 Max's story: Is Pluto Still There?",
     visited:n=>`🪐 ${n}/9 planets visited`, fav:n=>n===1?"⭐ Max's #1 favourite planet!":`⭐ Max's #${n} favourite planet!`,
     exploreSaturn:"🪐 Explore inside Saturn!", toSolar:"Solar System", galaxy:"Milky Way", dm:"Dark Matter",
     warp:"Warp speed! 🚀", flying:n=>`Flying to ${n}…`, here:"☀️ We are here!", allDone:"🎉 All nine planets!",
@@ -91,7 +91,7 @@ const UI={
   },
   zh:{
     title:"Max 的銀河大冒險", tag:"坐上 Max 的太空船！飛去九大行星和太陽，降落在神奇的星球上，再找找看不見的暗物質。",
-    start:"🚀 出發！", back:"Max 的小世界", backFull:"← 回到 Max 的小世界", home:"🏠 回到 Max 的小世界",
+    start:"🚀 出發！", back:"Max 的小世界", backFull:"← 回到 Max 的小世界", home:"🏠 回到 Max 的小世界", plutoStory:"📖 聽滿滿的故事：冥王星還在嗎？",
     visited:n=>`🪐 已到訪 ${n}/9 顆行星`, fav:n=>n===1?"⭐ Max 最喜歡的行星！":`⭐ Max 第${'一二三四五六七八九'[n-1]}喜歡的行星！`,
     exploreSaturn:"🪐 進入土星探險！", toSolar:"太陽系", galaxy:"銀河系", dm:"暗物質",
     warp:"超光速飛行！🚀", flying:n=>`正在飛往${n}……`, here:"☀️ 我們在這裡！", allDone:"🎉 九大行星全部去過啦！",
@@ -692,7 +692,8 @@ BODY_DEFS.forEach(b=>{
     actions: ()=>{
       const a=[];
       if(EXPLORE[b.id]) a.push({label:EXPLORE[b.id].label(),fn:EXPLORE[b.id].enter});
-      if(b.id==='earth') a.push({label:T().home,href:'./',alt:true});
+      if(b.id==='earth') a.push({label:T().home,href:'./?from=galaxy',alt:true});
+      if(b.id==='pluto') a.push({label:T().plutoStory,href:'stories.html#s02',alt:true});   /* Max's own story about Pluto */
       return a.length?a:null;
     },
   };
@@ -1327,6 +1328,9 @@ function begin(){
   cam.tTheta=Math.atan2(_b.x-_a.x,_b.z-_a.z)+.55;
   setWhere(whereFor('earth'));
   chime();
+  /* galaxy.html#pluto (e.g. from Max's Pluto story) flies straight to that planet */
+  const goal=location.hash.slice(1);
+  if(PLANETS.includes(goal) && goal!=='earth'){ setTimeout(()=>travelTo(goal),1400); return; }
   setTimeout(()=>{ if(mode==='solar'&&at==='earth'&&shipState.phase!=='flying') showDestCard('earth'); toast(T().tapHint); },1600);
 }
 $('#startbtn').onclick=begin;

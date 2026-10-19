@@ -121,6 +121,8 @@
   #lightbox{position:fixed;inset:0;z-index:60;background:rgba(15,20,40,.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px}
   #lightbox img{max-width:94%;max-height:80%;border-radius:16px;border:6px solid #fff;box-shadow:0 20px 80px rgba(0,0,0,.5)}
   #lightbox .cap{color:#fff;font-weight:800;font-size:17px;white-space:pre-wrap;text-align:center;max-width:min(94%,640px)}
+  #lblink{display:none;padding:10px 20px;border-radius:999px;background:#fff;color:var(--blue);font-weight:800;font-size:15px;
+    text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
   .lbnav{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:50%;border:none;
     background:rgba(255,255,255,.92);font-size:20px;color:var(--blue);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.3)}
   #lbprev{left:max(10px,env(safe-area-inset-left))} #lbnext{right:max(10px,env(safe-area-inset-right))}
@@ -144,6 +146,17 @@
     display:none;align-items:center;gap:7px;border:none;border-radius:999px;padding:12px 22px;cursor:pointer;
     font-family:inherit;font-size:15.5px;font-weight:800;color:#fff;white-space:nowrap;
     background:linear-gradient(135deg,var(--teal),var(--blue));box-shadow:var(--shadow)}
+  #invite{position:fixed;z-index:30;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    width:min(92vw,400px);background:rgba(255,255,255,.97);border-radius:24px;padding:16px 18px 16px;text-align:center;
+    box-shadow:var(--shadow);display:none;animation:pop .4s}
+  body.touch #invite{bottom:calc(270px + env(safe-area-inset-bottom))}
+  #invite .ic{font-size:34px;line-height:1}
+  #invite h3{font-size:19px;font-weight:800;margin-top:4px}
+  #invite p{font-size:14.5px;font-weight:700;color:#5a5f6e;line-height:1.5;margin-top:4px}
+  #invite .btns{display:flex;gap:8px;margin-top:12px}
+  #invite button{flex:1;border:none;border-radius:14px;padding:11px 8px;font-family:inherit;font-size:15.5px;font-weight:800;cursor:pointer;
+    color:#fff;background:linear-gradient(135deg,var(--teal),var(--blue))}
+  #invite button.alt{color:var(--ink);background:#eef0f5}
   #tourhud:active{transform:translateX(-50%) scale(.95)}
   /* on touch devices lift it clear of the D-pad / jump buttons */
   body.touch #tourhud{bottom:calc(214px + env(safe-area-inset-bottom));padding:10px 18px;font-size:14.5px}

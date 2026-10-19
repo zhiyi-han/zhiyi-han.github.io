@@ -156,6 +156,12 @@ function afterPage(){
   setTimeout(() => { if (book && at === was && auto && at < views.length - 1) show(at + 1); }, 900);
 }
 
+/* stories that lead on to another part of the site */
+const LINKS = {
+  s02: ['galaxy.html#pluto', '🚀 坐火箭去看看冥王星'],
+  s03: ['./?from=stories&art=bumblebee', '🎨 看看 Max 畫的 Bumblebee'],
+  s15: ['galaxy.html', '🚀 坐上真正的火箭去太空'],
+};
 function afterReading(){
   const box = document.createElement('div'); box.className = 'after';
   const tap = (el, text) => { el.onclick = () => speak(text, [el]); };
@@ -183,6 +189,8 @@ function afterReading(){
       tap(q, itemSpeech(it)); box.appendChild(q);
     });
   });
+  const go = LINKS[book.id];
+  if (go){ const a = document.createElement('a'); a.className = 'again link'; a.href = go[0]; a.textContent = go[1]; box.appendChild(a); }
   const again = document.createElement('button'); again.className = 'again'; again.textContent = '↺ 再讀一次';
   again.onclick = () => show(0); box.appendChild(again);
   return box;
