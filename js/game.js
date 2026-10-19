@@ -19,91 +19,6 @@ function paper(ctx,w,h){
   ctx.globalAlpha=1;
 }
 
-/* placeholder "kid drawings" (used until real photos are dropped into assets/art/) */
-const DOODLES = {
-  glala(ctx,w,h){
-    paper(ctx,w,h);
-    // sun
-    crayonCircle(ctx,70,66,30,'#f4a825',6,'#ffd966');
-    for(let a=0;a<Math.PI*2;a+=Math.PI/5) crayon(ctx,[[70+Math.cos(a)*42,66+Math.sin(a)*42],[70+Math.cos(a)*58,66+Math.sin(a)*58]],'#f4a825',5,1);
-    // grass
-    for(let x=15;x<w;x+=26) crayon(ctx,[[x,h-24],[x+8,h-48],[x+16,h-24]],'#5cab4f',5,1);
-    // Glala: green friendly blob
-    crayonCircle(ctx,190,225,72,'#3f9e57',8,'#8fd58a');
-    crayonCircle(ctx,168,205,10,'#2b2b33',5); crayonCircle(ctx,214,205,10,'#2b2b33',5);
-    crayon(ctx,[[168,246],[186,258],[210,246]],'#2b2b33',6,1);       // smile
-    crayon(ctx,[[150,158],[142,120]],'#3f9e57',7,1); crayon(ctx,[[228,158],[238,120]],'#3f9e57',7,1); // antennae
-    crayonCircle(ctx,140,114,7,'#e0529a',5,'#f7a8cc'); crayonCircle(ctx,240,114,7,'#e0529a',5,'#f7a8cc');
-    // Little Tiger
-    crayonCircle(ctx,372,258,46,'#e08a1e',7,'#ffb84d');
-    crayonCircle(ctx,352,246,6,'#2b2b33',4); crayonCircle(ctx,390,246,6,'#2b2b33',4);
-    crayon(ctx,[[356,276],[372,284],[388,276]],'#2b2b33',5,1);
-    crayon(ctx,[[344,214],[336,196]],'#e08a1e',8,1); crayon(ctx,[[398,214],[406,196]],'#e08a1e',8,1); // ears
-    crayon(ctx,[[352,226],[344,238]],'#2b2b33',5,1); crayon(ctx,[[392,226],[400,238]],'#2b2b33',5,1); // stripes
-    crayon(ctx,[[416,268],[448,252],[444,282]],'#e08a1e',6,1);       // tail
-    // heart between friends
-    crayon(ctx,[[286,180],[278,164],[262,168],[262,186],[286,208],[310,186],[310,168],[294,164],[286,180]],'#e05454',6);
-  },
-  horse(ctx,w,h){
-    paper(ctx,w,h);
-    crayon(ctx,[[10,h-40],[w-10,h-46]],'#8a6b45',7,1);               // ground
-    // horse body + legs
-    crayonCircle(ctx,250,250,80,'#8a5a2e',8,'#c98d55');
-    crayon(ctx,[[190,310],[184,368]],'#8a5a2e',9,1); crayon(ctx,[[230,318],[228,372]],'#8a5a2e',9,1);
-    crayon(ctx,[[290,318],[294,372]],'#8a5a2e',9,1); crayon(ctx,[[318,306],[330,364]],'#8a5a2e',9,1);
-    crayon(ctx,[[322,218],[368,178],[386,196]],'#8a5a2e',10,1);      // neck
-    crayonCircle(ctx,396,186,26,'#8a5a2e',7,'#c98d55');              // head
-    crayonCircle(ctx,404,180,4,'#2b2b33',3);
-    crayon(ctx,[[168,238],[140,270],[150,300]],'#6b4523',7,1);       // tail
-    // general rider
-    crayonCircle(ctx,240,142,24,'#f2c9a0',6,'#f8ddc0');
-    crayon(ctx,[[240,168],[240,214]],'#c0392b',10,1);                // red robe
-    crayon(ctx,[[218,186],[262,186]],'#c0392b',8,1);                 // arms
-    crayon(ctx,[[214,120],[266,120],[240,96],[214,120]],'#d4af37',6);// helmet
-    // flag
-    crayon(ctx,[[300,150],[300,60]],'#6b4523',6,1);
-    crayon(ctx,[[300,64],[372,80],[300,104]],'#e05454',5);
-    ctx.fillStyle='#e05454'; ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(300,64); ctx.lineTo(372,80); ctx.lineTo(300,104); ctx.fill(); ctx.globalAlpha=1;
-  },
-  dragon(ctx,w,h){
-    paper(ctx,w,h);
-    // dragon body wave
-    const body=[]; for(let x=60;x<=440;x+=12) body.push([x, 170+Math.sin((x-60)/48)*44]);
-    crayon(ctx,body,'#d4a017',13,2);
-    crayon(ctx,body.map(p=>[p[0],p[1]+10]),'#e05454',7,1);
-    // scales
-    for(let i=4;i<body.length-2;i+=3) crayonCircle(ctx,body[i][0],body[i][1]-2,7,'#b8860b',3);
-    // head
-    crayonCircle(ctx,66,166,30,'#e05454',7,'#f08080');
-    crayonCircle(ctx,58,158,5,'#2b2b33',3);
-    crayon(ctx,[[44,142],[30,120]],'#d4a017',6,1); crayon(ctx,[[62,138],[56,114]],'#d4a017',6,1); // horns
-    crayon(ctx,[[38,180],[16,190]],'#e05454',5,1);                   // whisker
-    // dancers (stick kids) + poles
-    [110,230,350].forEach(x=>{
-      const y=176+Math.sin((x-60)/48)*44;
-      crayon(ctx,[[x,y+8],[x,286]],'#8a6b45',5,1);                    // pole
-      crayonCircle(ctx,x,306,14,'#f2c9a0',5,'#f8ddc0');               // head
-      crayon(ctx,[[x,320],[x,352]],'#4f7fe0',7,1);                    // body
-      crayon(ctx,[[x-14,336],[x+14,336]],'#4f7fe0',5,1);
-      crayon(ctx,[[x,352],[x-10,374]],'#2b2b33',5,1); crayon(ctx,[[x,352],[x+10,374]],'#2b2b33',5,1);
-    });
-    // confetti
-    for(let i=0;i<26;i++){ ctx.fillStyle=['#e05454','#f4a825','#4f7fe0','#3f9e57','#7a4fd0'][i%5]; ctx.globalAlpha=.7; ctx.fillRect(rand(20,w-20),rand(20,120),7,7); }
-    ctx.globalAlpha=1;
-  },
-  soon(ctx,w,h){
-    paper(ctx,w,h);
-    // rainbow
-    const cols=['#e05454','#f4a825','#f6d743','#3f9e57','#4f7fe0','#7a4fd0'];
-    cols.forEach((c,i)=>{ const pts=[]; for(let a=Math.PI;a<=Math.PI*2;a+=.16) pts.push([256+Math.cos(a)*(150-i*14), 300+Math.sin(a)*(150-i*14)]); crayon(ctx,pts,c,9,1); });
-    crayonCircle(ctx,120,300,26,'#9db8d8',6,'#e8f0fa'); crayonCircle(ctx,150,308,22,'#9db8d8',6,'#e8f0fa');
-    crayonCircle(ctx,392,300,26,'#9db8d8',6,'#e8f0fa'); crayonCircle(ctx,362,308,22,'#9db8d8',6,'#e8f0fa');
-    // star
-    const star=[]; for(let i=0;i<=10;i++){ const a=-Math.PI/2+i*Math.PI/5, r=i%2===0?56:24; star.push([256+Math.cos(a)*r, 180+Math.sin(a)*r]); }
-    crayon(ctx,star,'#f4a825',7); ctx.fillStyle='#ffd966'; ctx.globalAlpha=.45; ctx.beginPath();
-    star.forEach((p,i)=> i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1])); ctx.fill(); ctx.globalAlpha=1;
-  }
-};
 /* =============== ENGINE =============== */
 let renderer;
 try{
@@ -560,22 +475,19 @@ zoneDefs.forEach(z=>{
   scene.add(mk); markers.push(mk);
 });
 
-/* artwork textures (real image if present, doodle fallback) */
-const artData = {};   // id -> {tex, dataURL}
+/* artwork textures: paper until Max's drawing has loaded */
+const artSrc=(art,full)=>`assets/art/${art.id}${full?'':'-s'}.webp`;
 function loadArt(art){
-  const c=makeCanvas(512,410); const ctx=c.getContext('2d');
-  DOODLES[art.id==='soon'?'soon':art.id]?.(ctx,512,410);
+  const c=makeCanvas(512,410); paper(c.getContext('2d'),512,410);
   const tex=canvasTexture(c);
-  artData[art.id]={ tex, url:c.toDataURL('image/jpeg',.86), real:false };
   const img=new Image();
   img.onload=()=>{
     const cc=makeCanvas(640,512), g=cc.getContext('2d');
-    const s=Math.max(640/img.width,512/img.height);
-    g.drawImage(img,(640-img.width*s)/2,(512-img.height*s)/2,img.width*s,img.height*s);
+    const k=Math.max(640/img.width,512/img.height);
+    g.drawImage(img,(640-img.width*k)/2,(512-img.height*k)/2,img.width*k,img.height*k);
     tex.image=cc; tex.needsUpdate=true;
-    artData[art.id].url=cc.toDataURL('image/jpeg',.88); artData[art.id].real=true;
   };
-  img.src=art.img;
+  img.src=artSrc(art);
   return tex;
 }
 /* =============== ZONE BUILDERS =============== */
@@ -601,7 +513,8 @@ zones.welcome = { id:'welcome', pos:new THREE.Vector3(0,0,-3.4), color:0x4f7fe0,
 /* --- gallery: easels in an arc --- */
 function buildGallery(z){
   const g=new THREE.Group();
-  ARTWORKS.forEach((art,i)=>{
+  const easels=ARTWORKS.filter(a=>a.easel);
+  easels.forEach((art,i)=>{
     const e=new THREE.Group();
     // easel legs
     const legMat=mat(0xa9835c);
@@ -619,7 +532,7 @@ function buildGallery(z){
       new THREE.MeshBasicMaterial({ map:loadArt(art) }));
     pic.position.set(0,1.32,.045); pic.rotation.x=-.1; pic.userData.art=art.id; e.add(pic);
     // arrange in arc facing zone center
-    const aa=(-.62+i*.42);
+    const aa=(i-(easels.length-1)/2)*.42;
     e.position.set(Math.sin(aa)*3.6, 0, -Math.cos(aa)*3.6);
     e.lookAt(0,0,0);
     g.add(e);
@@ -1539,12 +1452,12 @@ function openPanel(id){
   z.chips.forEach(c=>{ const s=document.createElement('span'); s.className='chip'; s.textContent=c; chips.appendChild(s); });
   const gal=$('#panelgal'); gal.innerHTML='';
   if(id==='gallery'){
-    ARTWORKS.forEach(a=>{
+    ARTWORKS.forEach((a,i)=>{
       const d=document.createElement('div'); d.className='art';
-      const img=document.createElement('img'); img.src=artData[a.id].url; img.alt=a[lang];
+      const img=document.createElement('img'); img.src=artSrc(a); img.alt=a[lang]; img.loading='lazy';
       const cap=document.createElement('div'); cap.className='cap'; cap.textContent=a[lang];
       d.appendChild(img); d.appendChild(cap);
-      d.onclick=()=>{ $('#lbimg').src=artData[a.id].url; $('#lbcap').textContent=a[lang]; $('#lightbox').style.display='flex'; };
+      d.onclick=()=>showArt(i);
       gal.appendChild(d);
     });
   }
@@ -1633,7 +1546,27 @@ $('#dirwrap').addEventListener('pointerdown',e=>{ if(e.target.id==='dirwrap') $(
 $('#panelclose').onclick=closePanel;
 $('#panelspeak').onclick=()=>{ if(narrator.isSpeaking()) narrator.stop(); else { ensureAudio(); narrator.speak(panelSpeech,true); } };
 $('#panelwrap').addEventListener('pointerdown',e=>{ if(e.target.id==='panelwrap') closePanel(); });
+/* lightbox: one drawing at a time, ◀ ▶ / swipe / arrow keys to flip through */
+let artAt=0;
+function showArt(i){
+  artAt=(i+ARTWORKS.length)%ARTWORKS.length;
+  const a=ARTWORKS[artAt];
+  $('#lbimg').src=artSrc(a,true); $('#lbcap').textContent=`${a[lang]}  ·  ${artAt+1}/${ARTWORKS.length}`;
+  $('#lightbox').style.display='flex';
+  const nx=new Image(); nx.src=artSrc(ARTWORKS[(artAt+1)%ARTWORKS.length],true);
+}
+const lbOpen=()=>$('#lightbox').style.display==='flex';
 $('#lightbox').onclick=()=>$('#lightbox').style.display='none';
+$('#lbprev').onclick=e=>{ e.stopPropagation(); showArt(artAt-1); };
+$('#lbnext').onclick=e=>{ e.stopPropagation(); showArt(artAt+1); };
+{ let sx=0;
+  $('#lightbox').addEventListener('touchstart',e=>{ sx=e.touches[0].clientX; },{passive:true});
+  $('#lightbox').addEventListener('touchend',e=>{ const dx=e.changedTouches[0].clientX-sx; if(Math.abs(dx)>50){ e.preventDefault(); showArt(artAt+(dx<0?1:-1)); } });
+  addEventListener('keydown',e=>{ if(!lbOpen()) return;
+    if(e.key==='ArrowRight'){ showArt(artAt+1); e.stopImmediatePropagation(); }
+    else if(e.key==='ArrowLeft'){ showArt(artAt-1); e.stopImmediatePropagation(); }
+    else if(e.key==='Escape') $('#lightbox').style.display='none'; },true);
+}
 
 /* interact + jump */
 let activeZone=null;

@@ -2,11 +2,21 @@
 /* =============== CONFIG =============== */
 export const SITE_URL = 'https://zhiyihan.com';
 export const AVATAR = { skin:0xf7d9bc, hair:0x24201d, shirt:0xf7f8fa, bow:0x8fb9e6, shorts:0x3a4a6b, shoes:0xf4f4f6, cheek:0xf5a98d };
+/* Max's drawings: assets/art/<id>.webp (full) and <id>-s.webp (small); `easel` ones also stand in the 3D gallery */
 export const ARTWORKS = [
-  { id:'glala',  img:'assets/art/glala.jpg',  en:'Glala & Little Tiger',   zh:'Glala 和小老虎' },
-  { id:'horse',  img:'assets/art/horse.jpg',  en:'General on Horseback',   zh:'騎馬的將軍' },
-  { id:'dragon', img:'assets/art/dragon.jpg', en:'Dragon Dance No.1',      zh:'舞龍一號' },
-  { id:'soon',   img:'assets/art/more.jpg',   en:'More coming soon…',      zh:'更多作品即將登場…' },
+  { id:'bumblebee', easel:true, en:"Bumblebee's Space Adventure", zh:'Bumblebee 的太空之旅' },
+  { id:'lotte',     easel:true, en:'Lotte World',                 zh:'樂天世界' },
+  { id:'earth',     easel:true, en:'Good Earth, Bad Earth',       zh:'好地球，壞地球' },
+  { id:'sushi',     easel:true, en:'Knuckles Goes for Sushi',     zh:'Knuckles 的壽司之旅' },
+  { id:'sea',       easel:true, en:'Flood Rescue in Guangxi',     zh:'廣西洪水大救援' },
+  { id:'monster',   easel:true, en:'The Big Red Monster',         zh:'紅色大怪獸' },
+  { id:'pharaoh',   en:"The Pharaoh's Story",         zh:'埃及法老的故事' },
+  { id:'aquarium',  en:'COEX Aquarium, Seoul',        zh:'首爾 COEX 水族館' },
+  { id:'pool',      en:'Korea Diary: The Rooftop Pool', zh:'韓國日記：和媽媽在酒店露天泳池看風景' },
+  { id:'kart',      en:'Mario Bros. Kart Race',       zh:'馬里奧兄弟賽車' },
+  { id:'words',     en:'Little Word Monsters',        zh:'文字小怪獸' },
+  { id:'tower',     en:'The Cave and the Rainbow Tower', zh:'山洞和彩虹高塔' },
+  { id:'map',       en:'Treasure Map',                zh:'尋寶地圖' },
 ];
 
 /* =============== I18N =============== */
@@ -34,7 +44,7 @@ export const I18N = {
     jumpTip: "Wheee!",
     zones: {
       welcome:{ icon:'👋', t:'About Max', sub:'Nice to meet you!', body:"Max is a five-year-old boy in Hong Kong — his family calls him Mun Mun (滿滿), and he's the boy in all his picture books and stories. He's curious, imaginative and warm-hearted. He learns through stories, drawing, numbers, LEGO bricks and real adventures outdoors. Walk around and visit every corner of his world to see what he loves!", chips:['Curiosity','Imagination','Creativity','Empathy','Growth'] },
-      gallery:{ icon:'🎨', t:"Max's Art Gallery", sub:'Stories he draws', body:"Drawing is one of Max's favourite ways to talk about his world. He invents his own characters and stories — like Glala and his best friend Little Tiger — and draws real memories too, from museums to dragon dances. Tap a painting for a closer look!", chips:['World-building','Storytelling','Imagination'] },
+      gallery:{ icon:'🎨', t:"Max's Art Gallery", sub:'Stories he draws', body:"Drawing is one of Max's favourite ways to talk about his world. He mixes characters he loves with things he sees and his own imagination — Bumblebee flying through space, a pharaoh from a book about ancient Egypt, Knuckles visiting a sushi shop. He drew Bumblebee on the train to Disneyland, and an artist sitting nearby came over to cheer him on! Tap a drawing for a closer look.", chips:['Creativity','Storytelling','Imagination'] },
       numbers:{ icon:'🔢', t:'Number Land', sub:'Every number is a friend', body:"To Max, every number has its own personality! His love of numbers began with Numberblocks — now he plays with number bonds, shapes and patterns everywhere. Even the codes on Dad's cameras, 604 and 603, became characters in his stories.", chips:['Number Sense','Logic','Spatial Thinking'] },
       builder:{ icon:'🧱', t:"Builder's Corner", sub:'The flood-control project', body:"When Max saw news about summer floods, he asked: “How can people control floods?” He explored the answer with Dad — then built it all in LEGO: a river, houses, a dam and a diversion channel, watching how extra water is guided safely away.", chips:['Real-world Learning','Scientific Inquiry','Problem Solving'] },
       sports:{ icon:'⚽', t:'Sports Park', sub:'Brave and bouncy', body:"Football, swimming, cycling, climbing, Taekwondo and fencing — Max loves them all, and earned an Outstanding Fencer certificate. At a Spartan Kids race he was scared of the mud pit… but jumped in anyway, got up after falling, and finished the race. Try kicking the football!", chips:['Courage','Resilience','Fencing ⭐'] },
@@ -66,7 +76,7 @@ export const I18N = {
     jumpTip: "咻——！",
     zones: {
       welcome:{ icon:'👋', t:'關於 Max', sub:'很高興認識你！', body:"Max 是一個五歲的香港小男孩，家人都叫他「滿滿」，他的繪本和故事裏的主角就是他。他好奇、愛想像、有一顆溫暖的心。他喜歡從故事、畫畫、數字、LEGO 和戶外探險中學習。四處走走，逛逛他世界裡的每個角落，看看他喜歡的東西吧！", chips:['好奇','想像力','創意','同理心','成長'] },
-      gallery:{ icon:'🎨', t:'Max 的小畫廊', sub:'他畫下的故事', body:"畫畫是 Max 最喜歡的表達方式之一。他會創作自己的角色和故事——例如 Glala 和好朋友小老虎——也會畫下真實的回憶，例如博物館和舞龍。點一點畫作，仔細看看吧！", chips:['世界觀創作','說故事','想像力'] },
+      gallery:{ icon:'🎨', t:'Max 的小畫廊', sub:'他畫下的故事', body:"畫畫是 Max 最喜歡的表達方式之一。他把喜歡的角色、生活中的觀察和自己的想像放在一起——Bumblebee 飛上太空、書裏的埃及法老、Knuckles 去吃壽司。《Bumblebee 的太空之旅》是在去迪士尼的地鐵上畫的，旁邊一位藝術家還走過來鼓勵他呢！點一點畫作，仔細看看吧！", chips:['創造力','說故事','想像力'] },
       numbers:{ icon:'🔢', t:'數字樂園', sub:'每個數字都是朋友', body:"對 Max 來說，每個數字都有自己的性格！他對數字的喜愛從 Numberblocks 開始——現在他隨時隨地玩數感、圖形和規律。連爸爸相機上的編號 604 和 603，都變成了他故事裡的角色。", chips:['數感','邏輯','空間思維'] },
       builder:{ icon:'🧱', t:'小小工程師', sub:'治水大工程', body:"Max 在新聞裡看到夏天的洪水，就問：「人們怎樣才能治水呢？」他和爸爸一起找答案，然後用 LEGO 把整個工程搭了出來：河流、房子、水壩和分洪道，看着多餘的水被安全地引走。", chips:['真實世界學習','科學探究','解決問題'] },
       sports:{ icon:'⚽', t:'運動小天地', sub:'勇敢又活力滿滿', body:"足球、游泳、單車、攀爬、跆拳道和劍擊——Max 全部都喜歡，還獲得了「傑出小劍手」證書。在 Spartan 小勇士賽中，他很怕泥潭……但還是勇敢跳了進去，跌倒了再爬起來，堅持完成比賽。試試踢一踢足球吧！", chips:['勇氣','堅毅','劍擊 ⭐'] },

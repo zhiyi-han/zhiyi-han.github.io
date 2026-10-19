@@ -120,7 +120,10 @@
   /* ---------- lightbox ---------- */
   #lightbox{position:fixed;inset:0;z-index:60;background:rgba(15,20,40,.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px}
   #lightbox img{max-width:94%;max-height:80%;border-radius:16px;border:6px solid #fff;box-shadow:0 20px 80px rgba(0,0,0,.5)}
-  #lightbox .cap{color:#fff;font-weight:800;font-size:17px}
+  #lightbox .cap{color:#fff;font-weight:800;font-size:17px;white-space:pre-wrap;text-align:center;max-width:min(94%,640px)}
+  .lbnav{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:50%;border:none;
+    background:rgba(255,255,255,.92);font-size:20px;color:var(--blue);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  #lbprev{left:max(10px,env(safe-area-inset-left))} #lbnext{right:max(10px,env(safe-area-inset-right))}
 
   /* ---------- intro overlay ---------- */
   #overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;
