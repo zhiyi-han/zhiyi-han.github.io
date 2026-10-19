@@ -1258,7 +1258,8 @@ let panelSpeech='';
 /* "title. subtitle! body" — only add a full stop where a part doesn't already end with one */
 function speechOf(z,lg){
   const zh=lg==='zh';
-  return [z.t,z.sub,z.body].map((p,i,a)=>i<a.length-1&&!/[。！？!?.]$/.test(p)?p+(zh?'。':'.'):p).join(zh?'':' ');
+  const t=[z.t,z.sub,z.body].map((p,i,a)=>i<a.length-1&&!/[。！？!?.]$/.test(p)?p+(zh?'。':'.'):p).join(zh?'':' ');
+  return zh ? t : t.replace(/\s*\([\u4e00-\u9fff]+\)/g,'');   /* the English voice can't say 滿滿 — it hears "Mun Mun" */
 }
 const narrator=createNarrator({
   getLang:()=>lang, isSoundOn:()=>soundOn,
