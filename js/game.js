@@ -146,12 +146,12 @@ const world = new THREE.Group(); scene.add(world);
 const ZONE_R = 21.5;
 const zoneDefs = [
   { id:'gallery',  angle:-90,  color:0xe86f9e },
-  { id:'numbers',  angle:-45,  color:0xeaa83a },
-  { id:'builder',  angle:0,    color:0x9a5fe0 },
-  { id:'sports',   angle:45,   color:0x5cb56f },
-  { id:'nature',   angle:90,   color:0x3f9e57 },
-  { id:'kindness', angle:135,  color:0xe87070 },
-  { id:'reading',  angle:180,  color:0x2bb6a0 },
+  { id:'numbers',  angle:-39,  color:0xeaa83a },
+  { id:'builder',  angle:12,   color:0x9a5fe0 },
+  { id:'sports',   angle:63,   color:0x5cb56f },
+  { id:'nature',   angle:115,  color:0x3f9e57 },
+  { id:'kindness', angle:166,  color:0xe87070 },
+  { id:'reading',  angle:218,  color:0x2bb6a0 },
 ];
 /* plug-in scenes (js/scenes/registry.js) join the world here */
 EXTRA_SCENES.forEach(s=>{
@@ -232,7 +232,7 @@ for(let i=0;i<9;i++){
 const polar=(aDeg,r)=>{ const a=aDeg*Math.PI/180; return [Math.cos(a)*r, Math.sin(a)*r]; };
 
 /* duck pond (between Nature Trail and Kindness Tree) */
-const pondCenter=new THREE.Vector3(...(()=>{const [x,z]=polar(112,13);return [x,0,z];})());
+const pondCenter=new THREE.Vector3(...(()=>{const [x,z]=polar(140,13);return [x,0,z];})());
 {
   const pond=new THREE.Group();
   const water=new THREE.Mesh(new THREE.CircleGeometry(2.6,24), new THREE.MeshLambertMaterial({color:0x63b8e8}));
@@ -281,7 +281,7 @@ const millHub=new THREE.Group();
     blade.position.y=1.05; blade.castShadow=true; pv.add(blade); millHub.add(pv);
   }
   const hubCap=new THREE.Mesh(new THREE.SphereGeometry(.14,8,7), mat(0x8a6242)); millHub.add(hubCap);
-  const [x,z]=polar(-22,26); wm.position.set(x,0,z); wm.lookAt(0,0,0);
+  const [x,z]=polar(-14,26); wm.position.set(x,0,z); wm.lookAt(0,0,0);
   world.add(wm);
 }
 
@@ -301,7 +301,7 @@ const millHub=new THREE.Group();
     });
     puffG.position.set(sd*4.7,.15,0); rb.add(puffG);
   });
-  const [x,z]=polar(67,29); rb.position.set(x,0,z); rb.lookAt(0,0,0);
+  const [x,z]=polar(89,29); rb.position.set(x,0,z); rb.lookAt(0,0,0);
   world.add(rb);
 }
 
@@ -363,7 +363,7 @@ for(let i=0;i<8;i++){
 
 /* bees humming around two little flower patches */
 const beeSwarms=[];
-[[22,16],[160,17]].forEach(([aDeg,r])=>{
+[[40,16],[195,17]].forEach(([aDeg,r])=>{
   const [bx,bz]=polar(aDeg,r);
   const g=new THREE.Group(); g.position.set(bx,0,bz);
   [[.4,.2],[-.35,.45],[.05,-.4],[-.5,-.15]].forEach((o,i)=>{
@@ -968,11 +968,7 @@ function buildReading(z){
 
 /* build all zones + signs */
 const builders={ gallery:buildGallery, numbers:buildNumbers, builder:buildBuilder, sports:buildSports, nature:buildNature, kindness:buildKindness, reading:buildReading };
-const sceneCtx={ THREE, mat,
-  sfx:{ note, blip, noiseHit },
-  say:([en,zh])=>{ const m=lang==='zh'?zh:en; toast(m); narrator.speak(m); },
-  burst:(obj,n=12)=>burst(obj.getWorldPosition(new THREE.Vector3()),n,1.6) };
-EXTRA_SCENES.forEach(s=>{ builders[s.id]=(z)=>s.build(z,sceneCtx); });
+EXTRA_SCENES.forEach(s=>{ builders[s.id]=(z)=>s.build(z,{ THREE, mat }); });
 const zoneGroups={};
 zoneDefs.forEach(z=>{
   const g=builders[z.id](z);
@@ -989,7 +985,7 @@ zoneDefs.forEach(z=>{
 });
 
 /* ---- Story House: a cottage with an open-book roof; its door leads to stories.html ---- */
-const STORY_POS=(()=>{const [x,z]=polar(157,14.5);return new THREE.Vector3(x,0,z);})();
+const STORY_POS=(()=>{const [x,z]=polar(192,14.5);return new THREE.Vector3(x,0,z);})();
 const STORY_DIR=new THREE.Vector3(-STORY_POS.x,0,-STORY_POS.z).normalize();   /* door faces the plaza */
 const STORY_DOOR=STORY_POS.clone().addScaledVector(STORY_DIR,1.9);
 const storyHouse=new THREE.Group();
@@ -1100,7 +1096,6 @@ if(!location.search.includes('nomerge')){
     ...ducks.map(d=>d.g),
     ...beeSwarms.flatMap(s=>s.bees.map(b=>b.m)),
     ...markers, ...flames, ...heartMeshes,
-    ...Object.values(zoneGroups).flatMap(g=>g.userData.animated||[]),
   ]);
   const zoneRoots=new Set(Object.values(zoneGroups));
   zoneRoots.forEach(g=>mergeStatic(g,{skip:skipSet}));
@@ -1594,12 +1589,6 @@ function handleTap(x,y){
   for(const h of hits){
     let o=h.object, zid=null;
     let ro=h.object;
-    for(let q=h.object;q;q=q.parent) if(q.userData && q.userData.onTap){
-      let zq=q; while(zq && !(zq.userData && zq.userData.zone)) zq=zq.parent;
-      const zp=zones[zq.userData.zone].pos;
-      if(max.g.position.distanceTo(new THREE.Vector3(zp.x,0,zp.z)) < 6.4+2.4) q.userData.onTap(); else toast(T().walkCloser);
-      return;
-    }
     while(ro){ if(ro.userData && ro.userData.portal){ const p=PORTALS.find(q=>q.id===ro.userData.portal); if(portalNear===p) p.go(); else toast(T().walkCloser); return; } ro=ro.parent; }
     while(o){ if(o.userData && o.userData.zone){ zid=o.userData.zone; break; } o=o.parent; }
     if(zid){
@@ -2000,8 +1989,6 @@ function tick(){
     }
     prevBallLocalZ=lb.z;
   }
-
-  EXTRA_SCENES.forEach(s=>{ if(s.update) s.update(dt,t); });
 
   /* ---- zone proximity ---- */
   let nearest=null,nd=1e9;
