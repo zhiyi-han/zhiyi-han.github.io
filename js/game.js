@@ -36,19 +36,67 @@ scene.fog = new THREE.Fog(0xcdeffd, 62, 140);
 
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .1, 400);
 
-/* sky dome */
+/* sky dome: a sunny day sky, and a night sky that fades in over it */
+const skyGrad=(stops)=>{ const c=makeCanvas(4,256), g=c.getContext('2d'), gr=g.createLinearGradient(0,0,0,256);
+  stops.forEach(([o,col])=>gr.addColorStop(o,col)); g.fillStyle=gr; g.fillRect(0,0,4,256); return canvasTexture(c); };
+const daySky=new THREE.Mesh(new THREE.SphereGeometry(190,24,18), new THREE.MeshBasicMaterial({ fog:false, side:THREE.BackSide,
+  map:skyGrad([[0,'#4fb2ef'],[.55,'#a5dcf9'],[.78,'#dff4fd'],[1,'#eafff3']]) }));
+scene.add(daySky);
+const night=new THREE.Group(); night.visible=false; scene.add(night);
+const nightSky=new THREE.Mesh(new THREE.SphereGeometry(188,24,18), new THREE.MeshBasicMaterial({ fog:false, side:THREE.BackSide, transparent:true, opacity:0, depthWrite:false,
+  map:skyGrad([[0,'#060a24'],[.45,'#10194a'],[.72,'#27306e'],[.86,'#4a4a8c'],[1,'#5b5a96']]) }));
+nightSky.renderOrder=-10;   /* draw the backdrop first so the stars stay on top of it */
+night.add(nightSky);
 {
-  const c = makeCanvas(4,256), g = c.getContext('2d');
-  const grad = g.createLinearGradient(0,0,0,256);
-  grad.addColorStop(0,'#4fb2ef'); grad.addColorStop(.55,'#a5dcf9'); grad.addColorStop(.78,'#dff4fd'); grad.addColorStop(1,'#eafff3');
-  g.fillStyle=grad; g.fillRect(0,0,4,256);
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(190,24,18), new THREE.MeshBasicMaterial({ map:canvasTexture(c), side:THREE.BackSide, fog:false }));
-  scene.add(sky);
+  /* stars all over the upper sky, plus a dense Milky Way band across it */
+  const N=1400, M=2600, pos=new Float32Array((N+M)*3), col=new Float32Array((N+M)*3), R=180;
+  const put=(i,v,c)=>{ pos.set([v.x*R,v.y*R,v.z*R],i*3); col.set(c,i*3); };
+  const v=new THREE.Vector3();
+  for(let i=0;i<N;i++){
+    do{ v.set(rand(-1,1),rand(-.05,1),rand(-1,1)); }while(v.lengthSq()>1||v.lengthSq()<.05);
+    v.normalize(); const k=rand(.55,1); put(i,v,[k,k,k*rand(.92,1.08)]);
+  }
+  const axis=new THREE.Vector3(.35,.25,1).normalize(), u=new THREE.Vector3(1,0,-.35).normalize().cross(axis).normalize(), w=axis.clone().cross(u);
+  for(let i=0;i<M;i++){
+    const a=rand(0,Math.PI*2), off=(rand(-1,1)+rand(-1,1)+rand(-1,1))*.06;
+    v.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(w,Math.sin(a)).addScaledVector(axis,off).normalize();
+    if(v.y<-.03) v.y=-v.y;
+    const k=rand(.35,.8); put(N+i,v,[k*rand(.8,1),k*rand(.8,1),k]);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  night.add(new THREE.Points(g,new THREE.PointsMaterial({ size:2.2, sizeAttenuation:false, vertexColors:true, fog:false, transparent:true, opacity:0, depthWrite:false })));
+  /* soft glow clouds along the band */
+  const glow=makeCanvas(128,128), gx=glow.getContext('2d'), rg=gx.createRadialGradient(64,64,0,64,64,64);
+  rg.addColorStop(0,'rgba(190,170,255,.55)'); rg.addColorStop(1,'rgba(190,170,255,0)'); gx.fillStyle=rg; gx.fillRect(0,0,128,128);
+  const gtex=canvasTexture(glow);
+  for(let i=0;i<26;i++){
+    const a=i/26*Math.PI*2;
+    v.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(w,Math.sin(a)).normalize(); if(v.y<0) continue;
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({ map:gtex, fog:false, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending }));
+    sp.position.copy(v).multiplyScalar(175); const sc=rand(30,52); sp.scale.set(sc,sc*.6,1); night.add(sp);
+  }
+  /* the Moon, and Jupiter + Saturn as bright points */
+  const disc=(size,draw)=>{ const c=makeCanvas(size,size); draw(c.getContext('2d'),size);
+    return new THREE.Sprite(new THREE.SpriteMaterial({ map:canvasTexture(c), fog:false, transparent:true, opacity:0, depthWrite:false })); };
+  const moon=disc(256,(x,S)=>{
+    const h=x.createRadialGradient(S/2,S/2,S*.2,S/2,S/2,S/2); h.addColorStop(0,'rgba(255,248,220,.5)'); h.addColorStop(1,'rgba(255,248,220,0)');
+    x.fillStyle=h; x.fillRect(0,0,S,S);
+    x.fillStyle='#fff6d8'; x.beginPath(); x.arc(S/2,S/2,S*.22,0,7); x.fill();
+    x.fillStyle='rgba(200,190,160,.45)'; [[.44,.44,.05],[.56,.55,.035],[.47,.6,.03],[.58,.42,.025]].forEach(([cx,cy,r])=>{ x.beginPath(); x.arc(S*cx,S*cy,S*r,0,7); x.fill(); });
+  });
+  moon.position.set(52,74,-118); moon.scale.set(40,40,1); night.add(moon);
+  const planet=(c1,c2,ring)=>disc(64,(x,S)=>{
+    const h=x.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2); h.addColorStop(0,c1); h.addColorStop(.25,c2); h.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=h; x.fillRect(0,0,S,S);
+    if(ring){ x.strokeStyle='rgba(255,236,190,.8)'; x.lineWidth=2; x.beginPath(); x.ellipse(S/2,S/2,S*.32,S*.1,-.35,0,7); x.stroke(); } });
+  const jup=planet('#fff4e0','rgba(240,205,160,.9)'); jup.position.set(-70,62,-120); jup.scale.set(7,7,1); night.add(jup);
+  const sat=planet('#fff8e6','rgba(240,220,170,.85)',true); sat.position.set(-120,48,30); sat.scale.set(8,8,1); night.add(sat);
 }
 
-/* lights */
-scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x86c46f, 1.15));
-scene.add(new THREE.AmbientLight(0xffffff, .45));
+/* lights (sunlight by day, cool moonlight at night) */
+const hemi=new THREE.HemisphereLight(0xcfe8ff, 0x86c46f, 1.15); scene.add(hemi);
+const amb=new THREE.AmbientLight(0xffffff, .45); scene.add(amb);
 const sun = new THREE.DirectionalLight(0xfff2d9, 2.6);
 sun.position.set(24,36,14);
 sun.castShadow = true;
@@ -56,6 +104,23 @@ sun.shadow.mapSize.set(isTouch?1024:2048, isTouch?1024:2048);
 sun.shadow.camera.left=-45; sun.shadow.camera.right=45; sun.shadow.camera.top=45; sun.shadow.camera.bottom=-45;
 sun.shadow.camera.far=110; sun.shadow.bias=-0.0004;
 scene.add(sun);
+
+/* day <-> night: night by the visitor's own clock, or toggled with the 🌙 button */
+const DAY={ hemiI:1.15, hemiS:new THREE.Color(0xcfe8ff), hemiG:new THREE.Color(0x86c46f), amb:.45, sunI:2.6, sunC:new THREE.Color(0xfff2d9), fog:new THREE.Color(0xcdeffd) };
+const NIGHT={ hemiI:.75, hemiS:new THREE.Color(0x7d8fd8), hemiG:new THREE.Color(0x3a5a48), amb:.32, sunI:1.0, sunC:new THREE.Color(0xb8c8ff), fog:new THREE.Color(0x1c2556) };
+let nightK=0, nightGoal=(()=>{ const h=new Date().getHours(); return h>=19||h<6 ? 1 : 0; })();
+const nightGlows=[];   /* little lanterns that only shine at night */
+function applyNight(k){
+  hemi.intensity=THREE.MathUtils.lerp(DAY.hemiI,NIGHT.hemiI,k);
+  hemi.color.copy(DAY.hemiS).lerp(NIGHT.hemiS,k); hemi.groundColor.copy(DAY.hemiG).lerp(NIGHT.hemiG,k);
+  amb.intensity=THREE.MathUtils.lerp(DAY.amb,NIGHT.amb,k);
+  sun.intensity=THREE.MathUtils.lerp(DAY.sunI,NIGHT.sunI,k); sun.color.copy(DAY.sunC).lerp(NIGHT.sunC,k);
+  scene.fog.color.copy(DAY.fog).lerp(NIGHT.fog,k);
+  night.visible=k>.001;
+  night.traverse(o=>{ if(o.material) o.material.opacity=k; });
+  nightGlows.forEach(g=>{ g.visible=k>.05; g.material.opacity=k*.8; });
+  document.body.classList.toggle('night',k>.5);
+}
 
 /* materials helper */
 const MAT = {};
@@ -327,26 +392,10 @@ const beeSwarms=[];
   beeSwarms.push({x:bx,z:bz,bees});
 });
 
-/* Jupiter — Max's favourite planet, hanging in the sky */
-const jupiter=(()=>{
-  const c=document.createElement('canvas'); c.width=256; c.height=128;
-  const x=c.getContext('2d');
-  const bands=['#e8d5b5','#d9b98c','#f0e2c8','#c9a06e','#e8d5b5','#d4ae80','#f0e2c8','#caa678','#e3ceac'];
-  const bh=c.height/bands.length;
-  bands.forEach((col,i)=>{ x.fillStyle=col; x.fillRect(0,i*bh,c.width,bh+1); });
-  x.globalAlpha=.35; x.fillStyle='#b98d5e';
-  for(let i=0;i<7;i++){ const y=rand(10,118); x.fillRect(0,y,c.width,rand(1.5,4)); }
-  x.globalAlpha=1;
-  /* Great Red Spot */
-  x.fillStyle='#cf6a4e'; x.beginPath(); x.ellipse(170,84,20,11,0,0,7); x.fill();
-  x.fillStyle='#e08a6a'; x.beginPath(); x.ellipse(170,84,13,7,0,0,7); x.fill();
-  const g=new THREE.Mesh(new THREE.SphereGeometry(4.2,24,18),
-    new THREE.MeshLambertMaterial({map:canvasTexture(c), fog:false}));
-  g.position.set(-40,11,-46); g.rotation.z=.18;
-  scene.add(g); return g;
-})();
+/* where the rocket heads for when it climbs into the sky (and comes back from) */
+const SKY_GATE=new THREE.Vector3(-40,11,-46);
 
-/* rocket that launches from the field up to Jupiter (orange + grey) */
+/* rocket that launches from the field into space (orange + grey) */
 const ROCKET_PAD=(()=>{const [x,z]=polar(246,14);return new THREE.Vector3(x,0,z);})();
 const rocket=new THREE.Group(), rocketFlame=new THREE.Group();
 {
@@ -385,10 +434,10 @@ const rocket=new THREE.Group(), rocketFlame=new THREE.Group();
 let rocketPhase=0, rocketT=0;   /* 0 on the pad, 4 countdown, 1 lift-off, 3 landing */
 let riding=false, rocketMarker=null;
 const ROCK_UP=new THREE.Vector3(0,1,0);
-const ROCK_A0=Math.atan2(ROCKET_PAD.z-jupiter.position.z, ROCKET_PAD.x-jupiter.position.x);
+const ROCK_A0=Math.atan2(ROCKET_PAD.z-SKY_GATE.z, ROCKET_PAD.x-SKY_GATE.x);
 const _rp=new THREE.Vector3(), _rd=new THREE.Vector3();
 function rocketOrbitPos(a,out){
-  const J=jupiter.position;
+  const J=SKY_GATE;
   return out.set(J.x+Math.cos(a)*6.5, J.y-1.2, J.z+Math.sin(a)*6.5);
 }
 rocket.traverse(o=>{ o.userData.portal='rocket'; });
@@ -1012,6 +1061,33 @@ let storyGlow;
   mk.userData.baseY=5.1; mk.userData.ph=2.4; scene.add(mk); markers.push(mk); rocketMarker=mk;
 }
 
+/* night lights: lanterns by the cottage door, the rocket pad and the plaza, and fireflies */
+const glowTex=(()=>{ const c=makeCanvas(64,64), x=c.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,240,180,1)'); g.addColorStop(.25,'rgba(255,210,110,.8)'); g.addColorStop(1,'rgba(255,190,80,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,64); return canvasTexture(c); })();
+const glowSprite=(size)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, fog:false }));
+  sp.scale.set(size,size,1); sp.visible=false; scene.add(sp); return sp; };
+{
+  const side=new THREE.Vector3(STORY_DIR.z,0,-STORY_DIR.x);
+  [-1,1].forEach(sd=>{ const g=glowSprite(.9); g.position.copy(STORY_POS).addScaledVector(STORY_DIR,1.3).addScaledVector(side,sd*.75).setY(1.9); nightGlows.push(g); });
+  const w=glowSprite(1.7); w.position.copy(STORY_POS).addScaledVector(STORY_DIR,1.25).setY(1.2); nightGlows.push(w);   /* warm doorway */
+  for(let i=0;i<6;i++){ const a=i/6*Math.PI*2, g=glowSprite(.6); g.position.set(ROCKET_PAD.x+Math.cos(a)*1.15,.35,ROCKET_PAD.z+Math.sin(a)*1.15); nightGlows.push(g); }
+  /* little lamp posts around the plaza */
+  for(let i=0;i<6;i++){
+    const a=(i+.5)/6*Math.PI*2, x=Math.cos(a)*5.3, z=Math.sin(a)*5.3;
+    const post=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,1.3,8),mat(0x4a5060)); post.position.set(x,.65,z); post.castShadow=true; world.add(post);
+    const lamp=new THREE.Mesh(new THREE.SphereGeometry(.13,12,10),mat(0xfff3c4)); lamp.position.set(x,1.38,z); world.add(lamp);
+    const g=glowSprite(.85); g.position.set(x,1.38,z); nightGlows.push(g);
+  }
+}
+const fireflies=[];
+for(let i=0;i<22;i++){
+  const a=rand(0,Math.PI*2), r=rand(7,28), s=glowSprite(.55);
+  fireflies.push({ s, x:Math.cos(a)*r, z:Math.sin(a)*r, y:rand(.6,2.2), r:rand(.5,1.6), sp:rand(.2,.5)*(i%2?1:-1), ph:rand(0,6) });
+  nightGlows.push(s);
+}
+nightK=nightGoal; applyNight(nightK);
+
 /* ---- perf: bake static meshes into merged buffers (far fewer draw calls).
         Disable with ?nomerge for A/B comparison. ---- */
 if(!location.search.includes('nomerge')){
@@ -1572,6 +1648,11 @@ function openPanel(id){
       gal.appendChild(d);
     });
   }
+  if(id==='welcome'){   /* where Max has lived and travelled */
+    const a=document.createElement('a'); a.className='dirtour'; a.href='earth.html';
+    a.style.cssText='background:linear-gradient(135deg,#1f6fb8,#3fae6a);text-decoration:none;grid-column:1/-1;margin:0';
+    a.textContent=T().footprints; gal.appendChild(a);
+  }
   if(id==='reading'){   /* a peek at the Story House shelf */
     [['b1','滿滿和會變色的情緒怪獸'],['b2','滿滿腦子裏的紅黃綠小隊'],['b3','小綠的兩種練習'],['','']].forEach(([b,t])=>{
       const d=document.createElement('a'); d.className='art book'; d.href='stories.html'+(b?'#'+b:'');
@@ -1666,6 +1747,9 @@ function openDir(){
   const tb=document.createElement('button'); tb.className='dirtour'; tb.textContent=T().tourBtn;
   tb.onclick=()=>{ $('#dirwrap').style.display='none'; startTour(); };
   list.appendChild(tb);
+  const eb=document.createElement('a'); eb.className='dirtour'; eb.href='earth.html';
+  eb.style.cssText='background:linear-gradient(135deg,#1f6fb8,#3fae6a);text-decoration:none';
+  eb.textContent=T().footprints; list.appendChild(eb);
   [['story',T().owStories,'linear-gradient(135deg,#f0a35e,#e0703a)'],['rocket',T().owGalaxy,'linear-gradient(135deg,#26306e,#7a4fd0)']].forEach(([id,[ic,name],bg])=>{
     const pb=document.createElement('button'); pb.className='dirtour'; pb.style.background=bg;
     pb.textContent=`${ic} ${name}`;
@@ -1741,6 +1825,9 @@ function setLang(l){
   saveGame();
 }
 $('#langbtn').onclick=()=>setLang(lang==='en'?'zh':'en');
+const updateNightBtn=()=>{ $('#nightbtn').textContent=nightGoal?'☀️':'🌙'; };
+$('#nightbtn').onclick=()=>{ nightGoal=nightGoal?0:1; updateNightBtn(); };
+updateNightBtn();
 document.querySelectorAll('#olang button').forEach(b=>b.onclick=()=>setLang(b.dataset.l));
 
 /* overlay */
@@ -1946,10 +2033,13 @@ function tick(){
 
   /* ---- ambient animations ---- */
   clouds.rotation.y+=dt*.0045;
+  if(nightK!==nightGoal){ nightK=nightGoal>nightK?Math.min(nightGoal,nightK+dt/1.6):Math.max(nightGoal,nightK-dt/1.6); applyNight(nightK); }
+  if(nightK>0) fireflies.forEach((f,i)=>{ const a=t*f.sp+f.ph;
+    f.s.position.set(f.x+Math.cos(a)*f.r, f.y+Math.sin(t*1.3+f.ph)*.35, f.z+Math.sin(a*1.3)*f.r);
+    f.s.material.opacity=nightK*(.55+.45*Math.sin(t*3+f.ph)); });
 
   /* ---- ambient life ---- */
   millHub.rotation.z+=dt*1.1;
-  jupiter.rotation.y+=dt*.04;
   ducks.forEach(d=>{
     const a=t*d.sp+d.ph;
     d.g.position.set(pondCenter.x+Math.cos(a)*d.r,.04+Math.sin(t*2.1+d.ph)*.035,pondCenter.z+Math.sin(a)*d.r);
@@ -1970,7 +2060,7 @@ function tick(){
     b.m.rotation.y=-a+Math.PI/2;
   }));
   /* rocket: countdown on the pad -> lift-off -> into the Galaxy game;
-     coming back from the Galaxy it glides down from Jupiter and lands */
+     coming back from the Galaxy it glides down from the sky and lands */
   rocketT+=dt;
   if(rocketPhase===4){            /* countdown: Max (helmet on) waits by the rocket, then climbs in */
     max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7); state.vy=0;
@@ -1981,7 +2071,7 @@ function tick(){
     rocket.position.set(ROCKET_PAD.x+Math.sin(t*61)*shake,0,ROCKET_PAD.z+Math.cos(t*53)*shake);
     rocketFlame.visible=rocketT>1.8; rocketFlame.scale.set(.6,.5+Math.sin(t*40)*.15,.6);
     if(rocketT>=3){ rocketPhase=1; rocketT=0; bigMsg(T().liftoff,1400); fanfare(); }
-  }else if(rocketPhase===1){      /* lift-off toward Jupiter, then on into space */
+  }else if(rocketPhase===1){      /* lift-off up into the sky, then on into space */
     const e=Math.min(rocketT/5,1), k=e*e*(3-2*e);
     rocketOrbitPos(ROCK_A0,_rp);
     rocket.position.lerpVectors(ROCKET_PAD,_rp,k);
@@ -2043,7 +2133,7 @@ function tick(){
     camTargetSmooth.lerp(new THREE.Vector3(0,1.5,0),Math.min(1,3*dt));
   }else{
     if(flyT<1){
-      flyT=Math.min(1,flyT+dt/1.7);
+      flyT=Math.min(1,flyT+dt/(flyFrom.dist>100?2.6:1.7));
       const e=1-Math.pow(1-flyT,3);
       cam.dist=THREE.MathUtils.lerp(flyFrom.dist,isTouch?9.4:7.8,e);
       cam.phi=THREE.MathUtils.lerp(flyFrom.phi,1.02,e);
@@ -2125,7 +2215,7 @@ updateStars();
 {
   const qs=new URLSearchParams(location.search), from=qs.get('from');
   const art=ARTWORKS.findIndex(a=>a.id===qs.get('art'));   /* ?art=bumblebee: show that drawing */
-  if(from==='galaxy' || from==='stories'){
+  if(from==='galaxy' || from==='stories' || from==='earth'){
     history.replaceState(null,'',location.pathname);
     started=true; flyT=1;
     $('#overlay').style.display='none'; $('#tourhud').style.display='flex';
@@ -2134,7 +2224,10 @@ updateStars();
     const wake=()=>{ ensureAudio(); narrator.unlock(); startMusic();
       ['pointerdown','keydown'].forEach(ev=>removeEventListener(ev,wake,true)); };
     ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,wake,true));
-    if(from==='stories'){
+    if(from==='earth'){   /* dived down from the globe: drop out of the sky onto the plaza */
+      flyT=0; flyFrom={dist:150,phi:.04,theta:0};
+      setTimeout(()=>toast(T().backFromEarth),1600);
+    }else if(from==='stories'){
       const p=STORY_DOOR.clone().addScaledVector(STORY_DIR,2.6);   /* just outside the door hint, so a stray tap does not go straight back in */
       max.g.position.set(p.x,0,p.z); max.g.rotation.y=Math.atan2(STORY_DIR.x,STORY_DIR.z);
       cam.theta=Math.atan2(STORY_DIR.x,STORY_DIR.z);

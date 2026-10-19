@@ -1,4 +1,4 @@
-"""Generate natural narration for the galaxy game's fact cards.
+"""Generate natural narration for the cards in Max's World, the Galaxy game and Max's Footprints.
 
 Neural voices (Microsoft, via the free `edge-tts` package):
   Cantonese  zh-HK-HiuMaanNeural
@@ -10,7 +10,8 @@ Usage
      the clipboard to a file):
        galaxy.html:  copy(JSON.stringify(await __galaxy.voiceLines()))  -> galaxy_lines.json
        index.html:   copy(JSON.stringify(__max.voiceLines()))           -> world_lines.json
-  3. python tools/make_voice.py galaxy_lines.json world_lines.json
+       earth.html:   copy(JSON.stringify(__earth.voiceLines()))         -> earth_lines.json
+  3. python tools/make_voice.py galaxy_lines.json world_lines.json earth_lines.json
      (pass every file: clips not listed in any of them are deleted)
 
 Only cards whose text changed (new hash key) are generated; files for
