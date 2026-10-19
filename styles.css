@@ -154,6 +154,30 @@
   #tournext{margin-top:16px;width:100%;padding:13px;border:none;border-radius:16px;cursor:pointer;font-family:inherit;
     font-size:16.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--teal),var(--blue));display:none}
   #tournext:active{transform:scale(.96)}
+  #oworlds{margin-top:16px}
+  #owt{font-size:12.5px;font-weight:800;color:#8b8f9e;margin-bottom:8px}
+  .owrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .ow{display:flex;flex-direction:column;align-items:center;gap:2px;padding:11px 6px 10px;border-radius:18px;text-decoration:none;color:#fff;
+    box-shadow:0 8px 20px rgba(30,40,90,.22);transition:transform .15s}
+  .ow:active{transform:scale(.95)}
+  .ow.gal{background:linear-gradient(150deg,#26306e,#5b3ea8 60%,#8a4fd0)}
+  .ow.sto{background:linear-gradient(150deg,#f0a35e,#e0703a)}
+  .ow.art{background:linear-gradient(150deg,#f08cb4,#d9578f)}
+  .ow .i{font-size:26px;line-height:1.1}
+  .ow b{font-size:14px;font-weight:800;line-height:1.25}
+  .ow small{font-size:11px;font-weight:700;opacity:.9;line-height:1.3}
+  #overlay{overflow-y:auto}
+  #ocard{margin:auto}
+  @media (max-height:700px){ #ocard{padding:22px 22px 18px} #ocard .mlogo{width:56px;height:56px;font-size:30px} #ocard h1{font-size:28px} #ocard .ctr{display:none} }
+  /* fade into the Galaxy game (space) or the Story House (book) */
+  #warp{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .9s;pointer-events:none}
+  #warp.on{opacity:1}
+  #warp.space{background:radial-gradient(circle at 50% 40%,#2a3170,#05071a 70%)}
+  #warp.space .ico:before{content:"🚀";font-size:64px;display:block;animation:warpUp 1s ease-in forwards}
+  #warp.book{background:#fbf4e6;transition-duration:.6s}
+  #warp.book .ico:before{content:"📖";font-size:80px;display:block;animation:warpBook .7s ease-out forwards}
+  @keyframes warpUp{from{transform:translateY(40px) scale(.7)}to{transform:translateY(-30px) scale(1.15)}}
+  @keyframes warpBook{from{transform:scale(.4) rotate(-8deg)}to{transform:scale(1.25) rotate(0)}}
   #ocard .url{margin-top:12px;font-size:12px;font-weight:800;color:#b8bcc8;letter-spacing:1px}
   #olang{margin:2px auto 0;display:inline-flex;background:#f0f1f5;border-radius:999px;padding:3px}
   #olang button{border:none;background:transparent;font-family:inherit;font-weight:800;font-size:13px;color:#8b8f9e;

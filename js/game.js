@@ -382,8 +382,8 @@ const rocket=new THREE.Group(), rocketFlame=new THREE.Group();
   rocket.position.copy(ROCKET_PAD);
   world.add(rocket);
 }
-let rocketPhase=0, rocketT=0;   /* 0 idle on pad, 1 flying, 2 arrived/hidden */
-let riding=false, rocketNear=false, rocketToastShown=false;
+let rocketPhase=0, rocketT=0;   /* 0 on the pad, 4 countdown, 1 lift-off, 3 landing */
+let riding=false, rocketMarker=null;
 const ROCK_UP=new THREE.Vector3(0,1,0);
 const ROCK_A0=Math.atan2(ROCKET_PAD.z-jupiter.position.z, ROCKET_PAD.x-jupiter.position.x);
 const _rp=new THREE.Vector3(), _rd=new THREE.Vector3();
@@ -391,15 +391,41 @@ function rocketOrbitPos(a,out){
   const J=jupiter.position;
   return out.set(J.x+Math.cos(a)*6.5, J.y-1.2, J.z+Math.sin(a)*6.5);
 }
-rocket.traverse(o=>{ o.userData.rocket=true; });
+rocket.traverse(o=>{ o.userData.portal='rocket'; });
+/* boarding: helmet on, countdown 3-2-1, lift-off, then fly on into the Galaxy game */
 function boardRocket(){
-  if(riding || rocketPhase!==0 || panelOpen) return;
+  if(riding || rocketPhase!==0 || panelOpen || leaving) return;
   riding=true; endTour();
-  max.g.visible=false;
-  rocketPhase=1; rocketT=0; rocketFlame.visible=true;
-  ding();
-  rocketNear=false; $('#hint').style.display='none';
+  portalNear=null; $('#hint').style.display='none';
+  max.helmet.visible=true;
+  rocketPhase=4; rocketT=0; countN=3;
+  bigMsg('3',800); ding();
 }
+let countN=0, leaving=false;
+/* fade to space (rocket) or to paper (book), then open the other page */
+function leaveTo(url,kind){
+  leaving=true; narrator.stop();
+  const w=$('#warp'); w.className=kind; w.style.display='flex';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.add('on')));
+  setTimeout(()=>{ location.href=url; },kind==='space'?1000:700);
+}
+/* places you walk up to and enter: the rocket (Galaxy game) and the Story House door */
+const PORTALS=[
+  { id:'rocket', at:()=>ROCKET_PAD,  r:2.8, label:()=>'🚀 '+T().rocketHint, go:()=>boardRocket(), ok:()=>!riding&&rocketPhase===0 },
+  { id:'story',  at:()=>STORY_DOOR,  r:2.3, label:()=>'📖 '+T().storyHint,  go:()=>enterStories(), ok:()=>!riding },
+];
+let portalNear=null;
+function enterStories(){ if(leaving||panelOpen) return; endTour(); portalNear=null; $('#hint').style.display='none'; ding(); leaveTo('stories.html','book'); }
+/* coming back with the browser's Back button restores this page as it was left: tidy up */
+addEventListener('pageshow',e=>{
+  if(!e.persisted || !leaving) return;
+  leaving=false; $('#warp').classList.remove('on'); $('#warp').style.display='none';
+  if(riding){
+    riding=false; rocketPhase=0; rocketT=0; rocketFlame.visible=false;
+    rocket.quaternion.identity(); rocket.position.copy(ROCKET_PAD);
+    max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7); max.g.visible=true; max.helmet.visible=false;
+  }
+});
 
 /* clouds */
 const clouds = new THREE.Group(); scene.add(clouds);
@@ -909,11 +935,88 @@ zoneDefs.forEach(z=>{
   world.add(sign);
 });
 
+/* ---- Story House: a cottage with an open-book roof; its door leads to stories.html ---- */
+const STORY_POS=(()=>{const [x,z]=polar(192,14.5);return new THREE.Vector3(x,0,z);})();
+const STORY_DIR=new THREE.Vector3(-STORY_POS.x,0,-STORY_POS.z).normalize();   /* door faces the plaza */
+const STORY_DOOR=STORY_POS.clone().addScaledVector(STORY_DIR,1.9);
+const storyHouse=new THREE.Group();
+let storyGlow;
+{
+  const H=storyHouse, wall=mat(0xfff1d6), trimM=mat(0xc98f5a), wood=mat(0x9a6a43);
+  const box=(w,h,d,m,x,y,z)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); o.castShadow=true; o.receiveShadow=true; H.add(o); return o; };
+  box(3,2.1,2.4,wall,0,1.05,0);
+  box(3.12,.22,2.52,trimM,0,.11,0);
+  /* gable ends under the roof */
+  const tri=new THREE.Shape(); tri.moveTo(-1.2,0); tri.lineTo(1.2,0); tri.lineTo(0,1.02); tri.lineTo(-1.2,0);
+  const gable=new THREE.Mesh(new THREE.ExtrudeGeometry(tri,{depth:2.96,bevelEnabled:false}).translate(0,0,-1.48),wall);
+  gable.rotation.y=Math.PI/2; gable.position.y=2.1; H.add(gable);
+  /* roof = an open book lying face-down: two covers, page blocks, a round spine */
+  [[-1,0x2bb6a0],[1,0xe87070]].forEach(([sd,col])=>{
+    const half=new THREE.Group(); half.position.y=3.12; half.rotation.x=sd*.62; H.add(half);
+    let coverMat=mat(col);
+    if(sd>0){   /* the front cover carries the title, like a real book */
+      const c=makeCanvas(512,260), x=c.getContext('2d');
+      x.fillStyle='#e87070'; x.fillRect(0,0,512,260);
+      x.strokeStyle='#fff3dc'; x.lineWidth=8; rr(x,16,16,480,228,22); x.stroke();
+      x.textAlign='center'; x.fillStyle='#fff8ea';
+      x.font='900 76px "Noto Sans TC","PingFang TC",sans-serif'; x.fillText('滿滿故事屋',256,122);
+      x.font='800 46px "Baloo 2",sans-serif'; x.fillText('★ Story House ★',256,196);
+      const side=mat(col);
+      coverMat=[side,side,new THREE.MeshLambertMaterial({map:canvasTexture(c)}),side,side,side];
+    }
+    const cover=new THREE.Mesh(new THREE.BoxGeometry(3.5,.09,1.78),coverMat); cover.position.z=sd*.87; cover.castShadow=true; half.add(cover);
+    const pages=new THREE.Mesh(new THREE.BoxGeometry(3.3,.2,1.62),mat(0xfffaf0)); pages.position.set(0,-.14,sd*.8); half.add(pages);
+  });
+  const spine=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,3.5,12),mat(0x24877a));
+  spine.rotation.z=Math.PI/2; spine.position.y=3.14; H.add(spine);
+  /* chimney: a stack of books */
+  [[0xffd166,.0],[0x4f7fe0,.25],[0xf7a8cc,-.2]].forEach(([c,r],i)=>{ const b=box(.52,.14,.38,mat(c),1.0,2.62+i*.14,-.62); b.rotation.y=r; });
+  /* arched door, knob, step */
+  const fr=new THREE.Mesh(new THREE.PlaneGeometry(1.04,1.3),trimM); fr.position.set(0,.85,1.206); H.add(fr);
+  const frA=new THREE.Mesh(new THREE.CircleGeometry(.52,24,0,Math.PI),trimM); frA.position.set(0,1.5,1.206); H.add(frA);
+  const dr=new THREE.Mesh(new THREE.PlaneGeometry(.88,1.22),wood); dr.position.set(0,.84,1.212); H.add(dr);
+  const drA=new THREE.Mesh(new THREE.CircleGeometry(.44,24,0,Math.PI),wood); drA.position.set(0,1.45,1.212); H.add(drA);
+  const knob=new THREE.Mesh(new THREE.SphereGeometry(.05,10,8),mat(0xffd166)); knob.position.set(.27,.9,1.25); H.add(knob);
+  box(1.4,.12,.6,trimM,0,.06,1.5);
+  /* windows show the picture-book covers */
+  const loader=new THREE.TextureLoader();
+  const win=(src,x,z,ry)=>{
+    const g=new THREE.Group(); g.position.set(x,1.25,z); g.rotation.y=ry; H.add(g);
+    const f=new THREE.Mesh(new THREE.PlaneGeometry(.74,.94),trimM); g.add(f);
+    const tex=loader.load(src); tex.colorSpace=THREE.SRGBColorSpace;
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(.6,.8),new THREE.MeshBasicMaterial({map:tex})); p.position.z=.006; g.add(p);
+  };
+  win('stories/img/b1/cover.webp',-1.02,1.206,0);
+  win('stories/img/b2/cover.webp', 1.02,1.206,0);
+  win('stories/img/b3/cover.webp', 1.506,0,Math.PI/2);
+  win('stories/img/s01/cover.webp',-1.506,0,-Math.PI/2);
+  /* warm glow on the doorstep */
+  storyGlow=new THREE.Mesh(new THREE.RingGeometry(.8,.98,40),new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:.5,side:THREE.DoubleSide}));
+  storyGlow.rotation.x=-Math.PI/2; storyGlow.position.set(0,.04,2.1); H.add(storyGlow);
+  H.position.copy(STORY_POS); H.rotation.y=Math.atan2(STORY_DIR.x,STORY_DIR.z);
+  H.traverse(o=>{ o.userData.portal='story'; });
+  world.add(H);
+  const sign=signpost(...I18N.en.storySign,0x2bb6a0);
+  const sp=STORY_POS.clone().addScaledVector(STORY_DIR,2.2).add(new THREE.Vector3(STORY_DIR.z,0,-STORY_DIR.x).multiplyScalar(2.1));
+  sign.position.copy(sp); sign.lookAt(0,1.6,0); world.add(sign);
+  const mk=emojiSprite('📖',0x2bb6a0); mk.position.set(STORY_POS.x,4.6,STORY_POS.z);
+  mk.userData.baseY=4.6; mk.userData.ph=1.3; scene.add(mk); markers.push(mk);
+}
+/* the rocket pad gets its own sign + marker so visitors find the Galaxy game */
+{
+  const toC=new THREE.Vector3(-ROCKET_PAD.x,0,-ROCKET_PAD.z).normalize();
+  const sign=signpost(...I18N.en.galaxySign,0x7a4fd0);
+  sign.position.copy(ROCKET_PAD).addScaledVector(toC,2.0).add(new THREE.Vector3(toC.z,0,-toC.x).multiplyScalar(-1.9));
+  sign.lookAt(0,1.6,0); world.add(sign);
+  const mk=emojiSprite('🌌',0x7a4fd0); mk.position.set(ROCKET_PAD.x,5.1,ROCKET_PAD.z);
+  mk.userData.baseY=5.1; mk.userData.ph=2.4; scene.add(mk); markers.push(mk); rocketMarker=mk;
+}
+
 /* ---- perf: bake static meshes into merged buffers (far fewer draw calls).
         Disable with ?nomerge for A/B comparison. ---- */
 if(!location.search.includes('nomerge')){
   const skipSet=new Set([
-    rocket, millHub, welcomeGroup.userData.balloon,
+    rocket, storyHouse, millHub, welcomeGroup.userData.balloon,
     ...ducks.map(d=>d.g),
     ...beeSwarms.flatMap(s=>s.bees.map(b=>b.m)),
     ...markers, ...flames, ...heartMeshes,
@@ -1080,7 +1183,15 @@ function buildAvatar(cfg){
   const tag=textSprite('MAX ⭐',{fs:40,color:'#4f7fe0',stroke:'#dbe6ff',scale:.62});
   tag.position.y=2.16; g.add(tag);
   g.traverse(o=>{ if(o.isMesh && !(o.material.transparent)) o.castShadow=true; o.userData.zone='welcome'; });
-  return { g, inner, legs, arms, head, eyes };
+  /* space helmet (worn for the rocket trip to the Galaxy game) */
+  const helmet=new THREE.Group(); helmet.visible=false; head.add(helmet);
+  const glass=add(helmet,new THREE.SphereGeometry(.76,40,28),
+    new THREE.MeshStandardMaterial({color:0xd6ecff,transparent:true,opacity:.24,roughness:.05,metalness:.1,depthWrite:false}),0,.03,.02);
+  glass.scale.set(1.04,.98,1.02);
+  const collar=add(helmet,new THREE.TorusGeometry(.5,.075,12,44),std(0xf4f6fa,.4),0,-.6,0); collar.rotation.x=Math.PI/2;
+  add(helmet,new THREE.CylinderGeometry(.014,.014,.26,8),std(0x9aa2ad,.4),.32,.84,0).rotation.z=-.35;
+  add(helmet,new THREE.SphereGeometry(.045,14,10),std(0xe05454,.35),.37,.97,0);
+  return { g, inner, legs, arms, head, eyes, helmet };
 }
 const max=buildAvatar(AVATAR);
 max.g.position.set(0,0,2.2);
@@ -1402,7 +1513,7 @@ function handleTap(x,y){
   for(const h of hits){
     let o=h.object, zid=null;
     let ro=h.object;
-    while(ro){ if(ro.userData && ro.userData.rocket){ if(rocketNear) boardRocket(); else toast(T().walkCloser); return; } ro=ro.parent; }
+    while(ro){ if(ro.userData && ro.userData.portal){ const p=PORTALS.find(q=>q.id===ro.userData.portal); if(portalNear===p) p.go(); else toast(T().walkCloser); return; } ro=ro.parent; }
     while(o){ if(o.userData && o.userData.zone){ zid=o.userData.zone; break; } o=o.parent; }
     if(zid){
       const zp=zones[zid].pos;
@@ -1570,7 +1681,7 @@ $('#lbnext').onclick=e=>{ e.stopPropagation(); showArt(artAt+1); };
 
 /* interact + jump */
 let activeZone=null;
-function tryInteract(){ if(!started) return; if(rocketNear){ boardRocket(); return; } if(activeZone) openPanel(activeZone); }
+function tryInteract(){ if(!started||leaving) return; if(portalNear){ portalNear.go(); return; } if(activeZone) openPanel(activeZone); }
 function tryJump(){ if(!started||panelOpen||riding) return; if(state.onGround){ state.vy=6.3; state.onGround=false; } }
 $('#actbtn').onclick=()=>tryInteract();
 $('#jumpbtn').onclick=()=>tryJump();
@@ -1582,6 +1693,10 @@ function setLang(l){
   $('#otag').innerHTML=T().otag;
   $('#octr').innerHTML=isTouch?T().octrMob:T().octrDesk;
   $('#startbtn').textContent=started ? (l==='zh'?'繼續探索':'Keep Exploring') : T().start;
+  $('#owt').textContent=T().owTitle;
+  [['#owsto',T().owStories],['#owart',T().owArt],['#owgal',T().owGalaxy]].forEach(([id,[i,b,sm]])=>{
+    const a=$(id); a.querySelector('.i').textContent=i; a.querySelector('b').textContent=b; a.querySelector('small').textContent=sm; });
+  if(portalNear) $('#hinttext').textContent=portalNear.label();
   document.querySelectorAll('#olang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
   $('#langbtn').textContent = l==='en'?'中文':'EN';
   updateTourHud();
@@ -1608,6 +1723,16 @@ $('#startbtn').onclick=()=>{
   }
   startMusic();
   $('#tourhud').style.display='flex';
+};
+/* "Art Gallery" card: start, land Max in the gallery and open its drawings */
+$('#owart').onclick=e=>{
+  e.preventDefault();
+  const first=!started;
+  $('#startbtn').click();
+  const p=zones.gallery.pos; max.g.position.set(p.x*.82,0,p.z*.82);
+  if(first){ flyT=1; cam.dist=isTouch?9.4:7.8; cam.phi=1.02; cam.theta=Math.atan2(-p.x,-p.z); }
+  max.g.rotation.y=Math.atan2(p.x,p.z);
+  setTimeout(()=>openPanel('gallery'),first?700:300);
 };
 $('#helpbtn').onclick=()=>{
   $('#startbtn').textContent = lang==='zh'?'繼續探索':'Keep Exploring';
@@ -1762,20 +1887,24 @@ function tick(){
   }
   glowRing.material.opacity=activeZone?(.3+Math.sin(t*3.5)*.14):0;
 
-  /* rocket boarding hint (only when no zone hint is showing) */
-  if(!riding && rocketPhase===0 && !activeZone && !panelOpen){
-    const dR=Math.hypot(max.g.position.x-ROCKET_PAD.x, max.g.position.z-ROCKET_PAD.z);
-    if(dR<2.8 && !rocketNear){
-      rocketNear=true;
-      $('#hinttext').textContent='🚀 '+T().rocketHint;
-      $('#hint').style.display='flex';
-      $('#hint').querySelector('.key').style.display=isTouch?'none':'inline-block';
-    }else if(dR>=2.8 && rocketNear){
-      rocketNear=false; $('#hint').style.display='none';
+  /* rocket / Story House hint (only when no zone hint is showing) */
+  { let near=null;
+    if(started && !activeZone && !panelOpen && !leaving){
+      for(const p of PORTALS){ const at=p.at(); if(p.ok() && Math.hypot(max.g.position.x-at.x,max.g.position.z-at.z)<p.r){ near=p; break; } }
     }
-  }else if(rocketNear){
-    rocketNear=false; if(!activeZone) $('#hint').style.display='none';
+    if(near!==portalNear){
+      portalNear=near;
+      if(near){
+        $('#hinttext').textContent=near.label();
+        $('#hint').style.display='flex';
+        $('#hint').querySelector('.key').style.display=isTouch?'none':'inline-block';
+      }else if(!activeZone) $('#hint').style.display='none';
+    }
   }
+  storyGlow.material.opacity=portalNear?.id==='story' ? .9 : .35+Math.sin(t*2.6)*.2;
+  /* the cottage is solid: nudge Max back out of its walls */
+  { const dx=max.g.position.x-STORY_POS.x, dz=max.g.position.z-STORY_POS.z, d=Math.hypot(dx,dz);
+    if(d<2.0 && d>1e-3){ max.g.position.x=STORY_POS.x+dx/d*2.0; max.g.position.z=STORY_POS.z+dz/d*2.0; } }
 
   /* ---- ambient animations ---- */
   clouds.rotation.y+=dt*.0045;
@@ -1802,48 +1931,46 @@ function tick(){
     b.m.position.set(Math.cos(a)*b.r, b.h+Math.sin(t*7+b.ph)*.09, Math.sin(a)*b.r);
     b.m.rotation.y=-a+Math.PI/2;
   }));
-  /* rocket trip: pad -> ascent -> one lap around Jupiter -> glide home */
+  /* rocket: countdown on the pad -> lift-off -> into the Galaxy game;
+     coming back from the Galaxy it glides down from Jupiter and lands */
   rocketT+=dt;
-  if(rocketPhase===1){            /* ascent */
-    const e=Math.min(rocketT/7,1), k=e*e*(3-2*e);
+  if(rocketPhase===4){            /* countdown: Max (helmet on) waits by the rocket, then climbs in */
+    max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7); state.vy=0;
+    const n=3-Math.floor(rocketT);
+    if(n<countN && n>0){ countN=n; bigMsg(String(n),800); ding(); }
+    if(rocketT>2.5) max.g.visible=false;
+    const shake=Math.min(1,rocketT/3)*.035;
+    rocket.position.set(ROCKET_PAD.x+Math.sin(t*61)*shake,0,ROCKET_PAD.z+Math.cos(t*53)*shake);
+    rocketFlame.visible=rocketT>1.8; rocketFlame.scale.set(.6,.5+Math.sin(t*40)*.15,.6);
+    if(rocketT>=3){ rocketPhase=1; rocketT=0; bigMsg(T().liftoff,1400); fanfare(); }
+  }else if(rocketPhase===1){      /* lift-off toward Jupiter, then on into space */
+    const e=Math.min(rocketT/5,1), k=e*e*(3-2*e);
     rocketOrbitPos(ROCK_A0,_rp);
     rocket.position.lerpVectors(ROCKET_PAD,_rp,k);
     _rd.subVectors(_rp,ROCKET_PAD).normalize();
     _rp.set(0,1,0).lerp(_rd,Math.min(1,e*1.7)).normalize();
     rocket.quaternion.setFromUnitVectors(ROCK_UP,_rp);
-    rocketFlame.scale.set(1,1+Math.sin(t*42)*.25,1);
-    if(e>=1){
-      rocketPhase=2; rocketT=0;
-      if(riding){ bigMsg(T().jupiterMsg,2200); fanfare(); }
-    }
-  }else if(rocketPhase===2){      /* slow sightseeing lap around Jupiter */
-    const e=Math.min(rocketT/8.5,1);
-    const a=ROCK_A0+e*Math.PI*2;
-    rocket.position.copy(rocketOrbitPos(a,_rp));
-    _rd.set(-Math.sin(a),0,Math.cos(a));
-    rocket.quaternion.setFromUnitVectors(ROCK_UP,_rd);
-    rocketFlame.scale.set(.5,.5+Math.sin(t*30)*.1,.5);
-    if(riding && !rocketToastShown && rocketT>3.8){ rocketToastShown=true; toast(T().lookDown); }
-    if(e>=1){ rocketPhase=3; rocketT=0; }
-  }else if(rocketPhase===3){      /* glide back down and land */
-    const e=Math.min(rocketT/6,1), k=e*e*(3-2*e);
+    rocketFlame.visible=true; rocketFlame.scale.set(1,1+Math.sin(t*42)*.25,1);
+    if(rocketT>2.4 && !leaving) leaveTo('galaxy.html?from=world','space');
+  }else if(rocketPhase===3){      /* back from the Galaxy: glide down and land */
+    const e=Math.min(rocketT/5.5,1), k=e*e*(3-2*e);
     rocket.position.lerpVectors(rocketOrbitPos(ROCK_A0,_rp),ROCKET_PAD,k);
     _rd.set(-Math.sin(ROCK_A0),0,Math.cos(ROCK_A0)).lerp(ROCK_UP,Math.min(1,e*2.2)).normalize();
     rocket.quaternion.setFromUnitVectors(ROCK_UP,_rd);
-    rocketFlame.scale.set(1,.8+Math.sin(t*38)*.2,1);
+    rocketFlame.visible=true; rocketFlame.scale.set(1,.8+Math.sin(t*38)*.2,1);
     if(e>=1){
-      rocketPhase=0; rocketT=0; rocketToastShown=false;
+      rocketPhase=0; rocketT=0;
       rocket.quaternion.identity(); rocket.position.copy(ROCKET_PAD);
       rocketFlame.visible=false;
-      if(riding){
-        riding=false;
-        max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7);
-        max.g.visible=true; state.vy=0;
-        toast(T().backMsg);
-      }
+      riding=false;
+      max.g.position.set(ROCKET_PAD.x,0,ROCKET_PAD.z+1.7);
+      max.g.visible=true; state.vy=0; burst(max.g.position.clone(),24);
+      toast(T().backFromGalaxy);
+      setTimeout(()=>{ max.helmet.visible=false; },1800);
     }
   }
-  if(riding){ max.g.position.copy(rocket.position); state.vy=0; }
+  if(riding && rocketPhase!==4){ max.g.position.copy(rocket.position); state.vy=0; }
+  if(rocketMarker) rocketMarker.visible=rocketPhase===0;
   markers.forEach(mk=>{ mk.position.y=mk.userData.baseY+Math.sin(t*1.7+mk.userData.ph)*.28; });
   waterTexes.forEach(w=>w.offset.x-=dt*.22);
   flames.forEach((f,i)=>{ f.scale.y=1+Math.sin(t*11+i*2)*.2; f.scale.x=f.scale.z=1+Math.sin(t*13+i)*.1; });
@@ -1954,4 +2081,30 @@ soundOn = saved.sound!==false;
 updateSndBtn();
 setLang(saved.lang || (/^zh/i.test(navigator.language||'')?'zh':'en'));
 updateStars();
+/* back from the Galaxy game or the Story House: skip the intro and carry on
+   where Max left — the rocket lands back on its pad, or he steps out of the cottage */
+{
+  const from=new URLSearchParams(location.search).get('from');
+  if(from==='galaxy' || from==='stories'){
+    history.replaceState(null,'',location.pathname);
+    started=true; flyT=1;
+    $('#overlay').style.display='none'; $('#tourhud').style.display='flex';
+    $('#startbtn').textContent = lang==='zh'?'繼續探索':'Keep Exploring';
+    cam.dist=isTouch?9.4:7.8; cam.phi=1.02;
+    const wake=()=>{ ensureAudio(); narrator.unlock(); startMusic();
+      ['pointerdown','keydown'].forEach(ev=>removeEventListener(ev,wake,true)); };
+    ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,wake,true));
+    if(from==='stories'){
+      const p=STORY_DOOR.clone().addScaledVector(STORY_DIR,2.6);   /* just outside the door hint, so a stray tap does not go straight back in */
+      max.g.position.set(p.x,0,p.z); max.g.rotation.y=Math.atan2(STORY_DIR.x,STORY_DIR.z);
+      cam.theta=Math.atan2(STORY_DIR.x,STORY_DIR.z);
+      setTimeout(()=>toast(T().backFromStories),400);
+    }else{
+      riding=true; max.g.visible=false; max.helmet.visible=true;
+      rocketPhase=3; rocketT=0;
+      cam.theta=Math.atan2(-ROCKET_PAD.x,-ROCKET_PAD.z);
+    }
+    camTargetSmooth.copy(max.g.position).y+=1.15;
+  }
+}
 tick();
