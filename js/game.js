@@ -3,6 +3,7 @@ import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js';
 import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js';
 import { EXTRA_SCENES } from './scenes/registry.js';
 import { mergeStatic } from './perf.js';
+import { createNarrator, textKey, silentWavURL } from './narrator.js';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -1022,7 +1023,7 @@ function buildAvatar(cfg){
   const skinShade=std(0xe9b996,.8);
   const shirt=std(cfg.shirt,.82), collarM=std(0xffffff,.75);
   const shorts=std(cfg.shorts,.78), band=std(0x2c3852,.7);
-  const hairM=std(cfg.hair,.42);
+  const hairM=std(cfg.hair,.62);
   const bowM=std(cfg.bow||0x8fb9e6,.5), trim=std(cfg.bow||0x8fb9e6,.6);
   const shoeM=std(cfg.shoes,.55), soleM=std(0xc6d4e6,.7), sockM=std(0xffffff,.85);
   const flat=c=>new THREE.MeshBasicMaterial({color:c});
@@ -1092,18 +1093,25 @@ function buildAvatar(cfg){
   /* face surface depth at (x,y) on the head ellipsoid */
   const faceZ=(x,y)=>{ const a=x/(HR*HS[0]), b=y/(HR*HS[1]); return HR*HS[2]*Math.sqrt(Math.max(0,1-a*a-b*b)); };
 
-  /* hair: one smooth cap whose lower edge forms scalloped bangs in front and covers the back */
-  const hairGeo=new THREE.SphereGeometry(HR*1.06,72,48,0,Math.PI*2,0,Math.PI*.78);
+  /* hair: a cap that hugs the skull — puffy crown, scalloped bangs in front,
+     short tufts at the nape, ears left clear, and a cowlick on the crown */
+  const hairGeo=new THREE.SphereGeometry(HR,128,72,0,Math.PI*2,0,Math.PI*.72);
   {
-    const p=hairGeo.attributes.position, v=new THREE.Vector3(), R=HR*1.06;
+    const p=hairGeo.attributes.position, v=new THREE.Vector3();
+    const sstep=(a,b,x)=>{ const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t); };
     for(let i=0;i<p.count;i++){
       v.fromBufferAttribute(p,i);
       const a=Math.atan2(v.x,v.z);                       /* 0 = facing forward */
       const F=Math.pow((1+Math.cos(a))/2,1.6);            /* 1 at the front, 0 at the back */
-      let edge=Math.PI*(.4+(1-F)*.34);
+      const B=Math.pow((1-Math.cos(a))/2,.8);             /* 1 at the back, 0 at the front */
+      let edge=Math.PI*(.4+.22*B);                        /* brow → above the ears → nape */
       edge+=F*Math.PI*.045*Math.abs(Math.sin(a*7.5+.4));  /* bang points */
-      const th=Math.min(Math.acos(Math.max(-1,Math.min(1,v.y/R))),edge);
-      const r=R*(1+.035*F*Math.max(0,(th-Math.PI*.3)/(Math.PI*.15)));   /* fringe sits a touch proud */
+      edge+=B*B*Math.PI*.035*Math.pow(Math.abs(Math.sin(a*5)),.6);   /* nape tufts */
+      const th=Math.min(Math.acos(Math.max(-1,Math.min(1,v.y/HR))),edge);
+      const u=th/edge;                                    /* 0 crown … 1 hairline */
+      let r=1.075-.07*sstep(.45,1,u);                     /* volume on top, tucked in at the edge */
+      r+=.03*F*sstep(.55,.85,u);                          /* fringe sits a touch proud */
+      r*=HR;
       v.set(Math.sin(th)*Math.sin(a)*r,Math.cos(th)*r,Math.sin(th)*Math.cos(a)*r);
       p.setXYZ(i,v.x,v.y,v.z);
     }
@@ -1113,11 +1121,16 @@ function buildAvatar(cfg){
   /* cartoon shine */
   const shine=add(head,new THREE.TorusGeometry(.3,.022,8,40,Math.PI*.55),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.22}),0,.33,.28);
   shine.rotation.set(-.95,0,Math.PI*.22);
-  /* cowlick strands */
-  [[-.04,-1],[.05,1]].forEach(([x,sd])=>{
-    const curve=new THREE.QuadraticBezierCurve3(new THREE.Vector3(x,.47,-.04),new THREE.Vector3(x+sd*.03,.6,-.01),new THREE.Vector3(x+sd*.09,.56,.06));
-    add(head,new THREE.TubeGeometry(curve,14,.02,8,false),hairM);
-  });
+  /* cowlick: two tapered strands springing from the crown */
+  [[-.03,-1,.59],[.04,1,.56]].forEach(([x,sd,h])=>{
+    const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(x,.44,-.08),new THREE.Vector3(x+sd*.015,h,-.06),
+      new THREE.Vector3(x+sd*.06,h+.035,-.01),new THREE.Vector3(x+sd*.11,h-.01,.03)]);
+    const n=14;
+    for(let k=0;k<n;k++){
+      const t=k/(n-1), rad=.042*(1-t*.8);
+      const b=add(head,new THREE.SphereGeometry(rad,12,10),hairM); b.position.copy(curve.getPoint(t));
+    }
+      });
   /* ears */
   [-1,1].forEach(sd=>{
     const ear=add(head,new THREE.SphereGeometry(.095,20,16),skin,sd*.58,-.08,.02); ear.scale.set(.5,1,.78);
@@ -1152,7 +1165,7 @@ function buildAvatar(cfg){
 
   /* name tag */
   const tag=textSprite('MAX ⭐',{fs:40,color:'#4f7fe0',stroke:'#dbe6ff',scale:.62});
-  tag.position.y=2.05; g.add(tag);
+  tag.position.y=2.16; g.add(tag);
   g.traverse(o=>{ if(o.isMesh && !(o.material.transparent)) o.castShadow=true; o.userData.zone='welcome'; });
   return { g, inner, legs, arms, head, eyes };
 }
@@ -1208,15 +1221,6 @@ function ensureAudio(){ try{ if(!actx) actx=new (window.AudioContext||window.web
    iOS a looping (near-)silent <audio> keeps the session in playback mode so
    sound works even with the ringer switch on silent */
 let audioUnlocked=false;
-function silentWavURL(){
-  const n=2205, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
-  const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
-  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt ');
-  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
-  v.setUint32(24,22050,true); v.setUint32(28,44100,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
-  w(36,'data'); v.setUint32(40,n*2,true);
-  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
-}
 function unlockAudio(){
   ensureAudio();
   if(!actx) return;
@@ -1249,6 +1253,17 @@ function note(freq,t0,dur=.16,type='triangle',vol=.12){
   o.start(actx.currentTime+t0); o.stop(actx.currentTime+t0+dur+.05);
 }
 let soundOn=true;   /* restored from save at boot */
+let musicDuck=1;    /* music volume while the narrator talks */
+let panelSpeech='';
+/* "title. subtitle! body" — only add a full stop where a part doesn't already end with one */
+function speechOf(z,lg){
+  const zh=lg==='zh';
+  return [z.t,z.sub,z.body].map((p,i,a)=>i<a.length-1&&!/[。！？!?.]$/.test(p)?p+(zh?'。':'.'):p).join(zh?'':' ');
+}
+const narrator=createNarrator({
+  getLang:()=>lang, isSoundOn:()=>soundOn,
+  onSpeaking:on=>{ musicDuck=on?.3:1; $('#panelspeak').classList.toggle('on',on); },
+});
 
 /* gentle music-box loop (C pentatonic) + occasional birdsong */
 const MELODY=[523.25,0,659.25,0,783.99,0,880,0, 783.99,0,659.25,0,587.33,0,0,0,
@@ -1260,8 +1275,8 @@ function startMusic(){
   musTimer=setInterval(()=>{
     if(!soundOn || !actx || document.hidden) return;
     const f=MELODY[musStep%MELODY.length];
-    if(f) note(f,0,.55,'sine',.042);
-    if(musStep%8===0) note(BASSLINE[(musStep>>3)%BASSLINE.length],0,1.1,'triangle',.026);
+    if(f) note(f,0,.55,'sine',.042*musicDuck);
+    if(musStep%8===0) note(BASSLINE[(musStep>>3)%BASSLINE.length],0,1.1,'triangle',.026*musicDuck);
     musStep++;
   },300);
 }
@@ -1279,7 +1294,7 @@ function updateSndBtn(){ $('#sndbtn').textContent = soundOn ? '🔊' : '🔇'; }
 $('#sndbtn').onclick=()=>{
   soundOn=!soundOn;
   if(soundOn){ ensureAudio(); startMusic(); ding(); }
-  else setBeeLevel(0);
+  else { setBeeLevel(0); narrator.stop(); }
   updateSndBtn(); saveGame();
 };
 
@@ -1532,9 +1547,19 @@ function openPanel(id){
       gal.appendChild(d);
     });
   }
+  if(id==='reading'){   /* a peek at the Story House shelf */
+    [['b1','滿滿和會變色的情緒怪獸'],['b2','滿滿腦子裏的紅黃綠小隊'],['b3','小綠的兩種練習'],['','']].forEach(([b,t])=>{
+      const d=document.createElement('a'); d.className='art book'; d.href='stories.html'+(b?'#'+b:'');
+      const img=document.createElement('img'); img.src=b?`stories/img/${b}/cover.webp`:'stories/img/s01/cover.webp'; img.alt=t; img.loading='lazy';
+      const cap=document.createElement('div'); cap.className='cap'; cap.textContent=b?t:(lang==='zh'?'📖 全部 20 本故事 ▶':'📖 All 20 stories ▶');
+      d.appendChild(img); d.appendChild(cap); gal.appendChild(d);
+    });
+  }
   $('#tournext').style.display = tour.active ? 'block' : 'none';
   if(tour.active) $('#tournext').textContent=T().tourNext;
   $('#panelwrap').style.display='flex';
+  panelSpeech=speechOf(z,lang);
+  narrator.speak(panelSpeech);
   /* collect star (7 themed zones only) */
   if(id!=='welcome' && !visited.has(id)){
     visited.add(id); updateStars(); saveGame(); ding();
@@ -1547,6 +1572,7 @@ function openPanel(id){
 }
 function closePanel(){
   panelOpen=false; currentPanel=null; $('#panelwrap').style.display='none';
+  narrator.stop();
   if(tour.active && !tour.target) nextTourStop();   /* tour: closing a stop's panel moves on */
 }
 
@@ -1604,6 +1630,7 @@ function openDir(){
 $('#logo').onclick=()=>{ if(started && !panelOpen) openDir(); };
 $('#dirwrap').addEventListener('pointerdown',e=>{ if(e.target.id==='dirwrap') $('#dirwrap').style.display='none'; });
 $('#panelclose').onclick=closePanel;
+$('#panelspeak').onclick=()=>{ if(narrator.isSpeaking()) narrator.stop(); else { ensureAudio(); narrator.speak(panelSpeech,true); } };
 $('#panelwrap').addEventListener('pointerdown',e=>{ if(e.target.id==='panelwrap') closePanel(); });
 $('#lightbox').onclick=()=>$('#lightbox').style.display='none';
 
@@ -1636,7 +1663,7 @@ document.querySelectorAll('#olang button').forEach(b=>b.onclick=()=>setLang(b.da
 /* overlay */
 let flyT=1, flyFrom=null;
 $('#startbtn').onclick=()=>{
-  ensureAudio();
+  ensureAudio(); narrator.unlock();
   $('#overlay').style.opacity=0;
   setTimeout(()=>$('#overlay').style.display='none',650);
   if(!started){
@@ -1963,7 +1990,17 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('gesturestart',e=>e.preventDefault());
 
 /* debug/test hooks */
+/* every zone card's spoken text, for tools/make_voice.py */
+function voiceLines(){
+  const out=[];
+  ['en','zh'].forEach(lg=>{
+    const zs=I18N[lg].zones;
+    for(const id in zs){ const z=zs[id], text=speechOf(z,lg); out.push({id:'world:'+id,lang:lg,key:textKey(text),text}); }
+  });
+  return out;
+}
 window.__max={
+  voiceLines,
   teleport(id){ const p=zones[id].pos; max.g.position.set(p.x*.82,0,p.z*.82); },
   setPos(x,z){ max.g.position.set(x,0,z); },
   openPanel, closePanel, setLang, cam,

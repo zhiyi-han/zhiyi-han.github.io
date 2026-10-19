@@ -103,11 +103,17 @@
   #panel .chip{font-size:12.5px;font-weight:800;padding:5px 12px;border-radius:999px;background:#eef2fd;color:#3a5fc0}
   #panelclose{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;border:none;
     background:#f0f1f5;font-size:17px;font-weight:800;color:#666;cursor:pointer}
+  #panelspeak{position:absolute;top:14px;right:62px;width:40px;height:40px;border-radius:50%;border:none;
+    background:#f0f1f5;font-size:17px;cursor:pointer}
+  #panelspeak.on{background:linear-gradient(135deg,var(--teal),var(--blue));animation:talk 1s ease-in-out infinite}
+  @keyframes talk{50%{transform:scale(1.12)}}
   #panelgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:16px}
   #panelgal .art{border-radius:14px;overflow:hidden;border:3px solid #f0e6d8;box-shadow:0 4px 14px rgba(0,0,0,.12);
     cursor:pointer;background:#fffdf5;transition:transform .2s}
   #panelgal .art:hover{transform:scale(1.04) rotate(-1deg)}
   #panelgal .art img{width:100%;display:block;aspect-ratio:5/4;object-fit:cover}
+  #panelgal .art.book{display:block;text-decoration:none}
+  #panelgal .art.book img{aspect-ratio:.708}
   #panelgal .art .cap{font-size:12px;font-weight:800;text-align:center;padding:6px 4px;color:#7a6a4f}
   #panelrel{position:relative}
 

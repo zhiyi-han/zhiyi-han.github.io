@@ -6,9 +6,12 @@ Neural voices (Microsoft, via the free `edge-tts` package):
 
 Usage
   1. pip install edge-tts
-  2. In the game page's console run:  copy(JSON.stringify(await __galaxy.voiceLines()))
-     and save the clipboard to a file, e.g. voice_lines.json
-  3. python tools/make_voice.py voice_lines.json
+  2. Export the spoken text of BOTH games (run in each page's console, save
+     the clipboard to a file):
+       galaxy.html:  copy(JSON.stringify(await __galaxy.voiceLines()))  -> galaxy_lines.json
+       index.html:   copy(JSON.stringify(__max.voiceLines()))           -> world_lines.json
+  3. python tools/make_voice.py galaxy_lines.json world_lines.json
+     (pass every file: clips not listed in any of them are deleted)
 
 Only cards whose text changed (new hash key) are generated; files for
 cards that no longer exist are deleted. Each clip is fetched as 96 kbps MP3,
@@ -76,4 +79,5 @@ async def main(lines):
 
 if __name__ == '__main__':
     use_high_quality()
-    asyncio.run(main(json.loads(pathlib.Path(sys.argv[1]).read_text())))
+    lines = [l for f in sys.argv[1:] for l in json.loads(pathlib.Path(f).read_text())]
+    asyncio.run(main(lines))
