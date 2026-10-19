@@ -1747,9 +1747,6 @@ function openDir(){
   const tb=document.createElement('button'); tb.className='dirtour'; tb.textContent=T().tourBtn;
   tb.onclick=()=>{ $('#dirwrap').style.display='none'; startTour(); };
   list.appendChild(tb);
-  const eb=document.createElement('a'); eb.className='dirtour'; eb.href='earth.html';
-  eb.style.cssText='background:linear-gradient(135deg,#1f6fb8,#3fae6a);text-decoration:none';
-  eb.textContent=T().footprints; list.appendChild(eb);
   [['story',T().owStories,'linear-gradient(135deg,#f0a35e,#e0703a)'],['rocket',T().owGalaxy,'linear-gradient(135deg,#26306e,#7a4fd0)']].forEach(([id,[ic,name],bg])=>{
     const pb=document.createElement('button'); pb.className='dirtour'; pb.style.background=bg;
     pb.textContent=`${ic} ${name}`;
@@ -1764,6 +1761,9 @@ function openDir(){
     b.onclick=()=>{ $('#dirwrap').style.display='none'; goToZone(id); };
     list.appendChild(b);
   });
+  const eb=document.createElement('a'); eb.className='dirtour'; eb.href='earth.html';   /* Max's Footprints, last */
+  eb.style.cssText='background:linear-gradient(135deg,#1f6fb8,#3fae6a);text-decoration:none;margin-top:10px';
+  eb.textContent=T().footprints; list.appendChild(eb);
   $('#dirwrap').style.display='flex';
 }
 $('#logo').onclick=()=>{ if(started && !panelOpen) openDir(); };
@@ -1812,8 +1812,10 @@ function setLang(l){
   $('#octr').innerHTML=isTouch?T().octrMob:T().octrDesk;
   $('#startbtn').textContent=started ? (l==='zh'?'繼續探索':'Keep Exploring') : T().start;
   $('#owt').textContent=T().owTitle;
-  [['#owsto',T().owStories],['#owart',T().owArt],['#owgal',T().owGalaxy]].forEach(([id,[i,b,sm]])=>{
-    const a=$(id); a.querySelector('.i').textContent=i; a.querySelector('b').textContent=b; a.querySelector('small').textContent=sm; });
+  /* tolerant on purpose: a card or its text may be missing while a page is mid-update */
+  [['#owsto',T().owStories],['#owart',T().owArt],['#owgal',T().owGalaxy]].forEach(([id,v])=>{
+    const a=$(id); if(!a||!v) return;
+    a.querySelector('.i').textContent=v[0]; a.querySelector('b').textContent=v[1]; a.querySelector('small').textContent=v[2]; });
   if(portalNear) $('#hinttext').textContent=portalNear.label();
   document.querySelectorAll('#olang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
   $('#langbtn').textContent = l==='en'?'中文':'EN';
