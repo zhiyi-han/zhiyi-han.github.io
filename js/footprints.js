@@ -55,6 +55,10 @@ const TRIPS = [
     text:{ en:'In Xishuangbanna, Max put on his rain boots and walked into the tropical rainforest to look for plants and animals.', zh:'在西雙版納，滿滿穿上雨靴，走進熱帶雨林探索動植物。' } },
   { id:'nanchang', lon:115.89, lat:28.68, dy:-8, name:{ en:'Nanchang, Jiangxi', zh:'江西南昌' },
     text:{ en:'Max has also travelled to Nanchang in Jiangxi.', zh:'滿滿也去過江西南昌旅行。' } },
+  { id:'macau', lon:113.54, lat:22.19, dy:2, name:{ en:'Macau', zh:'澳門' },
+    text:{ en:'Max has been to Macau, just across the water from Hong Kong.', zh:'滿滿去過澳門——就在香港的對岸，坐船很快就到。' } },
+  { id:'hainan', lon:109.8, lat:19.2, dy:34, name:{ en:'Hainan', zh:'海南' },
+    text:{ en:'Max has been to Hainan, a big tropical island in the south of China, with sunshine and the sea.', zh:'滿滿去過海南——中國南邊的大海島，有陽光，有大海。' } },
   { id:'kashgar', lon:75.99, lat:39.47, name:{ en:'Kashgar, Xinjiang', zh:'新疆喀什' },
     text:{ en:'Max has even been all the way to Kashgar in Xinjiang — a city and landscape very different from Hong Kong.', zh:'滿滿還去過很遠很遠的新疆喀什，看見了和香港很不一樣的城市和風景。' } },
 ];
@@ -273,7 +277,7 @@ function buildStages(){
 function markStage(){ document.querySelectorAll('.st').forEach(b => b.classList.toggle('on', b.dataset.id === stage)); }
 function showTrips(){
   playing = false; stage = 'trips'; markStage(); hideCard(); showLegs(0);
-  aimAt(100, 33, 2.75);
+  aimAt(100, 16, 2.75);   /* the busy South China corner sits above the card */
   $('#cwhen').textContent = '✈️'; $('#ctitle').textContent = U().tripsTitle; $('#ctext').textContent = U().tripsText;
   $('#cacts').innerHTML = ''; $('#card').style.display = 'block';
 }
