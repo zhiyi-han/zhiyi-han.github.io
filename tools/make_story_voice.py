@@ -17,11 +17,29 @@ import asyncio, json, pathlib, re, subprocess
 
 import edge_tts
 import edge_tts.communicate as _comm
+import opencc
 
 # the stories were written and read in Mandarin; most are read by a woman, some by a man ("voice": "m")
 VOICES = { '': ('zh-CN-XiaoxiaoNeural', '-8%'), 'm': ('zh-CN-YunjianNeural', '-8%') }
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA, OUT = ROOT / 'stories' / 'data', ROOT / 'stories' / 'voice'
+
+
+T2S = opencc.OpenCC('t2s')
+FIXES = [('甚么', '什么')]   # spoken-word fixes after conversion; add more as mispronunciations turn up
+
+
+def spoken(text):
+    """the Mandarin voices are trained on Simplified Chinese: with Traditional (HK) text they split words
+    wrongly and get tones wrong (腦子裏 read with a full third-tone 子), so convert just for speaking"""
+    s = T2S.convert(text)
+    for a, b in FIXES:
+        s = s.replace(a, b)
+    return s
+
+
+def clip_key(voice, text):   # must match clipKey() in js/stories.js
+    return key_of((voice or 'f') + '|' + text)
 
 
 def key_of(s):
@@ -40,6 +58,8 @@ def lines():
     for f in sorted(DATA.glob('[sb]*.json')):
         d = json.loads(f.read_text())
         v = d.get('voice', '')
+        if d['kind'] == 'text':
+            yield v, d['title'], None   # read on the cover page (must match pageText() in js/stories.js)
         for p in d['pages']:
             if 's' in p:
                 yield v, '\n'.join(''.join(par) for par in p['s']), [s for par in p['s'] for s in par]
@@ -80,7 +100,7 @@ def align(sents, bounds):
 
 
 async def make(voice, text, sents, sem, index):
-    key = key_of((voice + '|' if voice else '') + text)   # must match clipKey() in js/stories.js
+    key = clip_key(voice, text)
     name, rate = VOICES[voice]
     path = OUT / f'{key}.m4a'
     if path.exists() and path.stat().st_size > 0 and (sents is None or key in index):
@@ -92,7 +112,7 @@ async def make(voice, text, sents, sem, index):
                 bounds = []
                 async def fetch():
                     with open(mp3, 'wb') as f:
-                        async for ch in _comm.Communicate(text, name, rate=rate, boundary='SentenceBoundary').stream():
+                        async for ch in _comm.Communicate(spoken(text), name, rate=rate, boundary='SentenceBoundary').stream():
                             if ch['type'] == 'audio':
                                 f.write(ch['data'])
                             elif ch['type'] == 'SentenceBoundary':
@@ -123,7 +143,7 @@ async def main():
     index = json.loads(ix_file.read_text()).get('marks', {}) if ix_file.exists() else {}
     todo = {}
     for voice, text, sents in lines():
-        todo.setdefault(key_of((voice + '|' if voice else '') + text), (voice, text, sents))
+        todo.setdefault(clip_key(voice, text), (voice, text, sents))
     sem = asyncio.Semaphore(4)
     results = await asyncio.gather(*(make(v, t, s, sem, index) for v, t, s in todo.values()))
     removed = 0
