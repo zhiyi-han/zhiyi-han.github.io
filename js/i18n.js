@@ -24,7 +24,7 @@ export const ARTWORKS = [
 /* =============== I18N =============== */
 export const I18N = {
   en: {
-    otag: "Hi! I'm Max — a five-year-old explorer.<br>My family calls me 滿滿 (Mun Mun).<br>Walk around my little world and see what I love!",
+    otag: "Hi! I'm Max — a five-year-old explorer.<br>My Chinese nickname is 滿滿 (Mun Mun).<br>Walk around my little world and see what I love!",
     octrDesk: "🕹️ Move: <b>WASD / arrow keys</b> &nbsp;·&nbsp; 👀 Look: <b>drag mouse</b><br>⭐ Interact: <b>E</b> or click &nbsp;·&nbsp; ⬆️ Jump: <b>space</b>",
     octrMob: "🕹️ Move: <b>arrow buttons</b> or joystick &nbsp;·&nbsp; 👀 Look: <b>swipe</b><br>⭐ Interact: <b>star button</b> or tap things &nbsp;·&nbsp; ⬆️ Jump",
     start: "Start Exploring",
@@ -65,7 +65,7 @@ export const I18N = {
     goal: "⚽ GOAL!!",
     jumpTip: "Wheee!",
     zones: {
-      welcome:{ icon:'👋', t:'About Max', sub:'Nice to meet you!', body:"Max is a five-year-old boy in Hong Kong — his family calls him Mun Mun (滿滿), and he's the boy in all his picture books and stories. He's curious, imaginative and warm-hearted. He learns through stories, drawing, numbers, LEGO bricks and real adventures outdoors. Walk around and visit every corner of his world to see what he loves!", chips:['Curiosity','Imagination','Creativity','Empathy','Growth'] },
+      welcome:{ icon:'👋', t:'About Max', sub:'Nice to meet you!', body:"Max is a five-year-old boy in Hong Kong — his Chinese nickname is Mun Mun (滿滿), and he's the boy in all his picture books and stories. He's curious, imaginative and warm-hearted. He learns through stories, drawing, numbers, LEGO bricks and real adventures outdoors. Walk around and visit every corner of his world to see what he loves!", chips:['Curiosity','Imagination','Creativity','Empathy','Growth'] },
       gallery:{ icon:'🎨', t:"Max's Art Gallery", sub:'Stories he draws', body:"Drawing is one of Max's favourite ways to talk about his world. He mixes characters he loves with things he sees and his own imagination — Bumblebee flying through space, a pharaoh from a book about ancient Egypt, Knuckles visiting a sushi shop. He drew Bumblebee on the train to Disneyland, and an artist sitting nearby came over to cheer him on! Tap a drawing for a closer look.", chips:['Creativity','Storytelling','Imagination'] },
       numbers:{ icon:'🔢', t:'Number Land', sub:'Every number is a friend', body:"To Max, every number has its own personality! His love of numbers began with Numberblocks — now he plays with number bonds, shapes and patterns everywhere. Even the codes on Dad's cameras, 604 and 603, became characters in his stories.", chips:['Number Sense','Logic','Spatial Thinking'] },
       builder:{ icon:'🧱', t:"Builder's Corner", sub:'The flood-control project', body:"When Max saw news about summer floods, he asked: “How can people control floods?” He explored the answer with Dad — then built it all in LEGO: a river, houses, a dam and a diversion channel, watching how extra water is guided safely away.", chips:['Real-world Learning','Scientific Inquiry','Problem Solving'] },
