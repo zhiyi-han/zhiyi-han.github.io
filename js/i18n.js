@@ -24,7 +24,7 @@ export const ARTWORKS = [
 /* =============== I18N =============== */
 export const I18N = {
   en: {
-    otag: "Hi! I'm Max — a five-year-old explorer.<br>My Chinese nickname is 滿滿 (Mun Mun).<br>Walk around my little world and see what I love!",
+    otag: "Hi! I'm Max — a five-year-old explorer.<br>Walk around my little world and see what I love!",
     octrDesk: "🕹️ Move: <b>WASD / arrow keys</b> &nbsp;·&nbsp; 👀 Look: <b>drag mouse</b><br>⭐ Interact: <b>E</b> or click &nbsp;·&nbsp; ⬆️ Jump: <b>space</b>",
     octrMob: "🕹️ Move: <b>arrow buttons</b> or joystick &nbsp;·&nbsp; 👀 Look: <b>swipe</b><br>⭐ Interact: <b>star button</b> or tap things &nbsp;·&nbsp; ⬆️ Jump",
     start: "Start Exploring",
@@ -76,7 +76,7 @@ export const I18N = {
     }
   },
   zh: {
-    otag: "你好！我是 Max，家人都叫我「滿滿」，<br>是一個五歲的小小探險家。<br>來我的小世界走走，看看我喜歡的東西吧！",
+    otag: "你好！我是 Max——一個五歲的小小探險家。<br>來我的小世界走走，看看我喜歡的東西吧！",
     octrDesk: "🕹️ 移動：<b>WASD／方向鍵</b> &nbsp;·&nbsp; 👀 視角：<b>拖動滑鼠</b><br>⭐ 互動：<b>E 鍵</b>或點擊 &nbsp;·&nbsp; ⬆️ 跳：<b>空白鍵</b>",
     octrMob: "🕹️ 移動：<b>方向按鈕</b>或搖桿 &nbsp;·&nbsp; 👀 視角：<b>滑動畫面</b><br>⭐ 互動：<b>星星按鈕</b>或點按物件 &nbsp;·&nbsp; ⬆️ 跳",
     start: "開始探索",
@@ -117,7 +117,7 @@ export const I18N = {
     goal: "⚽ 入球啦！！",
     jumpTip: "咻——！",
     zones: {
-      welcome:{ icon:'👋', t:'關於 Max', sub:'很高興認識你！', body:"Max 是一個五歲的香港小男孩，家人都叫他「滿滿」，他的繪本和故事裏的主角就是他。他好奇、愛想像、有一顆溫暖的心。他喜歡從故事、畫畫、數字、LEGO 和戶外探險中學習。四處走走，逛逛他世界裡的每個角落，看看他喜歡的東西吧！", chips:['好奇','想像力','創意','同理心','成長'] },
+      welcome:{ icon:'👋', t:'關於 Max', sub:'很高興認識你！', body:"Max 是一個五歲的香港小男孩，中文小名叫「滿滿」，他的繪本和故事裏的主角就是他。他好奇、愛想像、有一顆溫暖的心。他喜歡從故事、畫畫、數字、LEGO 和戶外探險中學習。四處走走，逛逛他世界裡的每個角落，看看他喜歡的東西吧！", chips:['好奇','想像力','創意','同理心','成長'] },
       gallery:{ icon:'🎨', t:'Max 的小畫廊', sub:'他畫下的故事', body:"畫畫是 Max 最喜歡的表達方式之一。他把喜歡的角色、生活中的觀察和自己的想像放在一起——Bumblebee 飛上太空、書裏的埃及法老、Knuckles 去吃壽司。《Bumblebee 的太空之旅》是在去迪士尼的地鐵上畫的，旁邊一位藝術家還走過來鼓勵他呢！點一點畫作，仔細看看吧！", chips:['創造力','說故事','想像力'] },
       numbers:{ icon:'🔢', t:'數字樂園', sub:'每個數字都是朋友', body:"對 Max 來說，每個數字都有自己的性格！他對數字的喜愛從 Numberblocks 開始——現在他隨時隨地玩數感、圖形和規律。連爸爸相機上的編號 604 和 603，都變成了他故事裡的角色。", chips:['數感','邏輯','空間思維'] },
       builder:{ icon:'🧱', t:'小小工程師', sub:'治水大工程', body:"Max 在新聞裡看到夏天的洪水，就問：「人們怎樣才能治水呢？」他和爸爸一起找答案，然後用 LEGO 把整個工程搭了出來：河流、房子、水壩和分洪道，看着多餘的水被安全地引走。", chips:['真實世界學習','科學探究','解決問題'] },
