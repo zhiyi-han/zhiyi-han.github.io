@@ -46,7 +46,7 @@ function tick(){
 }
 
 /* speak text; els = elements to light up (one per sentence, or a single one); then() runs when it ends */
-/* clips are keyed by voice + text: a man reads the stories marked "voice": "m", a woman the rest */
+/* clips are keyed by voice + text: a man reads the stories marked "voice": "man", a woman the rest */
 const clipKey = text => textKey((book?.voice || 'f') + '|' + text);
 function speak(text, els = [], then = null, fromSentence = 0){
   stop();

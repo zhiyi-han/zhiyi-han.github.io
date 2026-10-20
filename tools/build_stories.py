@@ -123,7 +123,7 @@ def text_story(docx, covers):
     cov = next(c for c in covers if re.match(rf'0?{n}_', c.name))
     webp(cov, OUT / 'img' / sid / 'cover.webp', 540)
     return {'id': sid, 'n': n, 'kind': 'text', 'title': title,
-            'cover': f'stories/img/{sid}/cover.webp', **({'voice': 'm'} if n in MAN_READS else {}),
+            'cover': f'stories/img/{sid}/cover.webp', **({'voice': 'man'} if n in MAN_READS else {}),
             'pages': [{'s': pg} for pg in paginate(body)],
             'extras': extras_of(lines[cut:])}
 

@@ -1,5 +1,5 @@
 """Record the Story House narration (Mandarin: zh-CN-XiaoxiaoNeural, and
-zh-CN-YunjianNeural for the stories marked "voice": "m").
+zh-CN-YunyangNeural for the stories marked "voice": "man").
 
 Reads stories/data/*.json (made by tools/build_stories.py) and makes one clip
 per story page, picture-book page and after-reading item:
@@ -20,7 +20,7 @@ import edge_tts.communicate as _comm
 import opencc
 
 # the stories were written and read in Mandarin; most are read by a woman, some by a man ("voice": "m")
-VOICES = { '': ('zh-CN-XiaoxiaoNeural', '-8%'), 'm': ('zh-CN-YunjianNeural', '-8%') }
+VOICES = { '': ('zh-CN-XiaoxiaoNeural', '-8%'), 'man': ('zh-CN-YunyangNeural', '-6%') }
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA, OUT = ROOT / 'stories' / 'data', ROOT / 'stories' / 'voice'
 
