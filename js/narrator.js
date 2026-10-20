@@ -25,7 +25,9 @@ export function silentWavURL(){
 }
 
 /* getLang(): 'en' | 'zh'; isSoundOn(): bool; onSpeaking(bool): UI + music ducking */
-export function createNarrator({ getLang, isSoundOn, onSpeaking }){
+/* zhVoice / zhLang: which device voice reads Chinese when there is no recording
+   (Cantonese by default; the Story House asks for Mandarin) */
+export function createNarrator({ getLang, isSoundOn, onSpeaking, zhVoice = /zh[-_]HK|yue/i, zhLang = 'zh-HK' }){
   const canSpeak = 'speechSynthesis' in window;
   let voiceSet = null, speaking = false, voiceText = '', curU = null;
 
@@ -41,7 +43,7 @@ export function createNarrator({ getLang, isSoundOn, onSpeaking }){
 
   function pickVoice(){
     const vs = speechSynthesis.getVoices();
-    if (getLang() === 'zh') return vs.find(v => /zh[-_]HK|yue/i.test(v.lang)) || vs.find(v => /zh[-_](TW|Hant)/i.test(v.lang)) || vs.find(v => /^zh/i.test(v.lang));
+    if (getLang() === 'zh') return vs.find(v => zhVoice.test(v.lang)) || vs.find(v => /zh[-_](TW|Hant)/i.test(v.lang)) || vs.find(v => /^zh/i.test(v.lang));
     return vs.find(v => /en[-_]GB/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang));
   }
   function ttsSpeak(text){
@@ -52,7 +54,7 @@ export function createNarrator({ getLang, isSoundOn, onSpeaking }){
     const v = pickVoice();
     parts.forEach((part, i) => {
       const u = new SpeechSynthesisUtterance(part.trim());
-      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = zh ? 'zh-HK' : 'en-GB';
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = zh ? zhLang : 'en-GB';
       u.rate = zh ? .95 : .9; u.pitch = 1.05;
       const last = i === parts.length - 1;
       if (last) curU = u;

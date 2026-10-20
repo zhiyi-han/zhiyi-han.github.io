@@ -1657,7 +1657,7 @@ function openPanel(id){
     [['b1','滿滿和會變色的情緒怪獸'],['b2','滿滿腦子裏的紅黃綠小隊'],['b3','小綠的兩種練習'],['','']].forEach(([b,t])=>{
       const d=document.createElement('a'); d.className='art book'; d.href='stories.html'+(b?'#'+b:'');
       const img=document.createElement('img'); img.src=b?`stories/img/${b}/cover.webp`:'stories/img/s01/cover.webp'; img.alt=t; img.loading='lazy';
-      const cap=document.createElement('div'); cap.className='cap'; cap.textContent=b?t:(lang==='zh'?'📖 全部 20 本故事 ▶':'📖 All 20 stories ▶');
+      const cap=document.createElement('div'); cap.className='cap'; cap.textContent=b?t:(lang==='zh'?'📖 全部 21 本故事 ▶':'📖 All 21 stories ▶');
       d.appendChild(img); d.appendChild(cap); gal.appendChild(d);
     });
   }

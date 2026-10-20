@@ -22,7 +22,7 @@ let book = null, views = [], at = 0, auto = true, fromShelf = false;
 /* ---------------- voice ---------------- */
 const audio = new Audio(); audio.preload = 'auto'; audio.setAttribute('playsinline', '');
 let onDone = null, hl = null, raf = 0, viaTTS = false;
-const fallback = createNarrator({ getLang: () => 'zh', isSoundOn: () => true,
+const fallback = createNarrator({ getLang: () => 'zh', isSoundOn: () => true, zhVoice: /zh[-_](CN|Hans)|cmn/i, zhLang: 'zh-CN',
   onSpeaking: on => { if (!on && viaTTS) { viaTTS = false; finish(); } } });
 
 function finish(){
@@ -46,10 +46,12 @@ function tick(){
 }
 
 /* speak text; els = elements to light up (one per sentence, or a single one); then() runs when it ends */
+/* a man reads the stories marked "voice": "m"; their clips are keyed with that prefix */
+const clipKey = text => textKey((book?.voice ? book.voice + '|' : '') + text);
 function speak(text, els = [], then = null, fromSentence = 0){
   stop();
   if (!text) return;
-  const key = textKey(text);
+  const key = clipKey(text);
   onDone = then;
   hl = { els, marks: marks[key] || (els.length === 1 ? [0] : []), cur: -1 };
   $('#rplay').classList.toggle('on', true);
@@ -70,7 +72,7 @@ function stop(){
 }
 /* warm the cache for the next page so turning it starts at once */
 function prefetch(text){
-  const key = text && textKey(text);
+  const key = text && clipKey(text);
   if (key && clips.has(key)) fetch(VOICE + key + '.m4a', { priority: 'low' }).catch(() => {});
 }
 

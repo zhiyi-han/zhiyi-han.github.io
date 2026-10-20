@@ -1,4 +1,5 @@
-"""Record the Story House narration (Cantonese, zh-HK-HiuMaanNeural).
+"""Record the Story House narration (Mandarin: zh-CN-XiaoxiaoNeural, and
+zh-CN-YunjianNeural for the stories marked "voice": "m").
 
 Reads stories/data/*.json (made by tools/build_stories.py) and makes one clip
 per story page, picture-book page and after-reading item:
@@ -17,7 +18,8 @@ import asyncio, json, pathlib, re, subprocess
 import edge_tts
 import edge_tts.communicate as _comm
 
-VOICE, RATE = 'zh-HK-HiuMaanNeural', '-6%'
+# the stories were written and read in Mandarin; most are read by a woman, some by a man ("voice": "m")
+VOICES = { '': ('zh-CN-XiaoxiaoNeural', '-8%'), 'm': ('zh-CN-YunjianNeural', '-8%') }
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA, OUT = ROOT / 'stories' / 'data', ROOT / 'stories' / 'voice'
 
@@ -34,19 +36,20 @@ def plain(s):
 
 
 def lines():
-    """(text, sentences-or-None) for everything the reader can speak"""
+    """(voice, text, sentences-or-None) for everything the reader can speak"""
     for f in sorted(DATA.glob('[sb]*.json')):
         d = json.loads(f.read_text())
+        v = d.get('voice', '')
         for p in d['pages']:
             if 's' in p:
-                yield '\n'.join(''.join(par) for par in p['s']), [s for par in p['s'] for s in par]
+                yield v, '\n'.join(''.join(par) for par in p['s']), [s for par in p['s'] for s in par]
             else:
-                yield p['say'], None
+                yield v, p['say'], None
         for sec in d.get('extras', []):
             for it in sec['items']:
                 t = item_text(it)
                 if t:
-                    yield t, None
+                    yield v, t, None
 
 
 def item_text(it):   # must match itemSpeech() in js/stories.js
@@ -76,8 +79,9 @@ def align(sents, bounds):
     return out
 
 
-async def make(text, sents, sem, index):
-    key = key_of(text)
+async def make(voice, text, sents, sem, index):
+    key = key_of((voice + '|' if voice else '') + text)   # must match clipKey() in js/stories.js
+    name, rate = VOICES[voice]
     path = OUT / f'{key}.m4a'
     if path.exists() and path.stat().st_size > 0 and (sents is None or key in index):
         return 'kept'
@@ -86,15 +90,18 @@ async def make(text, sents, sem, index):
         for attempt in range(3):
             try:
                 bounds = []
-                with open(mp3, 'wb') as f:
-                    async for ch in _comm.Communicate(text, VOICE, rate=RATE, boundary='SentenceBoundary').stream():
-                        if ch['type'] == 'audio':
-                            f.write(ch['data'])
-                        elif ch['type'] == 'SentenceBoundary':
-                            bounds.append(ch)
+                async def fetch():
+                    with open(mp3, 'wb') as f:
+                        async for ch in _comm.Communicate(text, name, rate=rate, boundary='SentenceBoundary').stream():
+                            if ch['type'] == 'audio':
+                                f.write(ch['data'])
+                            elif ch['type'] == 'SentenceBoundary':
+                                bounds.append(ch)
+                await asyncio.wait_for(fetch(), 90)   # a stalled connection must not hang the whole run
                 subprocess.run(['afconvert', '-f', 'm4af', '-d', 'aach', '-b', '16000', str(mp3), str(path)], check=True)
                 if sents:
                     index[key] = align(sents, bounds)
+                save(index)   # keep progress, so an interrupted run can carry on
                 return 'made'
             except Exception as e:
                 if attempt == 2:
@@ -106,15 +113,19 @@ async def make(text, sents, sem, index):
                 mp3.unlink(missing_ok=True)
 
 
+def save(index):
+    (OUT / 'index.json').write_text(json.dumps({'clips': sorted(f.stem for f in OUT.glob('*.m4a')), 'marks': index}, separators=(',', ':')))
+
+
 async def main():
     OUT.mkdir(parents=True, exist_ok=True)
     ix_file = OUT / 'index.json'
     index = json.loads(ix_file.read_text()).get('marks', {}) if ix_file.exists() else {}
     todo = {}
-    for text, sents in lines():
-        todo.setdefault(key_of(text), (text, sents))
+    for voice, text, sents in lines():
+        todo.setdefault(key_of((voice + '|' if voice else '') + text), (voice, text, sents))
     sem = asyncio.Semaphore(4)
-    results = await asyncio.gather(*(make(t, s, sem, index) for t, s in todo.values()))
+    results = await asyncio.gather(*(make(v, t, s, sem, index) for v, t, s in todo.values()))
     removed = 0
     for f in OUT.glob('*.m4a'):
         if f.stem not in todo:

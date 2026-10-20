@@ -34,7 +34,8 @@ def trad(s):
     s = S2HK.convert(s).replace('什麼', '甚麼')
     return s.translate(str.maketrans('説悦脱税蜕兑衞', '說悅脫稅蛻兌衛'))   # keep the stories' own 說, not the HK 説
 
-PAGE_SOFT, PAGE_HARD = 95, 150      # characters per page for a five-year-old reader
+PAGE_SOFT, PAGE_HARD = 95, 150
+MAN_READS = {3, 5, 11, 13, 15, 17, 18}   # cars, heroes, 哈哈怪, rockets: read in a man's voice (make_story_voice.py)      # characters per page for a five-year-old reader
 
 def sentences(par):
     out = re.findall(r'[^。！？…]*(?:[。！？]+|…+)[」』）]*|[^。！？…]+$', par)
@@ -64,7 +65,7 @@ def paginate(paras):
     flush()
     return pages
 
-MAIN = re.compile(r'^(今天(認識)?的新朋友|回來和我們見面的詞|讀完想一想|請滿滿.*說一說|我也來試一試|犯錯以後，可以這樣做|滿滿可以試着說)$')
+MAIN = re.compile(r'^(今天(認識)?的新朋友|回來和我們見面的詞|讀完想一想|請滿滿.*說一說|我也來試一試|犯錯以後，可以這樣做|滿滿可以試着說|滿滿的調節小方法)$')
 BODY_END = re.compile(r'^(今天(認識)?的新朋友|回來和我們見面的詞|讀完想一想)$')
 
 def join_arrows(lines):
@@ -122,7 +123,7 @@ def text_story(docx, covers):
     cov = next(c for c in covers if re.match(rf'0?{n}_', c.name))
     webp(cov, OUT / 'img' / sid / 'cover.webp', 540)
     return {'id': sid, 'n': n, 'kind': 'text', 'title': title,
-            'cover': f'stories/img/{sid}/cover.webp',
+            'cover': f'stories/img/{sid}/cover.webp', **({'voice': 'm'} if n in MAN_READS else {}),
             'pages': [{'s': pg} for pg in paginate(body)],
             'extras': extras_of(lines[cut:])}
 
