@@ -4,6 +4,7 @@ import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCi
 import { EXTRA_SCENES } from './scenes/registry.js';
 import { mergeStatic } from './perf.js';
 import { createNarrator, textKey, silentWavURL } from './narrator.js';
+import { openPirates, pirateLines, piratesOpen } from './minigames/pirates.js';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -462,8 +463,19 @@ function leaveTo(url,kind){
 const PORTALS=[
   { id:'rocket', at:()=>ROCKET_PAD,  r:2.8, label:()=>'🚀 '+T().rocketHint, go:()=>boardRocket(), ok:()=>!riding&&rocketPhase===0 },
   { id:'story',  at:()=>STORY_DOOR,  r:2.3, label:()=>'📖 '+T().storyHint,  go:()=>enterStories(), ok:()=>!riding },
+  { id:'pirates', at:()=>PIRATE_SPOT, r:2.6, label:()=>'🏴‍☠️ '+T().pirateHint, go:()=>openGame(), ok:()=>!riding },
 ];
 let portalNear=null;
+/* Number Land's mini-game: Pirate Ships, Make Ten (js/minigames/pirates.js) */
+function openGame(){
+  if(leaving) return;
+  if(panelOpen) closePanel();
+  endTour(); portalNear=null; $('#hint').style.display='none';
+  narrator.stop(); panelOpen=true;
+  openPirates({ lang:()=>lang, speak:(t,force)=>narrator.speak(t,force),
+    sfx:{ miss:()=>note(196,0,.22,'sawtooth',.05), hop:i=>note(523+i*70,0,.1), win:()=>fanfare() },
+    onClose:()=>{ panelOpen=false; narrator.stop(); } });
+}
 function enterStories(){ if(leaving||panelOpen) return; endTour(); portalNear=null; $('#hint').style.display='none'; ding(); leaveTo('stories.html','book'); }
 /* coming back with the browser's Back button restores this page as it was left: tidy up */
 addEventListener('pageshow',e=>{
@@ -579,11 +591,12 @@ const welcomeGroup = new THREE.Group();
   const knot=new THREE.Mesh(new THREE.ConeGeometry(.08,.14,7), mat(0xc0392b)); knot.position.y=-.5; knot.rotation.x=Math.PI; bal.add(knot);
   const str=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1.5,4), mat(0xffffff)); str.position.y=-1.3; bal.add(str);
   bal.position.set(1.35,3.4,-.2); welcomeGroup.add(bal); welcomeGroup.userData.balloon=bal;
-  welcomeGroup.position.set(0,0,-3.4);   /* board faces +z = spawn side */
+  welcomeGroup.position.set(-2.4,0,-2.5);   /* off to one side of the plaza, clear of the path to the Art Gallery */
+  welcomeGroup.lookAt(0,0,2.2);              /* board faces where Max starts */
   tagZone(welcomeGroup,'welcome');
   world.add(welcomeGroup);
 }
-zones.welcome = { id:'welcome', pos:new THREE.Vector3(0,0,-3.4), color:0x4f7fe0, radius:4.6 };
+zones.welcome = { id:'welcome', pos:new THREE.Vector3(-2.4,0,-2.5), color:0x4f7fe0, radius:4.6 };
 
 /* --- gallery: easels in an arc --- */
 function buildGallery(z){
@@ -977,9 +990,12 @@ zoneDefs.forEach(z=>{
   tagZone(g,z.id);
   world.add(g); zoneGroups[z.id]=g;
   const sign=signpost(I18N.en.zones[z.id].t, I18N.zh.zones[z.id].t, z.color);
-  const sp=z.pos.clone().multiplyScalar(.72);
+  /* beside the stepping stones (not on them), angled toward people walking out from the plaza */
+  const dir=z.pos.clone().normalize(), side=new THREE.Vector3(dir.z,0,-dir.x);
+  const sp=dir.clone().multiplyScalar(ZONE_R*.72).addScaledVector(side,1.9);
   sign.position.set(sp.x,0,sp.z);
-  sign.lookAt(0,1.6,0);
+  const look=dir.clone().multiplyScalar(ZONE_R*.45);
+  sign.lookAt(look.x,1.6,look.z);
   tagZone(sign,z.id);
   world.add(sign);
 });
@@ -1061,6 +1077,32 @@ let storyGlow;
   mk.userData.baseY=5.1; mk.userData.ph=2.4; scene.add(mk); markers.push(mk); rocketMarker=mk;
 }
 
+/* a pirate ship moored in a little harbour between Number Land and Builder's Corner:
+   walk up to it to play Pirate Ships, Make Ten */
+const PIRATE_SPOT=(()=>{const [x,z]=polar(-25,14);return new THREE.Vector3(x,0,z);})();
+const pirateShip=new THREE.Group();
+{
+  const water=new THREE.Mesh(new THREE.CircleGeometry(2.1,32),new THREE.MeshLambertMaterial({color:0x63b8e8}));
+  water.rotation.x=-Math.PI/2; water.position.set(PIRATE_SPOT.x,.03,PIRATE_SPOT.z); world.add(water);
+  const rim=new THREE.Mesh(new THREE.RingGeometry(2.1,2.35,32),mat(0xe9d8a6)); rim.rotation.x=-Math.PI/2; rim.position.set(PIRATE_SPOT.x,.031,PIRATE_SPOT.z); world.add(rim);
+  const S=pirateShip, wood=mat(0x9a6038), dark=mat(0x6e4024);
+  const hull=new THREE.Mesh(new THREE.BoxGeometry(1.9,.5,.8),wood); hull.position.y=.3; hull.castShadow=true; S.add(hull);
+  const bow=new THREE.Mesh(new THREE.ConeGeometry(.42,.7,4),wood); bow.rotation.z=-Math.PI/2; bow.rotation.x=Math.PI/4; bow.scale.set(1,1,.95); bow.position.set(1.28,.3,0); S.add(bow);
+  const deck=new THREE.Mesh(new THREE.BoxGeometry(1.95,.06,.84),dark); deck.position.y=.57; S.add(deck);
+  const mast=new THREE.Mesh(new THREE.CylinderGeometry(.045,.055,1.9,8),dark); mast.position.set(-.1,1.5,0); mast.castShadow=true; S.add(mast);
+  const sc=makeCanvas(256,256), sx=sc.getContext('2d');
+  sx.fillStyle='#fffaf0'; sx.fillRect(0,0,256,256); sx.fillStyle='#e0453a'; sx.font='900 120px "Baloo 2",sans-serif'; sx.textAlign='center'; sx.textBaseline='middle'; sx.fillText('10',128,138);
+  const sail=new THREE.Mesh(new THREE.PlaneGeometry(1.05,1.05),new THREE.MeshLambertMaterial({map:canvasTexture(sc),side:THREE.DoubleSide}));
+  sail.position.set(-.1,1.55,.06); S.add(sail);
+  const fc=makeCanvas(64,40), fx=fc.getContext('2d'); fx.fillStyle='#2b2b33'; fx.fillRect(0,0,64,40); fx.fillStyle='#fff'; fx.font='26px sans-serif'; fx.textAlign='center'; fx.textBaseline='middle'; fx.fillText('☠',32,22);
+  const flag=new THREE.Mesh(new THREE.PlaneGeometry(.42,.26),new THREE.MeshLambertMaterial({map:canvasTexture(fc),side:THREE.DoubleSide})); flag.position.set(.12,2.33,0); S.add(flag);
+  S.position.copy(PIRATE_SPOT); S.lookAt(0,0,0);   /* broadside to the plaza, so the "10" sail shows */
+  S.traverse(o=>{ o.userData.portal='pirates'; });
+  world.add(S);
+  const mk=emojiSprite('🏴‍☠️',0xeaa83a); mk.position.set(PIRATE_SPOT.x,3.4,PIRATE_SPOT.z);
+  mk.userData.baseY=3.4; mk.userData.ph=.7; scene.add(mk); markers.push(mk);
+}
+
 /* night lights: lanterns by the cottage door, the rocket pad and the plaza, and fireflies */
 const glowTex=(()=>{ const c=makeCanvas(64,64), x=c.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
   g.addColorStop(0,'rgba(255,240,180,1)'); g.addColorStop(.25,'rgba(255,210,110,.8)'); g.addColorStop(1,'rgba(255,190,80,0)');
@@ -1073,12 +1115,15 @@ const glowSprite=(size)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({ 
   const w=glowSprite(1.7); w.position.copy(STORY_POS).addScaledVector(STORY_DIR,1.25).setY(1.2); nightGlows.push(w);   /* warm doorway */
   for(let i=0;i<6;i++){ const a=i/6*Math.PI*2, g=glowSprite(.6); g.position.set(ROCKET_PAD.x+Math.cos(a)*1.15,.35,ROCKET_PAD.z+Math.sin(a)*1.15); nightGlows.push(g); }
   /* little lamp posts around the plaza */
-  for(let i=0;i<6;i++){
-    const a=(i+.5)/6*Math.PI*2, x=Math.cos(a)*5.3, z=Math.sin(a)*5.3;
+  /* one in each gap between the paths, so none stands where a path leaves the plaza */
+  const pathA=zoneDefs.map(z=>((z.angle%360)+360)%360).sort((a,b)=>a-b);
+  pathA.forEach((p,i)=>{
+    const q=i+1<pathA.length ? pathA[i+1] : pathA[0]+360;
+    const a=(p+q)/2*Math.PI/180, x=Math.cos(a)*5.45, z=Math.sin(a)*5.45;
     const post=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,1.3,8),mat(0x4a5060)); post.position.set(x,.65,z); post.castShadow=true; world.add(post);
     const lamp=new THREE.Mesh(new THREE.SphereGeometry(.13,12,10),mat(0xfff3c4)); lamp.position.set(x,1.38,z); world.add(lamp);
     const g=glowSprite(.85); g.position.set(x,1.38,z); nightGlows.push(g);
-  }
+  });
 }
 const fireflies=[];
 for(let i=0;i<22;i++){
@@ -1092,7 +1137,7 @@ nightK=nightGoal; applyNight(nightK);
         Disable with ?nomerge for A/B comparison. ---- */
 if(!location.search.includes('nomerge')){
   const skipSet=new Set([
-    rocket, storyHouse, millHub, welcomeGroup.userData.balloon,
+    rocket, storyHouse, pirateShip, millHub, welcomeGroup.userData.balloon,
     ...ducks.map(d=>d.g),
     ...beeSwarms.flatMap(s=>s.bees.map(b=>b.m)),
     ...markers, ...flames, ...heartMeshes,
@@ -1648,6 +1693,11 @@ function openPanel(id){
       gal.appendChild(d);
     });
   }
+  if(id==='numbers'){   /* the pirate make-ten game */
+    const a=document.createElement('button'); a.className='dirtour';
+    a.style.cssText='background:linear-gradient(135deg,#eaa83a,#e0453a);grid-column:1/-1;margin:0';
+    a.textContent=T().pirateBtn; a.onclick=()=>openGame(); gal.appendChild(a);
+  }
   if(id==='welcome'){   /* where Max has lived and travelled */
     const a=document.createElement('a'); a.className='dirtour'; a.href='earth.html';
     a.style.cssText='background:linear-gradient(135deg,#1f6fb8,#3fae6a);text-decoration:none;grid-column:1/-1;margin:0';
@@ -1799,7 +1849,7 @@ $('#lbnext').onclick=e=>{ e.stopPropagation(); showArt(artAt+1); };
 
 /* interact + jump */
 let activeZone=null;
-function tryInteract(){ if(!started||leaving) return; if(portalNear){ portalNear.go(); return; } if(activeZone) openPanel(activeZone); }
+function tryInteract(){ if(!started||leaving||piratesOpen()) return; if(portalNear){ portalNear.go(); return; } if(activeZone) openPanel(activeZone); }
 function tryJump(){ if(!started||panelOpen||riding) return; if(state.onGround){ state.vy=6.3; state.onGround=false; } }
 $('#actbtn').onclick=()=>tryInteract();
 $('#jumpbtn').onclick=()=>tryJump();
@@ -2035,6 +2085,7 @@ function tick(){
 
   /* ---- ambient animations ---- */
   clouds.rotation.y+=dt*.0045;
+  pirateShip.position.y=Math.sin(t*1.6)*.05; pirateShip.rotation.z=Math.sin(t*1.1)*.04;
   if(nightK!==nightGoal){ nightK=nightGoal>nightK?Math.min(nightGoal,nightK+dt/1.6):Math.max(nightGoal,nightK-dt/1.6); applyNight(nightK); }
   if(nightK>0) fireflies.forEach((f,i)=>{ const a=t*f.sp+f.ph;
     f.s.position.set(f.x+Math.cos(a)*f.r, f.y+Math.sin(t*1.3+f.ph)*.35, f.z+Math.sin(a*1.3)*f.r);
@@ -2188,6 +2239,7 @@ function voiceLines(){
     const zs=I18N[lg].zones;
     for(const id in zs){ const z=zs[id], text=speechOf(z,lg); out.push({id:'world:'+id,lang:lg,key:textKey(text),text}); }
     ['story','rocket'].forEach(k=>{ const text=inviteSpeech(k,lg); out.push({id:'world:invite-'+k,lang:lg,key:textKey(text),text}); });
+    pirateLines(lg).forEach((text,i)=>out.push({id:'world:pirate-'+i,lang:lg,key:textKey(text),text}));
   });
   return out;
 }
