@@ -4,7 +4,6 @@ import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCi
 import { EXTRA_SCENES } from './scenes/registry.js';
 import { mergeStatic } from './perf.js';
 import { createNarrator, textKey, silentWavURL } from './narrator.js';
-import { openPirates, pirateLines, piratesOpen } from './minigames/pirates.js';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -463,18 +462,27 @@ function leaveTo(url,kind){
 const PORTALS=[
   { id:'rocket', at:()=>ROCKET_PAD,  r:2.8, label:()=>'🚀 '+T().rocketHint, go:()=>boardRocket(), ok:()=>!riding&&rocketPhase===0 },
   { id:'story',  at:()=>STORY_DOOR,  r:2.3, label:()=>'📖 '+T().storyHint,  go:()=>enterStories(), ok:()=>!riding },
-  { id:'pirates', at:()=>PIRATE_SPOT, r:2.6, label:()=>'🏴‍☠️ '+T().pirateHint, go:()=>openGame(), ok:()=>!riding },
+  { id:'pirates', at:()=>PIRATE_SPOT, r:2.6, label:()=>'🏴‍☠️ '+T().pirateHint, go:()=>openGame('pirates'), ok:()=>!riding },
+  { id:'flood',   at:()=>FLOOD_SPOT,  r:2.6, label:()=>'🌊 '+T().floodHint,  go:()=>openGame('flood'),   ok:()=>!riding },
 ];
 let portalNear=null;
-/* Number Land's mini-game: Pirate Ships, Make Ten (js/minigames/pirates.js) */
-function openGame(){
-  if(leaving) return;
+/* zone mini-games, loaded only when first opened so the island itself stays light:
+   Number Land's Pirate Ships (make ten) and Builder's Corner's Flood Fixers */
+const GAMES={ pirates:()=>import('./minigames/pirates.js'), flood:()=>import('./minigames/flood.js') };
+let gameOpen=false;
+async function openGame(kind){
+  if(leaving||gameOpen) return;
   if(panelOpen) closePanel();
   endTour(); portalNear=null; $('#hint').style.display='none';
-  narrator.stop(); panelOpen=true;
-  openPirates({ lang:()=>lang, speak:(t,force)=>narrator.speak(t,force),
-    sfx:{ miss:()=>note(196,0,.22,'sawtooth',.05), hop:i=>note(523+i*70,0,.1), win:()=>fanfare() },
-    onClose:()=>{ panelOpen=false; narrator.stop(); } });
+  narrator.stop(); panelOpen=true; gameOpen=true;
+  const ctx={ lang:()=>lang, speak:(t,force)=>narrator.speak(t,force),
+    sfx:{ miss:()=>note(196,0,.22,'sawtooth',.05), hop:i=>note(523+i*70,0,.1), win:()=>fanfare(),
+          dig:on=>note(on?330:262,0,.08,'square',.04), rain:()=>noiseHit?.(0,1.2,900,.6,.05) },
+    onClose:()=>{ panelOpen=false; gameOpen=false; narrator.stop(); } };
+  try{
+    const m=await GAMES[kind]();
+    kind==='pirates' ? m.openPirates(ctx) : m.openFlood(ctx);
+  }catch(e){ ctx.onClose(); toast('⚠️'); }
 }
 function enterStories(){ if(leaving||panelOpen) return; endTour(); portalNear=null; $('#hint').style.display='none'; ding(); leaveTo('stories.html','book'); }
 /* coming back with the browser's Back button restores this page as it was left: tidy up */
@@ -1103,6 +1111,28 @@ const pirateShip=new THREE.Group();
   mk.userData.baseY=3.4; mk.userData.ph=.7; scene.add(mk); markers.push(mk);
 }
 
+/* a sand table with a toy river, a dam and a little house, between Builder's Corner and the
+   Sports Park: walk up to it to play Flood Fixers */
+const FLOOD_SPOT=(()=>{const [x,z]=polar(36,13.6);return new THREE.Vector3(x,0,z);})();
+const floodTable=new THREE.Group();
+{
+  const F=floodTable;
+  const legM=mat(0x9a6a43);
+  [[-1,-.6],[1,-.6],[-1,.6],[1,.6]].forEach(([x,z])=>{ const l=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.7,6),legM); l.position.set(x,.35,z); F.add(l); });
+  const top=new THREE.Mesh(new THREE.BoxGeometry(2.4,.16,1.6),mat(0xe2c27e)); top.position.y=.74; top.castShadow=true; top.receiveShadow=true; F.add(top);
+  const river=new THREE.Mesh(new THREE.BoxGeometry(.32,.05,1.56),mat(0x3b9be0)); river.position.set(-.9,.84,0); F.add(river);
+  const channel=new THREE.Mesh(new THREE.BoxGeometry(1.2,.04,.18),mat(0x4aa8ea)); channel.position.set(-.15,.84,-.3); F.add(channel);
+  const pond=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.05,20),mat(0x4aa8ea)); pond.position.set(.72,.84,-.3); F.add(pond);
+  const dam=new THREE.Mesh(new THREE.BoxGeometry(.1,.18,.5),mat(0x9aa2ad)); dam.position.set(.4,.9,-.3); F.add(dam);
+  const house=new THREE.Mesh(new THREE.BoxGeometry(.3,.24,.3),mat(0xe87070)); house.position.set(.2,.94,.4); F.add(house);
+  const roof=new THREE.Mesh(new THREE.ConeGeometry(.26,.2,4),mat(0x9a5fe0)); roof.position.set(.2,1.16,.4); roof.rotation.y=Math.PI/4; F.add(roof);
+  F.position.copy(FLOOD_SPOT); F.lookAt(0,0,0);
+  F.traverse(o=>{ o.userData.portal='flood'; });
+  world.add(F);
+  const mk=emojiSprite('🌊',0x9a5fe0); mk.position.set(FLOOD_SPOT.x,2.6,FLOOD_SPOT.z);
+  mk.userData.baseY=2.6; mk.userData.ph=1.9; scene.add(mk); markers.push(mk);
+}
+
 /* night lights: lanterns by the cottage door, the rocket pad and the plaza, and fireflies */
 const glowTex=(()=>{ const c=makeCanvas(64,64), x=c.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
   g.addColorStop(0,'rgba(255,240,180,1)'); g.addColorStop(.25,'rgba(255,210,110,.8)'); g.addColorStop(1,'rgba(255,190,80,0)');
@@ -1137,7 +1167,7 @@ nightK=nightGoal; applyNight(nightK);
         Disable with ?nomerge for A/B comparison. ---- */
 if(!location.search.includes('nomerge')){
   const skipSet=new Set([
-    rocket, storyHouse, pirateShip, millHub, welcomeGroup.userData.balloon,
+    rocket, storyHouse, pirateShip, floodTable, millHub, welcomeGroup.userData.balloon,
     ...ducks.map(d=>d.g),
     ...beeSwarms.flatMap(s=>s.bees.map(b=>b.m)),
     ...markers, ...flames, ...heartMeshes,
@@ -1696,7 +1726,12 @@ function openPanel(id){
   if(id==='numbers'){   /* the pirate make-ten game */
     const a=document.createElement('button'); a.className='dirtour';
     a.style.cssText='background:linear-gradient(135deg,#eaa83a,#e0453a);grid-column:1/-1;margin:0';
-    a.textContent=T().pirateBtn; a.onclick=()=>openGame(); gal.appendChild(a);
+    a.textContent=T().pirateBtn; a.onclick=()=>openGame('pirates'); gal.appendChild(a);
+  }
+  if(id==='builder'){   /* the flood-diversion game */
+    const a=document.createElement('button'); a.className='dirtour';
+    a.style.cssText='background:linear-gradient(135deg,#3b9be0,#9a5fe0);grid-column:1/-1;margin:0';
+    a.textContent=T().floodBtn; a.onclick=()=>openGame('flood'); gal.appendChild(a);
   }
   if(id==='welcome'){   /* where Max has lived and travelled */
     const a=document.createElement('a'); a.className='dirtour'; a.href='earth.html';
@@ -1849,7 +1884,7 @@ $('#lbnext').onclick=e=>{ e.stopPropagation(); showArt(artAt+1); };
 
 /* interact + jump */
 let activeZone=null;
-function tryInteract(){ if(!started||leaving||piratesOpen()) return; if(portalNear){ portalNear.go(); return; } if(activeZone) openPanel(activeZone); }
+function tryInteract(){ if(!started||leaving||gameOpen) return; if(portalNear){ portalNear.go(); return; } if(activeZone) openPanel(activeZone); }
 function tryJump(){ if(!started||panelOpen||riding) return; if(state.onGround){ state.vy=6.3; state.onGround=false; } }
 $('#actbtn').onclick=()=>tryInteract();
 $('#jumpbtn').onclick=()=>tryJump();
@@ -2233,13 +2268,16 @@ document.addEventListener('gesturestart',e=>e.preventDefault());
 
 /* debug/test hooks */
 /* every zone card's spoken text, for tools/make_voice.py */
-function voiceLines(){
+const gameLines={};
+async function voiceLines(){
+  const [p,f]=await Promise.all([GAMES.pirates(),GAMES.flood()]); gameLines.pirates=p.pirateLines; gameLines.flood=f.floodLines;
   const out=[];
   ['en','zh'].forEach(lg=>{
     const zs=I18N[lg].zones;
     for(const id in zs){ const z=zs[id], text=speechOf(z,lg); out.push({id:'world:'+id,lang:lg,key:textKey(text),text}); }
     ['story','rocket'].forEach(k=>{ const text=inviteSpeech(k,lg); out.push({id:'world:invite-'+k,lang:lg,key:textKey(text),text}); });
-    pirateLines(lg).forEach((text,i)=>out.push({id:'world:pirate-'+i,lang:lg,key:textKey(text),text}));
+    (gameLines.pirates?.(lg)||[]).forEach((text,i)=>out.push({id:'world:pirate-'+i,lang:lg,key:textKey(text),text}));
+    (gameLines.flood?.(lg)||[]).forEach((text,i)=>out.push({id:'world:flood-'+i,lang:lg,key:textKey(text),text}));
   });
   return out;
 }
