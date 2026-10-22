@@ -87,15 +87,29 @@ const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, .01, 20
 const fitFov = () => { const a = innerWidth / innerHeight; camera.aspect = a; camera.fov = a < 1 ? Math.min(80, 2 * Math.atan(Math.tan(20 * Math.PI / 180) / a) * 180 / Math.PI) : 40; camera.updateProjectionMatrix(); };
 fitFov();
 camera.position.set(0, 0, 3.4);
-scene.add(new THREE.AmbientLight(0xffffff, .9));
-const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(-2, 1.5, 3); scene.add(key);
+scene.add(new THREE.AmbientLight(0xffffff, .55));
+scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x1a2a55, .35));
+const key = new THREE.DirectionalLight(0xfff6e8, 2.1); key.position.set(-2.2, 1.6, 3); scene.add(key);   /* sun from the front left: soft day/dusk shading */
 
-/* stars */
+/* stars: faint dust, a Milky Way band, and a few bright tinted ones */
 {
-  const N = 1800, pos = new Float32Array(N * 3), v = new THREE.Vector3();
-  for (let i = 0; i < N; i++) { v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(40, 70)); pos.set([v.x, v.y, v.z], i * 3); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color:0xffffff, size:1.8, sizeAttenuation:false, transparent:true, opacity:.85 })));
+  const v = new THREE.Vector3();
+  const layer = (n, size, opacity, place, tint) => {
+    const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      place(v); pos.set([v.x, v.y, v.z], i * 3);
+      const c = tint ? tint() : [1, 1, 1]; col.set(c, i * 3);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size, sizeAttenuation:false, vertexColors:true, transparent:true, opacity, depthWrite:false })));
+  };
+  const any = v => v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(40, 70));
+  const ax = new THREE.Vector3(.3, 1, .2).normalize(), u = new THREE.Vector3(1, -.3, 0).normalize(), w = ax.clone().cross(u);
+  const band = v => { const a = rand(0, Math.PI * 2), off = (rand(-1, 1) + rand(-1, 1) + rand(-1, 1)) * .07;
+    v.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(w, Math.sin(a)).addScaledVector(ax, off).normalize().multiplyScalar(rand(50, 70)); };
+  layer(1600, 1.3, .75, any);
+  layer(2600, 1.1, .45, band, () => { const k = rand(.6, 1); return [k * .85, k * .85, k]; });
+  layer(220, 2.8, .95, any, () => [[1, .92, .8], [.8, .88, 1], [1, 1, 1]][Math.floor(rand(0, 3))]);
 }
 
 /* cartoon world map (lon/lat outlines, simplified) */
@@ -104,12 +118,10 @@ const LAND = [
   ['#eef4f8', [[-55,60],[-42,60],[-20,70],[-20,80],[-40,83],[-65,80],[-58,75]]],
   ['#5daf4f', [[-80,10],[-72,12],[-62,10],[-50,0],[-35,-6],[-38,-15],[-41,-23],[-48,-26],[-58,-35],[-65,-42],[-68,-52],[-72,-50],[-74,-40],[-71,-30],[-71,-18],[-76,-14],[-81,-5],[-80,0]]],
   ['#7cc45e', [[-9,37],[-9,43],[-1,46],[-4,48],[2,51],[8,54],[12,54],[20,55],[28,60],[30,70],[45,68],[60,70],[70,73],[80,73],[100,77],[115,74],[130,71],[140,72],[160,70],[170,67],[180,66],[178,62],[165,60],[160,52],[155,50],[150,59],[142,59],[138,54],[141,48],[135,43],[130,42],[129,35.5],[126.5,34.5],[126,37],[125,39],[122,40],[121,39],[118,38],[120,35],[122,31],[121,28],[119,25],[116,23],[113,22],[110,21],[108,21],[106,18],[109,12],[107,10],[105,9],[103,10],[101,13],[100,8],[103,1.5],[101,3],[98,8],[98,16],[94,17],[92,22],[88,22],[85,20],[80,15],[80,10],[77,8],[73,16],[72,21],[67,25],[62,25],[57,26],[56,24],[59,22],[55,17],[52,16],[45,13],[43,16],[39,22],[35,28],[34,31],[35,36],[30,36],[27,37],[26,40],[23,40],[23,37],[21,38],[20,40],[19,42],[13,45],[16,41],[18,40],[16,38],[12,38],[12,42],[10,44],[7,43],[3,43],[0,39],[-2,37],[-6,36]]],
-  ['#d9c27a', [[35,28],[39,22],[43,16],[45,13],[52,16],[55,17],[59,22],[56,24],[50,26],[48,30],[44,30],[38,31]]],   /* Arabian desert */
   ['#7cc45e', [[5,58],[8,58],[11,59],[12,56],[13,55],[18,60],[22,65],[25,65.5],[28,70],[24,71],[15,69],[8,63],[5,61]]],
   ['#7cc45e', [[-5.7,50],[1.5,51],[1.7,52.8],[0,53.5],[-1.5,55],[-2,56],[-1.8,57.5],[-3.5,58.6],[-5,58.6],[-6,57],[-5.5,55.5],[-4.8,54.8],[-3.3,54.4],[-3.2,53.4],[-4.6,53.3],[-4.3,52.3],[-5.2,51.7],[-3.3,51.4]]],
   ['#7cc45e', [[-6,52],[-6.2,54],[-7.5,55.3],[-10,54],[-10.2,52],[-8,51.5]]],
   ['#a8b84e', [[-17,21],[-16,28],[-10,30],[-6,35.8],[10,37],[11,33],[20,31],[25,32],[32,31],[34,28],[37,22],[43,12],[51,12],[48,5],[40,-3],[39,-10],[40,-16],[35,-22],[33,-27],[28,-33],[20,-35],[17,-30],[12,-17],[13,-8],[9,-1],[9,4],[5,6],[-4,5],[-8,4],[-13,8],[-17,14]]],
-  ['#dcc67c', [[-16,20],[-15,27],[-8,30],[0,32],[10,32],[20,30],[30,30],[33,24],[30,18],[20,16],[10,17],[0,18],[-10,17]]],   /* Sahara */
   ['#7cc45e', [[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]]],
   ['#7cc45e', [[130.9,33.9],[132,35],[136,36],[140,38],[141.5,41],[142,40],[141,36],[140,35],[137,34.5],[135,33.7],[132,33],[131,31]]],
   ['#7cc45e', [[140,41.5],[141,45.5],[145,44],[143,42]]],
@@ -124,28 +136,150 @@ const LAND = [
   ['#7cc45e', [[173,-35],[178,-38],[175,-41.5],[171,-44],[167,-46],[169,-43],[172,-40]]],
   ['#eef4f8', [[-180,-70],[180,-70],[180,-90],[-180,-90]]],
 ];
-function mapTexture(){
-  const W = 2048, H = 1024, c = makeCanvas(W, H), x = c.getContext('2d');
-  const og = x.createLinearGradient(0, 0, 0, H); og.addColorStop(0, '#5aa7e6'); og.addColorStop(.5, '#3b8fd8'); og.addColorStop(1, '#5aa7e6');
+/* extra tints painted over the land: deserts, mountains */
+const TINTS = [
+  ['rgba(222,196,128,.95)', [[-16,20],[-15,27],[-8,30],[0,31],[10,31],[20,29],[30,29],[33,24],[30,18],[20,16],[10,17],[0,18],[-10,17]]],    /* Sahara */
+  ['rgba(222,196,128,.95)', [[36,28],[39,22],[44,16],[52,17],[55,19],[57,23],[50,26],[47,29],[43,30],[38,30]]],                              /* Arabia */
+  ['rgba(214,184,118,.9)',  [[119,-20],[130,-18],[138,-20],[140,-27],[134,-30],[124,-30],[118,-26]]],                                          /* Australian outback */
+  ['rgba(222,200,140,.9)',  [[77,37],[84,36.5],[90,38],[88,41],[80,41],[76,39.5]]],                                                           /* Taklamakan, by Kashgar */
+  ['rgba(214,196,140,.85)', [[96,40],[106,38],[114,41],[112,45],[102,46],[95,44]]],                                                            /* Gobi */
+  ['rgba(150,120,96,.8)',   [[73,35],[80,33],[88,29],[95,28],[100,31],[98,35],[90,36],[80,36.5],[74,37]]],                                     /* Himalaya / Tibet */
+  ['rgba(150,120,96,.7)',   [[-75,-5],[-72,-15],[-69,-22],[-70,-35],[-72,-45],[-74,-45],[-73,-30],[-75,-15],[-78,-5]]],                       /* Andes */
+  ['rgba(150,120,96,.6)',   [[-124,58],[-115,52],[-108,42],[-106,35],[-110,33],[-114,40],[-120,50],[-128,58]]],                                 /* Rockies */
+];
+/* a smooth closed path through lon/lat points (curves through the midpoints) */
+function smoothPath(x, pts, P){
+  const q = pts.map(P), n = q.length;
+  x.beginPath();
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const m0 = mid(q[n - 1], q[0]); x.moveTo(m0[0], m0[1]);
+  for (let i = 0; i < n; i++) { const m = mid(q[i], q[(i + 1) % n]); x.quadraticCurveTo(q[i][0], q[i][1], m[0], m[1]); }
+  x.closePath();
+}
+/* real coastlines: Natural Earth 1:110m land (public domain), TopoJSON from world-atlas@2 */
+async function loadCoasts(){
+  try{
+    const t = await (await fetch('assets/geo/land-110m.json')).json();
+    const [sx, sy] = t.transform.scale, [tx, ty] = t.transform.translate;
+    const arcs = t.arcs.map(a => { let x = 0, y = 0; return a.map(([dx, dy]) => { x += dx; y += dy; return [x * sx + tx, y * sy + ty]; }); });
+    const arc = i => i >= 0 ? arcs[i] : arcs[~i].slice().reverse();
+    const ring = ids => ids.flatMap((i, k) => k ? arc(i).slice(1) : arc(i));
+    const geoms = t.objects.land.type === 'GeometryCollection' ? t.objects.land.geometries : [t.objects.land];
+    /* polygons as [outer ring, ...holes] (holes are inland seas such as the Caspian) */
+    const unwrap = r => {
+      const out = []; let off = 0, prev = null;
+      for (const [lon, lat] of r) {
+        if (prev !== null) { const d = lon + off - prev; if (d > 180) off -= 360; else if (d < -180) off += 360; }
+        prev = lon + off; out.push([prev, lat]);
+      }
+      return out;
+    };
+    const polys = [];
+    const shiftBy = (r, d) => d ? r.map(([lon, lat]) => [lon + d, lat]) : r;
+    const span = r => { let a = Infinity, b = -Infinity; r.forEach(([lon]) => { if (lon < a) a = lon; if (lon > b) b = lon; }); return [a, b]; };
+    geoms.forEach(g => (g.type === 'Polygon' ? [g.arcs] : g.arcs).forEach(poly => {
+      let [outer, ...holes] = poly.map(r => unwrap(ring(r)));
+      /* bring the outline back to around -180..180, then move each hole onto the same lap of the globe */
+      let [a, b] = span(outer); const k = Math.round(((a + b) / 2) / 360) * 360; outer = shiftBy(outer, -k); a -= k; b -= k;
+      holes = holes.map(h => { const [ha, hb] = span(h), c = (ha + hb) / 2; return shiftBy(h, Math.round(((a + b) / 2 - c) / 360) * 360); });
+      polys.push([outer, ...holes]);
+    }));
+    return polys;
+  }catch(e){ return null; }
+}
+const COASTS = await loadCoasts();
+/* trace all land onto a canvas: real coastlines if loaded (drawn at -360/0/+360 so date-line rings wrap), else the hand-drawn shapes */
+function landPath(x, P){
+  if (!COASTS) { LAND.forEach(([, pts]) => { const q = pts.map(P), n = q.length, mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], m0 = mid(q[n - 1], q[0]);
+    x.moveTo(m0[0], m0[1]); for (let i = 0; i < n; i++) { const m = mid(q[i], q[(i + 1) % n]); x.quadraticCurveTo(q[i][0], q[i][1], m[0], m[1]); } x.closePath(); }); return; }
+  [-360, 0, 360].forEach(sh => COASTS.forEach(poly => poly.forEach(r => { r.forEach(([lon, lat], k) => { const [px, py] = P([lon + sh, lat]); k ? x.lineTo(px, py) : x.moveTo(px, py); }); x.closePath(); })));
+}
+function fillLand(x, P){   /* one shape at a time: overlapping rings never cancel out */
+  if (!COASTS) { LAND.forEach(([, pts]) => { smoothPath(x, pts, P); x.fill(); }); }
+  else [-360, 0, 360].forEach(sh => COASTS.forEach(poly => {
+    x.beginPath();
+    poly.forEach(r => { r.forEach(([lon, lat], k) => { const [px, py] = P([lon + sh, lat]); k ? x.lineTo(px, py) : x.moveTo(px, py); }); x.closePath(); });
+    x.fill('evenodd');   /* outer ring filled, inland seas left open */
+  }));
+  const [, top] = P([0, -79]), [, bot] = P([0, -90]); x.fillRect(0, top, 99999, bot - top);   /* Antarctica down to the pole */
+}
+function strokeLand(x, P){
+  if (!COASTS) { LAND.forEach(([, pts]) => { smoothPath(x, pts, P); x.stroke(); }); return; }
+  x.beginPath(); landPath(x, P); x.stroke();
+}
+/* colour map, specular (shiny sea) and bump (raised land) */
+function mapTextures(){
+  const W = 2048, H = 1024, P = ([lon, lat]) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
+  const c = makeCanvas(W, H), x = c.getContext('2d');
+  /* ocean: deep blue, a little lighter toward the poles, with soft swirls */
+  const og = x.createLinearGradient(0, 0, 0, H);
+  og.addColorStop(0, '#4f86c6'); og.addColorStop(.25, '#1f5fae'); og.addColorStop(.5, '#174f9e'); og.addColorStop(.75, '#1f5fae'); og.addColorStop(1, '#4f86c6');
   x.fillStyle = og; x.fillRect(0, 0, W, H);
-  x.strokeStyle = 'rgba(255,255,255,.12)'; x.lineWidth = 3;   /* gentle wave lines */
-  for (let y = 40; y < H; y += 46) { x.beginPath(); for (let px = 0; px <= W; px += 16) x.lineTo(px, y + Math.sin(px / 60 + y) * 5); x.stroke(); }
-  const P = ([lon, lat]) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
-  LAND.forEach(([col, pts]) => {
-    x.beginPath(); pts.forEach((p, i) => { const [px, py] = P(p); i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.closePath();
-    x.fillStyle = col; x.fill();
-    x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 3; x.stroke();
-  });
+  for (let i = 0; i < 260; i++) {
+    const cx = rand(0, W), cy = rand(H * .16, H * .84), r = rand(20, 90), g = x.createRadialGradient(cx, cy, 0, cx, cy, r);   /* none near the poles, where the map gets stretched */
+    g.addColorStop(0, `rgba(${Math.random() < .5 ? '40,110,190' : '18,70,150'},.35)`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2);
+  }
+  /* shallow water: a pale turquoise shelf along every coast */
+  x.save(); x.shadowColor = 'rgba(120,225,235,.9)'; x.shadowBlur = 22; x.fillStyle = 'rgba(120,225,235,.85)';
+  fillLand(x, P); x.restore();
+  /* land: coloured by latitude (ice, tundra, forest, grassland, jungle), then cut to the
+     coastlines with a mask filled one shape at a time (so overlapping shapes never cancel out) */
+  const lc = makeCanvas(W, H), lx = lc.getContext('2d');
+  const lg = lx.createLinearGradient(0, 0, 0, H), at = lat => (90 - lat) / 180;
+  [[90,'#f4f8fb'],[72,'#e6efe9'],[64,'#9cc59a'],[52,'#5f9f55'],[38,'#7fb45b'],[25,'#9cbd62'],[12,'#4e9a46'],[0,'#3f8f40'],[-12,'#4e9a46'],[-25,'#9cbd62'],[-40,'#79b058'],[-58,'#9cc59a'],[-66,'#f4f8fb'],[-90,'#f4f8fb']]
+    .forEach(([lat, col]) => lg.addColorStop(at(lat), col));
+  lx.fillStyle = lg; lx.fillRect(0, 0, W, H);
+  lx.filter = 'blur(6px)';
+  TINTS.forEach(([col, pts]) => { smoothPath(lx, pts, P); lx.fillStyle = col; lx.fill(); });
+  lx.filter = 'none';
+  for (let i = 0; i < 9000; i++) { lx.fillStyle = Math.random() < .5 ? 'rgba(0,40,0,.07)' : 'rgba(255,255,220,.06)'; lx.fillRect(rand(0, W), rand(0, H), rand(1, 4), rand(1, 4)); }
+  const mc = makeCanvas(W, H), mx = mc.getContext('2d'); mx.fillStyle = '#000';
+  fillLand(mx, P);
+  lx.globalCompositeOperation = 'destination-in'; lx.drawImage(mc, 0, 0);
+  x.drawImage(lc, 0, 0);
+  /* white coastline */
+  x.strokeStyle = 'rgba(255,255,255,.45)'; x.lineWidth = 1.8; x.lineJoin = 'round';
+  strokeLand(x, P);
+  /* masks: sea shines, land is raised a little */
+  const sm = makeCanvas(W / 2, H / 2), sx = sm.getContext('2d');
+  sx.fillStyle = '#fff'; sx.fillRect(0, 0, W / 2, H / 2); sx.fillStyle = '#000';
+  const P2 = p => P(p).map(v => v / 2);
+  fillLand(sx, P2);
+  const bm = makeCanvas(W / 2, H / 2), bx = bm.getContext('2d');
+  bx.fillStyle = '#000'; bx.fillRect(0, 0, W / 2, H / 2); bx.filter = 'blur(3px)'; bx.fillStyle = '#9a9a9a';
+  fillLand(bx, P2);
+  bx.fillStyle = '#ffffff'; TINTS.slice(5).forEach(([, pts]) => { smoothPath(bx, pts, P2); bx.fill(); });
+  const tex = canvasTexture(c), spec = new THREE.CanvasTexture(sm), bump = new THREE.CanvasTexture(bm);
+  return { tex, spec, bump };
+}
+/* clouds: soft streaks, more along the equator and the storm belts */
+function cloudTexture(){
+  const W = 1024, H = 512, c = makeCanvas(W, H), x = c.getContext('2d');
+  for (let i = 0; i < 420; i++) {
+    const band = [.5, .3, .7, .2, .8][i % 5], cy = (band + rand(-.08, .08)) * H, cx = rand(0, W), rx = rand(14, 60), ry = rx * rand(.25, .55);
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, 1);
+    g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.save(); x.translate(cx, cy); x.scale(rx, ry); x.fillStyle = g; x.beginPath(); x.arc(0, 0, 1, 0, 7); x.fill(); x.restore();
+  }
   return canvasTexture(c);
 }
 const globe = new THREE.Group(); scene.add(globe);
 globe.rotation.order = 'XYZ';
-globe.add(new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshLambertMaterial({ map:mapTexture() })));
-{ /* soft atmosphere glow */
-  const c = makeCanvas(256, 256), x = c.getContext('2d'), g = x.createRadialGradient(128, 128, 88, 128, 128, 128);
-  g.addColorStop(0, 'rgba(120,190,255,.55)'); g.addColorStop(1, 'rgba(120,190,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:canvasTexture(c), transparent:true, depthWrite:false }));
-  s.scale.set(2.95, 2.95, 1); s.renderOrder = -1; scene.add(s);
+{
+  const { tex, spec, bump } = mapTextures();
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(1, 128, 96), new THREE.MeshPhongMaterial({
+    map:tex, specularMap:spec, specular:new THREE.Color(0x6688aa), shininess:28, bumpMap:bump, bumpScale:.012 })));
+}
+const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.014, 96, 64),
+  new THREE.MeshLambertMaterial({ map:cloudTexture(), transparent:true, opacity:.6, depthWrite:false }));
+globe.add(clouds);
+{ /* atmosphere: a blue rim that glows brighter toward the edge */
+  const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.09, 64, 48), new THREE.ShaderMaterial({
+    side:THREE.BackSide, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    vertexShader:'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader:'varying vec3 vN; void main(){ float i = pow(clamp(0.68 - dot(vN, vec3(0.0, 0.0, 1.0)), 0.0, 1.0), 2.4); gl_FragColor = vec4(0.36, 0.66, 1.0, 1.0) * i; }' }));
+  scene.add(atmo);
 }
 /* lon/lat -> point on the unit sphere, matching SphereGeometry's texture layout */
 function surf(lon, lat, r = 1){
@@ -161,6 +295,9 @@ ALL.forEach(p => {
   const h = home ? .05 : .025;
   const stick = new THREE.Mesh(new THREE.CylinderGeometry(.003, .003, h, 6), new THREE.MeshBasicMaterial({ color:0xffffff })); stick.position.y = h / 2; g.add(stick);
   const head = new THREE.Mesh(new THREE.SphereGeometry(home ? .014 : .009, 14, 10), new THREE.MeshBasicMaterial({ color:home ? 0xff7a3d : 0xffcf5c })); head.position.y = h; g.add(head);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(home ? .016 : .011, home ? .022 : .015, 32),
+    new THREE.MeshBasicMaterial({ color:home ? 0xff7a3d : 0xffcf5c, transparent:true, opacity:.9, side:THREE.DoubleSide, depthWrite:false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = .002; g.add(ring); p.ring = ring;
   p.tip = new THREE.Vector3(0, h, 0); p.pin = g;
   const b = document.createElement('button'); b.className = 'lbl ' + (home ? 'home' : 'trip');
   b.onclick = () => focusPlace(p, true);
@@ -323,6 +460,10 @@ function tick(){
   if (view.tYaw != null) { view.yaw += (view.tYaw - view.yaw) * Math.min(1, dt * 2.6); view.pitch += (view.tPitch - view.pitch) * Math.min(1, dt * 2.6); }
   view.dist += (view.tDist - view.dist) * Math.min(1, dt * (diving ? 1.8 : 2.4));
   globe.rotation.set(view.pitch, view.yaw, 0);
+  clouds.rotation.y += dt * .006;
+  clouds.material.opacity = Math.max(0, Math.min(.6, (view.dist - 1.45) * .45));   /* clear the clouds when zoomed in on a place */
+  const now = performance.now() / 1000;
+  ALL.forEach((p, i) => { const k = (now * .6 + i * .37) % 1; p.ring.scale.setScalar(1 + k * 2.4); p.ring.material.opacity = .9 * (1 - k); });
   camera.position.set(0, 0, view.dist); camera.lookAt(0, 0, 0);
   if (legAnim) {
     const e = Math.min(1, (performance.now() - legAnim.t0) / 2600);   /* wall-clock, so slow devices still finish on time */
