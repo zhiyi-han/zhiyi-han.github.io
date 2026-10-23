@@ -3,12 +3,15 @@
   --blue:#4f7fe0; --teal:#2bb6c4; --hi:#ffe08a;
   --up:#3fae6a; --right:#4f7fe0; --left:#f0a35e; --down:#b07ad8;
   --new:#e4dccd; --learn:#f0a35e; --known:#7fa6f0; --master:#3fae6a;
-  --glyph:"LXGW WenKai TC","Kaiti TC","BiauKai","STKaiti","KaiTi",serif;
+  /* system fonts only: they draw the characters the way the family's Excel and books do (研 鉛 温 着 説…);
+     Taiwan-standard web fonts write many of them differently */
+  --ui:"PingFang HK","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK HK","Noto Sans CJK SC",system-ui,sans-serif;
+  --glyph:"Kaiti SC","STKaiti","KaiTi","Noto Serif CJK HK",var(--ui);
 }
-body.hei{--glyph:"Noto Sans TC","PingFang HK","PingFang TC","Microsoft JhengHei",sans-serif}
+body.hei{--glyph:var(--ui)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:var(--paper)}
-body{font-family:"Noto Sans TC","PingFang HK","PingFang TC","Microsoft JhengHei","Baloo 2",system-ui,sans-serif;
+body{font-family:var(--ui);
   color:var(--ink);background:radial-gradient(circle at 20% 0,#fff8ea,var(--paper) 60%);min-height:100vh}
 small{font-family:"Baloo 2",system-ui,sans-serif;font-weight:700;color:var(--soft);font-size:.6em;margin-left:6px}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -111,7 +114,7 @@ summary{font-weight:900;font-size:17px;cursor:pointer}
 #hw:empty,#hs:empty{display:none}
 #hw .wp{display:block;font:700 15px "Baloo 2",system-ui,sans-serif;color:var(--soft);letter-spacing:.05em}
 #hs{font-size:clamp(19px,4.6vw,25px);line-height:1.6;margin-top:10px;padding:0 6px}
-#hs cite{display:block;font:500 13px "Noto Sans TC",system-ui,sans-serif;color:var(--soft);font-style:normal;margin-top:2px}
+#hs cite{display:block;font:500 13px var(--ui);color:var(--soft);font-style:normal;margin-top:2px}
 #hints em{font-style:normal;color:#d9534f;font-weight:700}
 #xh{position:absolute;right:-10px;bottom:-14px;width:64px;height:64px;border-radius:50%;border:3px solid #fff;background:#fff3c4;padding:0;
   box-shadow:0 6px 16px rgba(90,60,30,.28);transition:transform .15s}
@@ -126,7 +129,7 @@ summary{font-weight:900;font-size:17px;cursor:pointer}
 #buddy{position:absolute;right:-30px;bottom:-6px;width:96px;pointer-events:none;opacity:0;transform:translateY(40px) scale(.4);transform-origin:bottom center}
 #buddy img{width:100%;display:block;filter:drop-shadow(0 6px 10px rgba(90,60,30,.25))}
 #bubble{position:absolute;right:62px;top:-8px;white-space:nowrap;background:#fff;border:3px solid #f2c94c;border-radius:16px;padding:6px 12px;
-  font:900 17px "Noto Sans TC",system-ui,sans-serif;color:#a37a00;box-shadow:0 4px 12px rgba(90,60,30,.15)}
+  font:900 17px var(--ui);color:#a37a00;box-shadow:0 4px 12px rgba(90,60,30,.15)}
 #bubble:after{content:"";position:absolute;right:-9px;top:14px;border:7px solid transparent;border-left-color:#f2c94c}
 #buddy.pop{animation:buddy 1.4s ease-out}
 @keyframes buddy{0%{opacity:0;transform:translateY(40px) scale(.4)}14%{opacity:1;transform:translateY(-8px) scale(1.04)}
@@ -144,7 +147,7 @@ dialog .ig{font-family:var(--glyph);font-size:84px;line-height:1;text-align:cent
 dialog .ip{text-align:center;font:700 20px "Baloo 2",system-ui,sans-serif;color:var(--soft)}
 dialog .iw{font-family:var(--glyph);font-size:26px;text-align:center;margin-top:8px}
 dialog .is{font-family:var(--glyph);font-size:19px;line-height:1.6;margin-top:10px}
-dialog .is cite{display:block;font:500 13px "Noto Sans TC",system-ui,sans-serif;color:var(--soft);font-style:normal}
+dialog .is cite{display:block;font:500 13px var(--ui);color:var(--soft);font-style:normal}
 dialog em{font-style:normal;color:#d9534f;font-weight:700}
 dialog dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin-top:14px}
 dialog dt{color:var(--soft)}

@@ -20,7 +20,8 @@ from pypinyin import pinyin, Style
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 T2S = opencc.OpenCC('t2s')
 PY_FIX = {'甚麼': 'shén me', '什麼': 'shén me', '彈來彈去': 'tán lái tán qù', '繫鞋帶': 'jì xié dài'}   # pypinyin misreads these
-GLYPH = {'説': '說'}   # the sheet uses HK glyphs; the card shows the form the stories print
+GLYPH = {}                  # the sheet's characters are used exactly as written
+STORY_TO_SHEET = str.maketrans({'說': '説'})   # the stories print 說; the sheet (and so the game) writes 説
 
 
 def load_hints():
@@ -48,18 +49,18 @@ def load_sentences():
     for wi, w in enumerate(index):
         works.append([w['id'], w['title']])
         d = json.loads((ROOT / 'stories' / 'data' / f"{w['id']}.json").read_text())
-        sets.append(set(json.dumps(d, ensure_ascii=False)))
+        sets.append(set(json.dumps(d, ensure_ascii=False).translate(STORY_TO_SHEET)))
         for p in d['pages']:
             if 's' in p:
                 body = [s for para in p['s'] for s in para]
             else:
                 body = re.findall(r'[^。！？]+[。！？]*[」』]?', p.get('say', ''))
-            sents += [(unquote(s), wi, True) for s in body if s.strip()]
+            sents += [(unquote(s).translate(STORY_TO_SHEET), wi, True) for s in body if s.strip()]
         for ex in d.get('extras', []):
             for it in ex['items']:
                 for k in ('d', 't'):
                     if it.get(k):
-                        sents += [(unquote(s), wi, False) for s in re.split(r'(?<=[。！？])', it[k]) if s.strip()]
+                        sents += [(unquote(s).translate(STORY_TO_SHEET), wi, False) for s in re.split(r'(?<=[。！？])', it[k]) if s.strip()]
     return works, [x for x in sents if 'NASA' not in x[0]], sets   # the Pluto story's reading list is no example sentence
 
 
@@ -106,6 +107,7 @@ def main(xlsx):
         if c not in hints:
             problems.append(f'{c}: no hint word'); continue
         w, own = hints[c]
+        w, own = w.translate(STORY_TO_SHEET), own and own.translate(STORY_TO_SHEET)
         if c not in w:
             problems.append(f'{c}: hint word {w} does not contain it')
         if own:
