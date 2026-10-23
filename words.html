@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6ead6">
+<title>滿滿認字 · Max Word</title>
+<meta name="description" content="Max's Chinese character review game: 1,188 Traditional characters from his reading books and stories. 滿滿的識字複習遊戲。">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://zhiyihan.com/words.html">
+<meta property="og:site_name" content="Max's World">
+<meta property="og:title" content="滿滿認字 · Max Word">
+<meta property="og:description" content="Max's Chinese character review game. 滿滿的識字複習遊戲。">
+<meta property="og:image" content="https://zhiyihan.com/assets/og-cover.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%234f7fe0'/><text x='50' y='68' font-size='52' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="words.css">
+</head>
+<body>
+<header id="top">
+  <a class="pill" href="stories.html">← <span>故事屋</span></a>
+  <h1>🔤 滿滿認字 <small>Max Word</small></h1>
+</header>
+
+<main id="home">
+  <section class="hero">
+    <img src="words/xiaohuang.webp" alt="小黃" width="86" height="143">
+    <div>
+      <p class="intro">一張卡只有一個大字。想不起來？先想一想，再請小黃幫忙。滿滿讀出來，家長按他的反應選方向；不認得的字會自動再出現，直到一看就認得。</p>
+      <div class="go">
+        <button id="start" class="big">開始</button>
+        <button id="resume" class="big alt" hidden>繼續上次</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="legend" aria-label="四個方向">
+    <div class="k up"><b>↑</b><span><strong>秒認到</strong>一看就讀出來</span></div>
+    <div class="k right"><b>→</b><span><strong>想一想認到</strong>沒看提示，想了一會兒</span></div>
+    <div class="k left"><b>←</b><span><strong>提示後認到</strong>看了小黃的詞語或例句</span></div>
+    <div class="k down"><b>↓</b><span><strong>今天還不認得</strong>看答案，等一下再見</span></div>
+    <p class="tip">電腦用方向鍵，空白鍵叫小黃；手機平板可以點按鈕，或在字卡上滑動。</p>
+  </section>
+
+  <section>
+    <h2>進度 <small id="total"></small></h2>
+    <div id="bars"></div>
+    <div id="due"></div>
+  </section>
+
+  <details id="all">
+    <summary>看全部字</summary>
+    <p class="tip">點一個字，可以看它的詞語、例句和最近的回答。</p>
+    <div id="grid"></div>
+  </details>
+
+  <details id="prefs">
+    <summary>家長設定</summary>
+    <div class="set">
+      <span>字體</span>
+      <button data-font="kai">楷體</button><button data-font="hei">黑體</button>
+    </div>
+    <div class="set">
+      <span>進度只存在這部機上</span>
+      <button id="export">下載備份</button>
+      <label class="btn">還原備份<input id="import" type="file" accept="application/json,.json" hidden></label>
+      <button id="reset" class="danger">清除全部進度</button>
+    </div>
+  </details>
+</main>
+
+<div id="play" hidden>
+  <div id="pbar">
+    <button id="undo" class="rbtn" aria-label="上一張" title="上一張（Backspace）" disabled>↶</button>
+    <div id="pcount"></div>
+    <button id="end" class="endbtn">結束本次</button>
+  </div>
+  <div id="pad">
+    <button class="dir up" data-k="U"><b>↑</b><span>秒認到</span></button>
+    <button class="dir left" data-k="L"><b>←</b><span>提示後<br>認到</span></button>
+    <div id="card">
+      <div id="lv"></div>
+      <div id="py"></div>
+      <div id="glyph"></div>
+      <div id="hints"><p id="hw"></p><p id="hs"></p></div>
+      <button id="xh" aria-label="小黃提示" title="小黃提示（空白鍵）"><img src="words/xiaohuang-head.webp" alt=""><i></i><i></i></button>
+      <div id="buddy" aria-hidden="true"><span id="bubble"></span><img src="words/xiaohuang.webp" alt=""></div>
+    </div>
+    <button class="dir right" data-k="R"><b>→</b><span>想一想<br>認到</span></button>
+    <button class="dir down" data-k="D"><b>↓</b><span>今天還不認得</span></button>
+    <button id="next">下一個 ▶</button>
+  </div>
+</div>
+
+<main id="done" hidden>
+  <h2>本次完成 🎉</h2>
+  <p id="dsum"></p>
+  <div id="dcounts"></div>
+  <h3>下次優先複習</h3>
+  <div id="dnext" class="chips"></div>
+  <div class="go">
+    <button id="again" class="big">再玩一次</button>
+    <button id="home-btn" class="big alt">回到首頁</button>
+  </div>
+</main>
+
+<dialog id="info"></dialog>
+
+<script type="module" src="js/words.js"></script>
+</body>
+</html>
