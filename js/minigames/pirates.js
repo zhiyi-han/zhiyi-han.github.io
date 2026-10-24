@@ -11,6 +11,7 @@
    Spoken lines come from pirateLines() so the fixed ones can be
    pre-recorded; the lines that contain the numbers use the device voice.
    ============================================================ */
+import { bump } from '../progress.js?v=0c90647d';
 
 const TEXT = {
   en: {
@@ -287,6 +288,7 @@ function pick(k, btn){
 }
 
 function finish(){
+  bump('pirates', 'rounds');   /* for the Explorer Passport */
   root.querySelector('.boats').innerHTML = '';
   root.querySelector('.done h3').textContent = T().end;
   root.querySelector('.done').style.display = 'flex';

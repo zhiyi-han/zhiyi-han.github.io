@@ -9,6 +9,7 @@
    if not, it spills toward the houses and you can dig some more.
    Three levels, no timer. Spoken lines come from floodLines().
    ============================================================ */
+import { bump } from '../progress.js?v=0c90647d';
 
 const TEXT = {
   en: {
@@ -141,7 +142,7 @@ function build(){
   root.querySelector('.x').onclick = close;
   root.querySelector('.back').onclick = close;
   root.querySelector('.again').onclick = () => startGame();
-  root.querySelector('.rs').onclick = () => { if (!st.busy) loadLevel(st.level, true); };
+  root.querySelector('.rs').onclick = () => { if (st && !st.busy) loadLevel(st.level, true); };
   root.querySelector('.go').onclick = rain;
   root.querySelector('.spk').onclick = () => { if (st?.line) ctx.speak(st.line, true); };
   addEventListener('keydown', e => { if (root.style.display === 'flex' && e.key === 'Escape') close(); });
@@ -182,7 +183,7 @@ function loadLevel(i, keepQuiet){
   if (!keepQuiet && i > 0) say(T()[LEVELS[i].tip]);
 }
 function dig(cell){
-  if (st.busy) return;
+  if (!st || st.busy) return;
   cell.dug = !cell.dug;
   cell.el.classList.toggle('dug', cell.dug);
   ctx.sfx.dig(cell.dug);
@@ -192,7 +193,7 @@ const nb = (st, cell) => [[1,0],[-1,0],[0,1],[0,-1]].map(([dr,dc]) => st.cells[c
 
 /* water follows the dug channel from the crack; it reaches the reservoir only through dug cells */
 function rain(){
-  if (st.busy) return;
+  if (!st || st.busy) return;
   st.busy = true; root.querySelector('.go').disabled = true; root.querySelector('.rs').disabled = true;
   root.classList.add('rainy'); say(T().raining); ctx.sfx.rain();
   const start = st.cells.flat().find(c => c.ch === 'C');
@@ -253,6 +254,7 @@ function rain(){
 }
 
 function finish(){
+  bump('flood', 'cleared');   /* for the Explorer Passport */
   root.classList.remove('rainy');
   root.querySelector('.done h3').textContent = T().end;
   root.querySelector('.done').style.display = 'flex';

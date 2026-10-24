@@ -416,7 +416,7 @@ function finishQuiet() {
 }
 
 async function init() {
-  const d = await (await fetch('english/bank.json?v=318caff1')).json();
+  const d = await (await fetch('english/bank.json?v=0c90647d')).json();
   BANK = d.words.map(([w, lv, pos, zh, en, ex, e, cat, alt, note]) => ({ w, lv, pos, zh, en, ex, e, cat, alt, note }));
   BANK.forEach((e, i) => { e.i = i; BY[e.w] = e; });
   if (S.cur && S.cur.card && !BY[S.cur.card.w]) S.cur = null;   // the bank changed under an open session

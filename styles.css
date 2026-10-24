@@ -269,7 +269,7 @@
 #overlay{align-items:flex-start}#ocard{margin:auto}
 #quickactivities .ow,.activity-grid .ow{font-family:inherit;cursor:pointer;text-align:left;width:100%;font-size:inherit}
 .ow.pirate{background:#fff7df}.ow.flood{background:#edf8fc}.ow.footprints{background:#edf8ef}
-.ow.eng{background:#f0f4ff}
+.ow.eng{background:#f0f4ff}.ow.pass{background:linear-gradient(135deg,#fff4d6,#ffe1ec)}
 /* an odd number of activity cards: the last one spans the row */
 .owrow>.ow:last-child:nth-child(odd){grid-column:1/-1}
 #owt{font-size:14px;font-weight:800;color:#324a60}

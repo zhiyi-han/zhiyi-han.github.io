@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { rand, clamp, makeCanvas, canvasTexture } from '../helpers.js?v=318caff1';
-import { createNarrator, textKey, silentWavURL } from '../narrator.js?v=318caff1';
+import { rand, clamp, makeCanvas, canvasTexture } from '../helpers.js?v=0c90647d';
+import { createNarrator, textKey, silentWavURL } from '../narrator.js?v=0c90647d';
 
 /* ============================================================
    Max's Galaxy Adventure
@@ -994,15 +994,15 @@ function registerExplorer(ex){
 /* Explorers are loaded on demand: nothing is downloaded or built until Max
    taps "Explore" on that planet, which keeps phone start-up fast. */
 const LAZY=[
-  { planet:'jupiter', file:'./jupiter.js?v=318caff1', fn:'createJupiter', label:['🟠 Explore Jupiter!','🟠 進入木星探險！'] },
-  { planet:'mars',    file:'./mars.js?v=318caff1',    fn:'createMars',    label:['🔴 Explore Mars!','🔴 進入火星探險！'] },
-  { planet:'mercury', file:'./mercury.js?v=318caff1', fn:'createMercury', label:['⚪ Explore Mercury!','⚪ 進入水星探險！'] },
-  { planet:'venus',   file:'./venus.js?v=318caff1',   fn:'createVenus',   label:['🟡 Explore Venus!','🟡 進入金星探險！'] },
-  { planet:'earth',   file:'./earth.js?v=318caff1',   fn:'createEarth',   label:['🌍 Explore Earth & the Moon!','🌍 探索地球和月亮！'] },
-  { planet:'uranus',  file:'./uranus.js?v=318caff1',  fn:'createUranus',  label:['🩵 Explore Uranus!','🩵 進入天王星探險！'] },
-  { planet:'neptune', file:'./neptune.js?v=318caff1', fn:'createNeptune', label:['🔵 Explore Neptune!','🔵 進入海王星探險！'] },
-  { planet:'pluto',   file:'./pluto.js?v=318caff1',   fn:'createPluto',   label:['🤎 Explore Pluto!','🤎 進入冥王星探險！'] },
-  { planet:'sun',     file:'./sun.js?v=318caff1',     fn:'createSun',     label:['☀️ Fly close to the Sun!','☀️ 飛近太陽！'] },
+  { planet:'jupiter', file:'./jupiter.js?v=0c90647d', fn:'createJupiter', label:['🟠 Explore Jupiter!','🟠 進入木星探險！'] },
+  { planet:'mars',    file:'./mars.js?v=0c90647d',    fn:'createMars',    label:['🔴 Explore Mars!','🔴 進入火星探險！'] },
+  { planet:'mercury', file:'./mercury.js?v=0c90647d', fn:'createMercury', label:['⚪ Explore Mercury!','⚪ 進入水星探險！'] },
+  { planet:'venus',   file:'./venus.js?v=0c90647d',   fn:'createVenus',   label:['🟡 Explore Venus!','🟡 進入金星探險！'] },
+  { planet:'earth',   file:'./earth.js?v=0c90647d',   fn:'createEarth',   label:['🌍 Explore Earth & the Moon!','🌍 探索地球和月亮！'] },
+  { planet:'uranus',  file:'./uranus.js?v=0c90647d',  fn:'createUranus',  label:['🩵 Explore Uranus!','🩵 進入天王星探險！'] },
+  { planet:'neptune', file:'./neptune.js?v=0c90647d', fn:'createNeptune', label:['🔵 Explore Neptune!','🔵 進入海王星探險！'] },
+  { planet:'pluto',   file:'./pluto.js?v=0c90647d',   fn:'createPluto',   label:['🤎 Explore Pluto!','🤎 進入冥王星探險！'] },
+  { planet:'sun',     file:'./sun.js?v=0c90647d',     fn:'createSun',     label:['☀️ Fly close to the Sun!','☀️ 飛近太陽！'] },
 ];
 const loaded={}, retries={};
 let pendingTok=0;   /* bumped by every new request, so a slow load can't hijack a later choice */
@@ -1035,7 +1035,7 @@ NAMES.landTitan=['Land on Titan','登陸泰坦'];
     center:out=>tm.getWorldPosition(out), focus:out=>tm.getWorldPosition(out), camDist:12,
     onArrive:()=>{
       const tok=++pendingTok;
-      loadModule('./titan.js?v=318caff1','createTitan',f=>f(api,tm,LDIR)).then(t=>{
+      loadModule('./titan.js?v=0c90647d','createTitan',f=>f(api,tm,LDIR)).then(t=>{
         if(tok===pendingTok && mode==='saturn' && at==='landTitan') t.land();
       }).catch(()=>{ if(at==='landTitan'){ at=null; markActive(null); } });
       return true;
@@ -1045,7 +1045,7 @@ NAMES.landTitan=['Land on Titan','登陸泰坦'];
 /* once the game is running, quietly fetch explorer code in the background
    (download only — scenes are still built on first visit) */
 function prefetchExplorers(){
-  const files=[...LAZY.map(z=>z.file),'./titan.js?v=318caff1'];
+  const files=[...LAZY.map(z=>z.file),'./titan.js?v=0c90647d'];
   const next=()=>{ const f=files.shift(); if(!f) return; import(f).catch(()=>{}).finally(()=>setTimeout(next,400)); };
   setTimeout(next,4000);
 }
@@ -1345,7 +1345,7 @@ tick();
 
 /* every card's spoken text, for tools/make_voice.py (loads all explorers first) */
 async function voiceLines(){
-  await Promise.all([...LAZY.map(z=>loadModule(z.file,z.fn,f=>f(api))), loadModule('./titan.js?v=318caff1','createTitan',f=>f(api,satMoons.titan.mesh,LDIR))]);
+  await Promise.all([...LAZY.map(z=>loadModule(z.file,z.fn,f=>f(api))), loadModule('./titan.js?v=0c90647d','createTitan',f=>f(api,satMoons.titan.mesh,LDIR))]);
   const out=[];
   for(const id in FACTS){
     if(!NAMES[id]) continue;

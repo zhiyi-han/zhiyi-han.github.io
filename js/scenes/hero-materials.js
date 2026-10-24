@@ -1,6 +1,6 @@
 /* Surface details for articulated hero figures. */
 import * as THREE from 'three';
-import { makeCanvas, canvasTexture } from '../helpers.js?v=318caff1';
+import { makeCanvas, canvasTexture } from '../helpers.js?v=0c90647d';
 
 /* ---------- tiling surface details (grey = multiply) ---------- */
 function tile(draw){ const c=makeCanvas(256,256), x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,256,256); draw(x); const t=canvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.colorSpace=THREE.NoColorSpace; return t; }

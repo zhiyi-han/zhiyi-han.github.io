@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js?v=318caff1';
-import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js?v=318caff1';
-import { EXTRA_SCENES } from './scenes/registry.js?v=318caff1';
-import { mergeStatic } from './perf.js?v=318caff1';
-import { createNarrator, textKey, silentWavURL } from './narrator.js?v=318caff1';
+import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js?v=0c90647d';
+import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js?v=0c90647d';
+import { EXTRA_SCENES } from './scenes/registry.js?v=0c90647d';
+import { mergeStatic } from './perf.js?v=0c90647d';
+import { createNarrator, textKey, silentWavURL } from './narrator.js?v=0c90647d';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -468,7 +468,7 @@ const PORTALS=[
 let portalNear=null;
 /* zone mini-games, loaded only when first opened so the island itself stays light:
    Number Land's Pirate Ships (add and subtract within 100) and Builder's Corner's Flood Fixers */
-const GAMES={ pirates:()=>import('./minigames/pirates.js?v=318caff1'), flood:()=>import('./minigames/flood.js?v=318caff1') };
+const GAMES={ pirates:()=>import('./minigames/pirates.js?v=0c90647d'), flood:()=>import('./minigames/flood.js?v=0c90647d') };
 let gameOpen=false;
 async function openGame(kind){
   if(leaving||gameOpen) return;
@@ -1737,7 +1737,7 @@ function handleTap(x,y){
 let started=false, panelOpen=false, currentPanel=null, celebrated=false;
 const visited=new Set();
 const SAVE_KEY='maxworld.v1';
-function saveGame(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({lang, visited:[...visited], sound:soundOn})); }catch(e){} }
+function saveGame(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({lang, visited:[...visited], zones:ZONE_COUNT, sound:soundOn})); }catch(e){} }
 const state={ vy:0, onGround:true, walkT:0, blink:rand(2,4), moving:false };
 
 /* stars HUD */
@@ -2461,5 +2461,10 @@ updateStars();
     }
     camTargetSmooth.copy(max.g.position).y+=1.15;
   }
+}
+/* ?play=pirates | flood (from the Explorer Passport): open that mini-game straight away */
+{
+  const play=new URLSearchParams(location.search).get('play');
+  if(play==='pirates'||play==='flood'){ history.replaceState(null,'',location.pathname); setTimeout(()=>launchActivityGame(play),300); }
 }
 tick();
