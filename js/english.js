@@ -1,6 +1,6 @@
 // 滿滿背單詞 · Max English — the English vocabulary game (english.html).
 // Cambridge YLE Starters / Movers / Flyers words. Each card shows a word and four meanings
-// (emoji + a simple English definition, Traditional Chinese underneath as a helper); Max picks one. The first time he picks the right meaning
+// (emoji + a simple English definition; the Chinese gloss in the data is not shown); Max picks one. The first time he picks the right meaning
 // by himself the word is 背會 and earns $1; it then comes back after 1, 2, 4, 8… days and
 // becomes 熟練 (+$2) when he still knows it on three later days. Money buys pets.
 // Progress lives in localStorage on this device only.
@@ -161,7 +161,7 @@ function show(c) {
   $('word').innerHTML = esc(e.w) + (e.alt ? ` <small>/ ${esc(e.alt)}</small>` : '');
   $('word').classList.toggle('long', e.w.length > 11);
   $('ans').hidden = true;
-  $('opts').innerHTML = c.opts.map(w => `<button class="opt" data-w="${esc(w)}"><span class="e">${BY[w].e}</span><span class="t"><b>${esc(BY[w].en)}</b><small>${esc(BY[w].zh.split('；')[0])}</small></span></button>`).join('');
+  $('opts').innerHTML = c.opts.map(w => `<button class="opt" data-w="${esc(w)}"><span class="e">${BY[w].e}</span><span class="t"><b>${esc(BY[w].en)}</b></span></button>`).join('');
   $('dunno').hidden = false; $('verdict').hidden = true; $('next').hidden = true;
   $('buddy').classList.remove('pop');
   $('pcount').textContent = `還有 ${C.q.length} 個`;
@@ -186,7 +186,6 @@ function answer(w) {
     if (b.dataset.w === card.w) b.classList.add('ok');
     else if (b.dataset.w === w) b.classList.add('bad');
   });
-  $('azh').innerHTML = `${esc(e.zh)} <button class="zsay" aria-label="讀中文">🔉</button>`;
   $('aen').textContent = e.en;
   $('aex').innerHTML = `${mark(e.ex, e.w)} <button class="xsay" aria-label="讀例句">🔊</button>`;
   $('ans').hidden = false;
@@ -313,7 +312,7 @@ function info(w) {
   const hist = r ? r.h.slice(-8).map(([, k]) => (k ? '✅' : '❌')).join(' ') : '—';
   $('info').innerHTML = `${e.e ? `<div class="ie">${e.e}</div>` : ''}<div class="iw">${esc(e.w)}${e.alt ? ` <small>/ ${esc(e.alt)}</small>` : ''}</div>
     <button class="say" data-say="${esc(e.w)}">🔊</button>
-    <div class="id">${esc(e.en)}</div><div class="iz">${esc(e.zh)}</div>
+    <div class="id">${esc(e.en)}</div>
     <div class="is">${mark(e.ex, e.w)} <button class="xsay" data-say="${esc(e.ex)}" style="border:none;background:none;font-size:18px">🔊</button></div>
     <dl><dt>級別</dt><dd>${LV[e.lv]} · ${e.pos.map(p => POS[p] || p).join('、')}${e.note ? `（${esc(e.note)}）` : ''}</dd>
     <dt>類別</dt><dd>${CATS[e.cat] || e.cat}</dd>
@@ -368,7 +367,6 @@ function wire() {
   }));
   document.addEventListener('click', e => {
     const o = e.target.closest('.opt'); if (o && !o.disabled) return answer(o.dataset.w);
-    if (e.target.closest('.zsay')) return say(BY[card.w].zh.replace(/；/g, '，'), 'zh', .9);
     if (e.target.closest('#aex .xsay')) return say(BY[card.w].ex, 'en', .9);
     const sy = e.target.closest('[data-say]'); if (sy) return say(sy.dataset.say, 'en', .9);
     const b = e.target.closest('[data-w]'); if (b && !b.classList.contains('opt')) return info(b.dataset.w);
