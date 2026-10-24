@@ -34,7 +34,7 @@ export const I18N = {
     tourBtn: "🚶 Take me around",
     invite: {
       story:  { icon:'📖', t:"Max's Story House", body:"Max and his mum made up twenty-one picture books and stories together — and every one can be read aloud!", go:'Go in 📖', next:'Next stop ▶' },
-      heroes: { icon:'⚡', t:"Max's Hero Base", body:"Max loves superheroes — especially Ultraman! Meet the whole Ultra family from the Land of Light and see their special moves.", go:'Go in ⚡', next:'Next stop ▶' },
+      heroes: { icon:'⚡', t:"Ultraman Family", body:"Max loves superheroes — especially Ultraman! Step into the glowing tower to meet the whole Ultra family from the Land of Light and see their special moves.", go:'Go in ⚡', next:'Next stop ▶' },
       rocket: { icon:'🚀', t:'Last stop: the rocket!', body:"Would you like to fly into space and visit every planet?", go:'Blast off! 🚀', next:'End the tour' },
     },
     allDoneNext: "Next: hear a story in the Story House, or blast off to space! 📖🚀",
@@ -44,24 +44,25 @@ export const I18N = {
     rocketHint: "Blast off to the Galaxy Adventure!",
     liftoff: "🚀 Blast off!",
     galaxySign: ["Galaxy Adventure","銀河大冒險"],
-    storyHint: "Go into the Story House",
+    storyHint: "Explore Story & Words",
     pirateHint: "Play Pirate Ships: Make Ten",
     pirateBtn: "🏴‍☠️ Play: Pirate Ships, Make Ten",
     floodHint: "Play Flood Fixers",
     floodBtn: "🌊 Play: Flood Fixers — dig a diversion channel",
-    heroHint: "Go into Max's Hero Base",
-    heroSign: ["Hero Base","滿滿英雄基地"],
+    heroHint: "Meet the Ultraman family",
+    heroSign: ["Ultraman Family","奧特曼家族"],
     backFromHeroes: "Welcome back from the Hero Base! ⚡",
-    storySign: ["Story House","滿滿故事屋"],
+    storySign: ["Story & Words","故事與文字"],
     backFromGalaxy: "Welcome back to Earth! 🌍",
-    backFromStories: "Welcome back from the Story House! 📖",
+    backFromStories: "Welcome back to Story & Words! 📖",
     backFromEarth: "Welcome to Max's World in Hong Kong! 🏝️",
     footprints: "🌍 Max's Footprints — where he has lived & travelled",
     owTitle: "Or jump straight in:",
-    owStories: ["📖","Story House","21 books, read aloud"],
+    owStories: ["📖","Story & Words","Stories, reading & word play"],
     owArt: ["🎨","Art Gallery","13 drawings by Max"],
     owGalaxy: ["🚀","Galaxy Adventure","Fly to every planet"],
-    owHeroes: ["⚡","Hero Base","The Ultra family"],
+    owHeroes: ["🦸","Hero Base","Max's superheroes"],
+    owUltra: ["⚡","Ultraman Family"],
     allDone: "🎉 You explored all of Max's World!",
     thanks: "Thank you for visiting — Max ❤️",
     goal: "⚽ GOAL!!",
@@ -74,7 +75,8 @@ export const I18N = {
       sports:{ icon:'⚽', t:'Sports Park', sub:'Brave and bouncy', body:"Football, swimming, cycling, climbing, Taekwondo and fencing — Max loves them all, and earned an Outstanding Fencer certificate. At a Spartan Kids race he was scared of the mud pit… but jumped in anyway, got up after falling, and finished the race. Try kicking the football!", chips:['Courage','Resilience','Fencing ⭐'] },
       nature:{ icon:'🌲', t:'Nature Trail', sub:'A little outdoor explorer', body:"Max grows up outdoors — he has hiked forest paths in Gaoligong Mountain and the Xishuangbanna rainforest, and joined a five-day camp in Dali before turning four, bringing home stones, twigs and flowers as little gifts.", chips:['Independence','Adaptability','Adventure'] },
       kindness:{ icon:'❤️', t:'Kindness Tree', sub:'Small hands, warm heart', body:"Max is learning that caring means small, real actions: selling charity flags in the rain two years in a row, giving his favourite cup to a family who lost their home in a fire, and sharing all ten of his candies — one for each child in the photo.", chips:['Empathy','Sharing','Responsibility'] },
-      reading:{ icon:'📚', t:'Reading Nook', sub:'Two languages, many worlds', body:"Bookshops and libraries are Max's happy places — from Hong Kong to Oxford. He reads stories in both Chinese and English, loves linking new words to characters he knows, and is starting to write his own little sentences.", chips:['Reading Habit','Bilingual','Phonics'] },
+      readingNook:{ icon:'📚', t:'Reading Nook', sub:'Two languages, many worlds', body:"Bookshops and libraries are Max's happy places — from Hong Kong to Oxford. He reads stories in both Chinese and English, loves linking new words to characters he knows, and is starting to write his own little sentences.", chips:['Reading Habit','Bilingual','Phonics'] },
+      reading:{icon:'📖',t:'Story & Words',sub:'Listen, read and play with words',body:"Welcome to Max's Story & Words neighbourhood. Listen to his stories, choose a book in the reading nook, or practise Chinese characters with Little Yellow.",chips:['Listen to stories','Read a book','Play with words']},
     }
   },
   zh: {
@@ -88,7 +90,7 @@ export const I18N = {
     tourBtn: "🚶 帶我逛逛",
     invite: {
       story:  { icon:'📖', t:'滿滿故事屋', body:'滿滿和媽媽一起創作了二十一本繪本和故事，每一本都可以聽朗讀！', go:'進去看看 📖', next:'下一站 ▶' },
-      heroes: { icon:'⚡', t:'滿滿英雄基地', body:'滿滿最喜歡超級英雄，特別是奧特曼！來認識光之國的奧特曼家族，看看他們的必殺技吧。', go:'進去看看 ⚡', next:'下一站 ▶' },
+      heroes: { icon:'⚡', t:'奧特曼家族', body:'滿滿最喜歡超級英雄，特別是奧特曼！走進發光的塔，來認識光之國的奧特曼家族，看看他們的必殺技吧。', go:'進去看看 ⚡', next:'下一站 ▶' },
       rocket: { icon:'🚀', t:'最後一站：火箭！', body:'要不要搭火箭去太空，飛遊九大行星？', go:'出發！🚀', next:'結束導覽' },
     },
     allDoneNext: "下一站：去故事屋聽故事，或者搭火箭去太空吧！📖🚀",
@@ -98,24 +100,25 @@ export const I18N = {
     rocketHint: "搭火箭去銀河大冒險！",
     liftoff: "🚀 出發！",
     galaxySign: ["Galaxy Adventure","銀河大冒險"],
-    storyHint: "進入滿滿故事屋",
+    storyHint: "進入故事與文字",
     pirateHint: "玩海盜船湊十",
     pirateBtn: "🏴‍☠️ 玩遊戲：海盜船湊十",
     floodHint: "玩分洪小工程師",
     floodBtn: "🌊 玩遊戲：分洪小工程師——挖一條分洪道",
-    heroHint: "進入滿滿英雄基地",
-    heroSign: ["Hero Base","滿滿英雄基地"],
+    heroHint: "進入奧特曼家族",
+    heroSign: ["Ultraman Family","奧特曼家族"],
     backFromHeroes: "從英雄基地回來啦！⚡",
-    storySign: ["Story House","滿滿故事屋"],
+    storySign: ["Story & Words","故事與文字"],
     backFromGalaxy: "歡迎回到地球！🌍",
-    backFromStories: "從故事屋回來啦！📖",
+    backFromStories: "回到故事與文字啦！📖",
     backFromEarth: "歡迎來到香港的 Max's World！🏝️",
     footprints: "🌍 Max 的足跡——住過和去過的地方",
     owTitle: "也可以直接去：",
-    owStories: ["📖","滿滿故事屋","21 本故事，普通話朗讀"],
+    owStories: ["📖","故事與文字","聽故事・閱讀・文字遊戲"],
     owArt: ["🎨","小畫廊","13 幅 Max 的畫作"],
     owGalaxy: ["🚀","銀河大冒險","飛遊九大行星"],
-    owHeroes: ["⚡","滿滿英雄基地","奧特曼家族"],
+    owHeroes: ["🦸","英雄基地","Max 的超級英雄"],
+    owUltra: ["⚡","奧特曼家族"],
     allDone: "🎉 你探索完 Max 的整個世界啦！",
     thanks: "謝謝你的到訪 — Max ❤️",
     goal: "⚽ 入球啦！！",
@@ -128,7 +131,31 @@ export const I18N = {
       sports:{ icon:'⚽', t:'運動小天地', sub:'勇敢又活力滿滿', body:"足球、游泳、單車、攀爬、跆拳道和劍擊——Max 全部都喜歡，還獲得了「傑出小劍手」證書。在 Spartan 小勇士賽中，他很怕泥潭……但還是勇敢跳了進去，跌倒了再爬起來，堅持完成比賽。試試踢一踢足球吧！", chips:['勇氣','堅毅','劍擊 ⭐'] },
       nature:{ icon:'🌲', t:'大自然小徑', sub:'小小戶外探險家', body:"Max 在大自然中長大——他走過高黎貢山和西雙版納雨林的山徑，不到四歲就參加了大理的五天戶外營，還把石頭、樹枝和小花帶回家當小禮物。", chips:['獨立','適應力','探險精神'] },
       kindness:{ icon:'❤️', t:'愛心樹', sub:'小小的手，暖暖的心', body:"Max 正在學習：關愛就是一件件真實的小事——連續兩年冒雨參加賣旗籌款；把最心愛的水杯送給火災中失去家園的家庭；看到照片裡有十個小朋友，就把自己的十顆糖全部分享出去。", chips:['同理心','分享','責任感'] },
-      reading:{ icon:'📚', t:'閱讀小角落', sub:'兩種語言，無數世界', body:"書店和圖書館是 Max 最開心的地方——由香港到牛津。他用中英文閱讀故事，喜歡把新學的字和認識的角色連起來，也開始寫下自己的小句子。", chips:['閱讀習慣','雙語','拼讀'] },
+      readingNook:{ icon:'📚', t:'閱讀小角落', sub:'兩種語言，無數世界', body:"書店和圖書館是 Max 最開心的地方——由香港到牛津。他用中英文閱讀故事，喜歡把新學的字和認識的角色連起來，也開始寫下自己的小句子。", chips:['閱讀習慣','雙語','拼讀'] },
+      reading:{icon:'📖',t:'故事與文字',sub:'聽故事、讀繪本、玩文字',body:'故事屋、閱讀小角落和文字遊戲，現在住在同一片小天地。挑一本滿滿的故事聽朗讀、到閱讀角自己翻書，或和小黃一起認字吧。',chips:['聽故事','自己閱讀','文字遊戲']},
     }
   }
 };
+
+/* Keep the two original activity descriptions inside the unified neighbourhood. */
+for(const lg of ['en','zh']){
+  const z=I18N[lg].zones;z.numberPlay={...z.numbers};
+  z.numbers=lg==='zh'?{
+    icon:'🔢',t:'數字與搭建',sub:'數一數、想一想、搭起來',
+    body:'數字樂園和小小工程師，現在住在同一片小天地。左邊是數字朋友，右邊是 LEGO 治水模型；選一種玩法，或走近看看吧。',
+    chips:['數字玩法','搭建玩法','觀察與思考']
+  }:{
+    icon:'🔢',t:'Numbers & Building',sub:'Count, think and build',
+    body:'Number Land and Builder’s Corner share one neighbourhood. Meet the number friends on the left and explore the LEGO flood-control project on the right. Choose an activity or walk closer to look.',
+    chips:['Number play','Building play','Observe and think']
+  };
+}
+
+/* Direct activities are shared by the homepage and map. */
+I18N.zh.activityTitle='想玩什麼？直接開始';
+I18N.en.activityTitle='Choose an activity';
+I18N.zh.islandTitle='也可以逛逛主島';
+I18N.en.islandTitle='Explore the island';
+I18N.zh.activities=[['stories','📖','聽故事','21 本故事與繪本・普通話朗讀','stories.html','sto'],['words','🔤','和小黃認字','認字、聽讀、複習','words.html','art'],['pirates','🏴‍☠️','海盜船湊十','找一找，還差幾個湊成 10',null,'pirate'],['flood','🌊','分洪小工程師','挖水道，保護小村莊',null,'flood'],['galaxy','🚀','銀河大冒險','飛到太空，探索星球','galaxy.html','gal'],['footprints','🌍','Max 的足跡','轉轉地球，看 Max 去過哪裡','earth.html','footprints']];
+I18N.en.activities=[['stories','📖','Listen to stories','21 stories & picture books, in Mandarin','stories.html','sto'],['words','🔤','Words with Little Yellow','Read, listen and practise Chinese','words.html','art'],['pirates','🏴‍☠️','Pirate Ships','Find the missing number to make ten',null,'pirate'],['flood','🌊','Flood Fixers','Dig a channel and save the village',null,'flood'],['galaxy','🚀','Galaxy Adventure','Fly into space and explore the planets','galaxy.html','gal'],['footprints','🌍',"Max’s Footprints",'Spin the globe and see his travels','earth.html','footprints']];
+I18N.zh.start='逛逛主島';I18N.en.start='Explore the island';

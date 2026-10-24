@@ -36,4 +36,5 @@
    the M-menu entry and the auto tour all pick it up.
    ============================================================ */
 
-export const EXTRA_SCENES = [];
+import { heroesScene } from './heroes.js?v=tour-first-v1';
+export const EXTRA_SCENES = [heroesScene];

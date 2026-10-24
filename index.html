@@ -19,17 +19,17 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%234f7fe0'/><text x='50' y='68' font-size='52' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'>M</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=tour-first-v1">
 <script type="importmap">{"imports":{"three":"./three.module.min.js"}}</script>
 </head>
 <body>
 <div id="scene"></div>
 
 <!-- HUD -->
-<div id="logo" class="hud" role="button" style="cursor:pointer"><div class="m">M</div><b>Max's World</b></div>
+<div id="logo" class="hud" role="button" tabindex="0" aria-label="Open world map" style="cursor:pointer"><div class="m">M</div><b id="maplabel">Explore</b></div>
 <div id="dirwrap"><div id="dir"><h3 id="dirtitle"></h3><div id="dirlist"></div></div></div>
 <div id="topbtns" class="hud">
-  <a id="storybtn" class="roundbtn" href="stories.html" aria-label="Story House" style="text-decoration:none">📖</a>
+  <a id="storybtn" class="roundbtn" href="#reading" aria-label="Story & Words" style="text-decoration:none">📖</a>
   <a id="galbtn" class="roundbtn" href="galaxy.html" aria-label="Galaxy Adventure" style="text-decoration:none">🌌</a>
   <button id="nightbtn" class="roundbtn" aria-label="Day or night">🌙</button>
   <button id="sndbtn" class="roundbtn">🔊</button>
@@ -83,19 +83,24 @@
 <!-- intro -->
 <div id="overlay">
   <div id="ocard">
-    <div class="mlogo">M</div>
-    <div id="olang"><button data-l="en" class="on">English</button><button data-l="zh">繁體中文</button></div>
-    <h1 id="otitle">Max's World</h1>
-    <div class="tag" id="otag"></div>
-    <div class="ctr" id="octr"></div>
-    <button id="startbtn"></button>
-    <div id="oworlds">
-      <div id="owt"></div>
-      <div class="owrow">
-        <a class="ow sto" id="owsto" href="stories.html"><span class="i"></span><b></b><small></small></a>
-        <a class="ow art" id="owart" href="#gallery"><span class="i"></span><b></b><small></small></a>
-        <a class="ow gal" id="owgal" href="galaxy.html"><span class="i"></span><b></b><small></small></a>
+    <div class="intro-head"><div class="mlogo">M</div>
+      <div id="olang"><button data-l="en" class="on">English</button><button data-l="zh">繁體中文</button></div>
+    </div>
+    <div class="intro-layout">
+      <section class="intro-welcome">
+        <h1 id="otitle">Max's World</h1>
+        <div class="tag" id="otag"></div>
+        <button id="autotourbtn" type="button"></button>
+        <p id="autotourhint"></p>
+      </section>
+      <div id="oworlds">
+        <div id="owt"></div>
+        <div class="owrow" id="quickactivities"></div>
       </div>
+      <section class="intro-wander">
+        <button id="startbtn"></button>
+        <details class="intro-help"><summary id="ohelp">How to explore</summary><div class="ctr" id="octr"></div></details>
+      </section>
     </div>
     <div class="url">ZHIYIHAN.COM</div>
   </div>
@@ -103,6 +108,6 @@
 
 <div id="fallback"><div>This page needs WebGL to show Max's 3D world.<br>此頁面需要 WebGL 才能顯示 Max 的 3D 世界。<br><br>zhiyihan.com</div></div>
 
-<script type="module" src="js/game.js"></script>
+<script type="module" src="js/game.js?v=tour-first-v1"></script>
 </body>
 </html>

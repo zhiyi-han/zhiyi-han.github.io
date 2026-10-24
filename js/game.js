@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js';
+import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js?v=tour-first-v1';
 import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js';
-import { EXTRA_SCENES } from './scenes/registry.js';
+import { EXTRA_SCENES } from './scenes/registry.js?v=tour-first-v1';
 import { mergeStatic } from './perf.js';
-import { createNarrator, textKey, silentWavURL } from './narrator.js';
+import { createNarrator, textKey, silentWavURL } from './narrator.js?v=tour-first-v1';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -146,12 +146,11 @@ const world = new THREE.Group(); scene.add(world);
 const ZONE_R = 21.5;
 const zoneDefs = [
   { id:'gallery',  angle:-90,  color:0xe86f9e },
-  { id:'numbers',  angle:-39,  color:0xeaa83a },
-  { id:'builder',  angle:12,   color:0x9a5fe0 },
-  { id:'sports',   angle:63,   color:0x5cb56f },
-  { id:'nature',   angle:115,  color:0x3f9e57 },
-  { id:'kindness', angle:166,  color:0xe87070 },
-  { id:'reading',  angle:218,  color:0x2bb6a0 },
+  { id:'numbers',  angle:-22.5,color:0xeaa83a },
+  { id:'sports',   angle:45,   color:0x5cb56f },
+  { id:'nature',   angle:90,   color:0x3f9e57 },
+  { id:'kindness', angle:135,  color:0xe87070 },
+  { id:'reading',  angle:180,  color:0x2bb6a0 },
 ];
 /* plug-in scenes (js/scenes/registry.js) join the world here */
 EXTRA_SCENES.forEach(s=>{
@@ -209,7 +208,8 @@ function pineTree(s=1){
   });
   return g;
 }
-const TREE_POS=[[-14,-25,1.2],[8,-28,1],[24,-16,1.1],[30,4,.9],[26,17,1.15],[6,30,1],[-12,28,1.2],[-26,17,1],[-30,-2,1.05],[-24,-16,.95],[16,25,.9],[-4,-31,.9]];
+/* Leave the Ultra Tower sightline clear on the Hero Base right-hand lawn. */
+const TREE_POS=[[-20,-25,1.2],[8,-28,1],[24,-16,1.1],[30,4,.9],[26,17,1.15],[6,30,1],[-12,28,1.2],[-26,17,1],[-30,-2,1.05],[-24,-16,.95],[16,25,.9],[-4,-31,.9]];
 TREE_POS.forEach((p,i)=>{
   const t = i%3===2 ? pineTree(p[2]) : puffTree(p[2], i%2?0x58b368:0x6fc97e);
   t.position.set(p[0],0,p[1]); t.rotation.y=rand(0,6); world.add(t);
@@ -232,7 +232,7 @@ for(let i=0;i<9;i++){
 const polar=(aDeg,r)=>{ const a=aDeg*Math.PI/180; return [Math.cos(a)*r, Math.sin(a)*r]; };
 
 /* duck pond (between Nature Trail and Kindness Tree) */
-const pondCenter=new THREE.Vector3(...(()=>{const [x,z]=polar(140,13);return [x,0,z];})());
+const pondCenter=new THREE.Vector3(...(()=>{const [x,z]=polar(112,13);return [x,0,z];})());
 {
   const pond=new THREE.Group();
   const water=new THREE.Mesh(new THREE.CircleGeometry(2.6,24), new THREE.MeshLambertMaterial({color:0x63b8e8}));
@@ -264,7 +264,7 @@ function duck(s){
   const g=duck(d.s); world.add(g); ducks.push({g,...d});
 });
 
-/* windmill (between Number Land and Builder's Corner) */
+/* windmill beside the unified Numbers & Building neighbourhood */
 const millHub=new THREE.Group();
 {
   const wm=new THREE.Group();
@@ -281,7 +281,7 @@ const millHub=new THREE.Group();
     blade.position.y=1.05; blade.castShadow=true; pv.add(blade); millHub.add(pv);
   }
   const hubCap=new THREE.Mesh(new THREE.SphereGeometry(.14,8,7), mat(0x8a6242)); millHub.add(hubCap);
-  const [x,z]=polar(-14,26); wm.position.set(x,0,z); wm.lookAt(0,0,0);
+  const [x,z]=polar(-4,29); wm.position.set(x,0,z); wm.lookAt(0,0,0);
   world.add(wm);
 }
 
@@ -301,7 +301,7 @@ const millHub=new THREE.Group();
     });
     puffG.position.set(sd*4.7,.15,0); rb.add(puffG);
   });
-  const [x,z]=polar(89,29); rb.position.set(x,0,z); rb.lookAt(0,0,0);
+  const [x,z]=polar(67,29); rb.position.set(x,0,z); rb.lookAt(0,0,0);
   world.add(rb);
 }
 
@@ -363,7 +363,7 @@ for(let i=0;i<8;i++){
 
 /* bees humming around two little flower patches */
 const beeSwarms=[];
-[[40,16],[195,17]].forEach(([aDeg,r])=>{
+[[22,16],[160,17]].forEach(([aDeg,r])=>{
   const [bx,bz]=polar(aDeg,r);
   const g=new THREE.Group(); g.position.set(bx,0,bz);
   [[.4,.2],[-.35,.45],[.05,-.4],[-.5,-.15]].forEach((o,i)=>{
@@ -451,19 +451,19 @@ function boardRocket(){
   bigMsg('3',800); ding();
 }
 let countN=0, leaving=false;
-/* fade to space (rocket) or to paper (book), then open the other page */
+/* fade to space (rocket), to paper (book) or to a flash of light (hero), then open the other page */
 function leaveTo(url,kind){
   leaving=true; narrator.stop();
   const w=$('#warp'); w.className=kind; w.style.display='flex';
   requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.add('on')));
-  setTimeout(()=>{ location.href=url; },kind==='space'?1000:700);
+  setTimeout(()=>{ location.href=url; },kind==='space'?1000:kind==='hero'?800:700);
 }
 /* places you walk up to and enter: the rocket (Galaxy game) and the Story House door */
 const PORTALS=[
   { id:'rocket', at:()=>ROCKET_PAD,  r:2.8, label:()=>'🚀 '+T().rocketHint, go:()=>boardRocket(), ok:()=>!riding&&rocketPhase===0 },
   { id:'story',  at:()=>STORY_DOOR,  r:2.3, label:()=>'📖 '+T().storyHint,  go:()=>enterStories(), ok:()=>!riding },
-  { id:'pirates', at:()=>PIRATE_SPOT, r:2.6, label:()=>'🏴‍☠️ '+T().pirateHint, go:()=>openGame('pirates'), ok:()=>!riding },
-  { id:'flood',   at:()=>FLOOD_SPOT,  r:2.6, label:()=>'🌊 '+T().floodHint,  go:()=>openGame('flood'),   ok:()=>!riding },
+  { id:'words', at:()=>WORD_DOOR, r:1.35, label:()=>lang==='zh'?'🔤 玩文字遊戲':'🔤 Play the word game', go:()=>enterWords(), ok:()=>!riding },
+  { id:'heroes', at:()=>HERO_DOOR,   r:2.3, label:()=>'⚡ '+T().heroHint,   go:()=>enterHeroes(),  ok:()=>!riding },
 ];
 let portalNear=null;
 /* zone mini-games, loaded only when first opened so the island itself stays light:
@@ -484,7 +484,11 @@ async function openGame(kind){
     kind==='pirates' ? m.openPirates(ctx) : m.openFlood(ctx);
   }catch(e){ ctx.onClose(); toast('⚠️'); }
 }
-function enterStories(){ if(leaving||panelOpen) return; endTour(); portalNear=null; $('#hint').style.display='none'; ding(); leaveTo('stories.html','book'); }
+
+function enterStories(){ if(leaving||panelOpen) return; endTour(); portalNear=null; $('#hint').style.display='none'; ding(); openPanel('reading'); }
+function enterWords(){if(leaving||panelOpen)return;endTour();portalNear=null;$('#hint').style.display='none';ding();leaveTo('words.html','book');}
+function enterHeroes(){ if(leaving||panelOpen) return; endTour(); portalNear=null; $('#hint').style.display='none'; ding(); leaveTo('heroes.html','hero'); }
+const enterPortal=k=>k==='story' ? enterStories() : k==='heroes' ? enterHeroes() : boardRocket();
 /* coming back with the browser's Back button restores this page as it was left: tidy up */
 addEventListener('pageshow',e=>{
   if(!e.persisted || !leaving) return;
@@ -529,47 +533,25 @@ function textSprite(text, opts={}){
   return sp;
 }
 
-/* signpost with bilingual board */
-function signpost(en,zh,color){
-  const g=new THREE.Group();
-  const post=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,1.5,8), mat(0x8a6242));
-  post.position.y=.75; post.castShadow=true; g.add(post);
-  const c=makeCanvas(512,236), ctx=c.getContext('2d');
-  ctx.fillStyle='#fffdf6'; rr(ctx,6,6,500,224,34); ctx.fill();
-  ctx.strokeStyle='#'+color.toString(16).padStart(6,'0'); ctx.lineWidth=12; rr(ctx,12,12,488,212,28); ctx.stroke();
-  ctx.textAlign='center'; ctx.fillStyle='#2b2b33';
-  ctx.font='800 64px "Baloo 2",sans-serif'; ctx.fillText(en,256,102);
-  ctx.font='900 58px "Noto Sans TC","PingFang TC",sans-serif'; ctx.fillText(zh,256,182);
-  const tex=canvasTexture(c);
-  const board=new THREE.Mesh(new THREE.BoxGeometry(1.9,.88,.08),
-    [mat(0xdccbb0),mat(0xdccbb0),mat(0xdccbb0),mat(0xdccbb0),
-     new THREE.MeshLambertMaterial({map:tex}), mat(0xdccbb0)]);
-  board.position.y=1.62; board.castShadow=true; g.add(board);
-  return g;
+/* Compact floating wayfinding; no posts or boards in the walking space. */
+const wayfindingLabels=[];
+function signpost(en,zh,color,icon=''){
+  const g=new THREE.Group(),c=makeCanvas(768,192),x=c.getContext('2d');
+  const texture=canvasTexture(c);
+  const redraw=()=>{
+    x.clearRect(0,0,768,192);x.fillStyle='rgba(246,252,255,.95)';rr(x,6,6,756,166,48);x.fill();
+    const stroke='#'+color.toString(16).padStart(6,'0');x.strokeStyle=stroke;x.lineWidth=7;rr(x,9,9,750,160,45);x.stroke();
+    const left=icon?142:384;
+    if(icon){x.fillStyle=stroke+'20';x.beginPath();x.arc(82,86,48,0,Math.PI*2);x.fill();x.font='52px "Apple Color Emoji","Segoe UI Emoji",sans-serif';x.textAlign='center';x.fillText(icon,82,105);}
+    x.textAlign=icon?'left':'center';x.fillStyle='#20374c';x.font='900 67px "Baloo 2","Noto Sans TC","PingFang TC",sans-serif';x.fillText(lang==='en'?en:zh,left,111,icon?585:690);texture.needsUpdate=true;
+  };
+  redraw();
+  // Constant screen size prevents a nearby label from covering distant exhibits.
+  const board=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthWrite:false,sizeAttenuation:false}));board.scale.set(.17,.0425,1);g.add(board);
+  g.userData.waypointLabel=board;g.userData.redrawLabel=redraw;wayfindingLabels.push(g);return g;
 }
 
-/* floating emoji marker above each zone */
-function emojiSprite(emoji, color=0xffffff, size=160){
-  const c=makeCanvas(size,size), ctx=c.getContext('2d');
-  ctx.fillStyle='rgba(255,255,255,.96)';
-  ctx.beginPath(); ctx.arc(size/2,size/2,size*.44,0,7); ctx.fill();
-  ctx.strokeStyle='#'+color.toString(16).padStart(6,'0'); ctx.lineWidth=size*.055;
-  ctx.beginPath(); ctx.arc(size/2,size/2,size*.41,0,7); ctx.stroke();
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font=`${size*.52}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-  ctx.fillText(emoji,size/2,size/2+size*.03);
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:canvasTexture(c),transparent:true}));
-  sp.scale.set(1.5,1.5,1);
-  return sp;
-}
 const markers=[];
-zoneDefs.forEach(z=>{
-  const mk=emojiSprite(I18N.en.zones[z.id].icon, z.color);
-  mk.position.set(z.pos.x, 4.1, z.pos.z);
-  mk.userData.baseY=4.1; mk.userData.ph=rand(0,6);
-  scene.add(mk); markers.push(mk);
-});
-
 /* artwork textures: paper until Max's drawing has loaded */
 const artSrc=(art,full)=>`assets/art/${art.id}${full?'':'-s'}.webp`;
 function loadArt(art){
@@ -592,19 +574,19 @@ function tagZone(group, id){ group.traverse(o=>o.userData.zone=id); group.userDa
 const welcomeGroup = new THREE.Group();
 {
   const sign = signpost("Max's World","歡迎光臨", 0x4f7fe0);
-  sign.scale.setScalar(1.25); welcomeGroup.add(sign);
+  sign.position.y=4.35;
+  sign.scale.setScalar(1); welcomeGroup.add(sign);
   // red balloon
   const bal = new THREE.Group();
   const b=new THREE.Mesh(new THREE.SphereGeometry(.42,14,12), mat(0xe05454)); b.scale.y=1.12; b.castShadow=true; bal.add(b);
   const knot=new THREE.Mesh(new THREE.ConeGeometry(.08,.14,7), mat(0xc0392b)); knot.position.y=-.5; knot.rotation.x=Math.PI; bal.add(knot);
   const str=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1.5,4), mat(0xffffff)); str.position.y=-1.3; bal.add(str);
   bal.position.set(1.35,3.4,-.2); welcomeGroup.add(bal); welcomeGroup.userData.balloon=bal;
-  welcomeGroup.position.set(-2.4,0,-2.5);   /* off to one side of the plaza, clear of the path to the Art Gallery */
-  welcomeGroup.lookAt(0,0,2.2);              /* board faces where Max starts */
+  welcomeGroup.position.set(0,0,-3.4);   /* board faces +z = spawn side */
   tagZone(welcomeGroup,'welcome');
   world.add(welcomeGroup);
 }
-zones.welcome = { id:'welcome', pos:new THREE.Vector3(-2.4,0,-2.5), color:0x4f7fe0, radius:4.6 };
+zones.welcome = { id:'welcome', pos:new THREE.Vector3(0,0,-3.4), color:0x4f7fe0, radius:4.6 };
 
 /* --- gallery: easels in an arc --- */
 function buildGallery(z){
@@ -954,7 +936,7 @@ function buildKindness(z){
 
 /* --- reading: book stack + open book --- */
 function buildReading(z){
-  const g=new THREE.Group();
+  const area=new THREE.Group(),g=new THREE.Group();area.add(g);g.position.set(2.0,0,-1.65);g.scale.setScalar(.72);
   const cols=[0xe05454,0x4f7fe0,0x3f9e57,0xe08a1e,0x7a4fd0];
   let y=0;
   const sizes=[[2.1,.42,1.5],[1.9,.38,1.35],[1.7,.36,1.2],[1.45,.34,1.05]];
@@ -974,22 +956,48 @@ function buildReading(z){
     ob.add(pg);
   });
   ob.position.y=y+.12; ob.rotation.y=.4; g.add(ob);
-  // floating letters
-  const abc=textSprite('A B C · 字',{fs:52,scale:1.1,stroke:'#2bb6a0'});
-  abc.position.set(0,y+1.35,0); g.add(abc);
-  g.userData.absSprite=abc;
   // lamp
   const lampG=new THREE.Group();
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.05,.07,2.3,8), mat(0x3a3f4a)); pole.position.y=1.15; lampG.add(pole);
   const shade=new THREE.Mesh(new THREE.ConeGeometry(.34,.3,10), mat(0xffd23f)); shade.position.y=2.35; lampG.add(shade);
   const bulb=new THREE.PointLight(0xffe8b0, 5, 6); bulb.position.y=2.2; lampG.add(bulb);
   lampG.position.set(1.9,0,1.3); g.add(lampG);
-  return g;
+  // A small reading bench beside the shelf and the word-game table share one lawn.
+  const seat=new THREE.Mesh(new THREE.BoxGeometry(1.6,.14,.62),mat(0x75b7aa));seat.position.set(2,.5,.2);area.add(seat);
+  [-.56,.56].forEach(x=>{const leg=new THREE.Mesh(new THREE.BoxGeometry(.12,.48,.42),mat(0x637f7b));leg.position.set(2+x,.24,.2);area.add(leg);});
+  const table=new THREE.Group();table.position.set(2.5,0,1.65);area.add(table);
+  const desk=new THREE.Mesh(new THREE.BoxGeometry(1.6,.12,.75),mat(0xf5c978));desk.position.y=.72;table.add(desk);
+  [-.56,.56].forEach(x=>{const leg=new THREE.Mesh(new THREE.BoxGeometry(.11,.7,.53),mat(0xb99160));leg.position.set(x,.35,0);table.add(leg);});
+  ['字','文','A'].forEach((letter,i)=>{
+    const c=makeCanvas(128,128),x=c.getContext('2d');x.fillStyle=['#dcf1ec','#ffdfdc','#dfe6ff'][i];x.fillRect(0,0,128,128);x.fillStyle='#33516c';x.font='900 86px "Noto Sans TC",sans-serif';x.textAlign='center';x.fillText(letter,64,98);
+    const tile=new THREE.Mesh(new THREE.BoxGeometry(.38,.46,.13),[mat(0xfff9e8),mat(0xfff9e8),mat(0xfff9e8),mat(0xfff9e8),new THREE.MeshLambertMaterial({map:canvasTexture(c)}),mat(0xfff9e8)]);tile.position.set((i-1)*.46,1.02,.02);tile.rotation.z=(i-1)*-.08;table.add(tile);
+  });
+  const buddyTex=new THREE.TextureLoader().load('words/xiaohuang.webp');buddyTex.colorSpace=THREE.SRGBColorSpace;
+  const buddy=new THREE.Sprite(new THREE.SpriteMaterial({map:buddyTex,transparent:true,depthWrite:false}));buddy.scale.set(.55,.92,1);buddy.position.set(-1.08,.48,.05);table.add(buddy);
+  table.traverse(o=>o.userData.portal='words');
+  return area;
 }
 
+/* Numbers and the LEGO project share one zone, one label and two clear choices. */
+function buildMathBuild(z){
+  const g=new THREE.Group(),numbers=buildNumbers(z),construction=buildBuilder(z);
+  numbers.position.set(-2.55,0,-.9);numbers.scale.setScalar(.58);
+  construction.position.set(2.65,0,.2);construction.scale.setScalar(.57);
+  numbers.userData.onTap=()=>openMathSection('numbers');construction.userData.onTap=()=>openMathSection('builder');
+  g.add(numbers,construction);
+  // Batch within each activity while keeping its tap target intact.
+  numbers.userData.zone='numbers';construction.userData.zone='numbers';mergeStatic(numbers);mergeStatic(construction);
+  g.userData.animated=[numbers,construction];return g;
+}
+function openMathSection(section){openPanel('numbers');document.getElementById('math-'+section)?.click();}
+
 /* build all zones + signs */
-const builders={ gallery:buildGallery, numbers:buildNumbers, builder:buildBuilder, sports:buildSports, nature:buildNature, kindness:buildKindness, reading:buildReading };
-EXTRA_SCENES.forEach(s=>{ builders[s.id]=(z)=>s.build(z,{ THREE, mat }); });
+const builders={ gallery:buildGallery, numbers:buildMathBuild, builder:buildBuilder, sports:buildSports, nature:buildNature, kindness:buildKindness, reading:buildReading };
+const sceneCtx={ THREE, mat, renderer, maxPos:()=>max.g.position,
+  sfx:{ note, blip, noiseHit },
+  say:([en,zh])=>{ const m=lang==='zh'?zh:en; toast(m); narrator.speak(m); },
+  burst:(obj,n=12)=>burst(obj.getWorldPosition(new THREE.Vector3()),n,1.6) };
+EXTRA_SCENES.forEach(s=>{ builders[s.id]=(z)=>s.build(z,sceneCtx); });
 const zoneGroups={};
 zoneDefs.forEach(z=>{
   const g=builders[z.id](z);
@@ -997,19 +1005,16 @@ zoneDefs.forEach(z=>{
   g.lookAt(0,0,0);          /* zone content faces plaza */
   tagZone(g,z.id);
   world.add(g); zoneGroups[z.id]=g;
-  const sign=signpost(I18N.en.zones[z.id].t, I18N.zh.zones[z.id].t, z.color);
-  /* beside the stepping stones (not on them), angled toward people walking out from the plaza */
-  const dir=z.pos.clone().normalize(), side=new THREE.Vector3(dir.z,0,-dir.x);
-  const sp=dir.clone().multiplyScalar(ZONE_R*.72).addScaledVector(side,1.9);
-  sign.position.set(sp.x,0,sp.z);
-  const look=dir.clone().multiplyScalar(ZONE_R*.45);
-  sign.lookAt(look.x,1.6,look.z);
-  tagZone(sign,z.id);
-  world.add(sign);
+  const sign=signpost(I18N.en.zones[z.id].t,I18N.zh.zones[z.id].t,z.color,I18N.en.zones[z.id].icon);
+  // Labels sit above the exhibits, leaving the stage and path unobstructed.
+  sign.position.copy(z.pos).setY(z.id==='herobase'?4.75:4.25);
+  sign.userData.baseY=sign.position.y;sign.userData.ph=0;
+  tagZone(sign,z.id);world.add(sign);markers.push(sign);
 });
 
 /* ---- Story House: a cottage with an open-book roof; its door leads to stories.html ---- */
-const STORY_POS=(()=>{const [x,z]=polar(192,14.5);return new THREE.Vector3(x,0,z);})();
+const STORY_POS=(()=>{const g=zoneGroups.reading;g.updateMatrixWorld(true);return g.localToWorld(new THREE.Vector3(-1.65,0,-.85)).setY(0);})();
+const WORD_DOOR=(()=>{const g=zoneGroups.reading;g.updateMatrixWorld(true);return g.localToWorld(new THREE.Vector3(2.5,0,2.65)).setY(0);})();
 const STORY_DIR=new THREE.Vector3(-STORY_POS.x,0,-STORY_POS.z).normalize();   /* door faces the plaza */
 const STORY_DOOR=STORY_POS.clone().addScaledVector(STORY_DIR,1.9);
 const storyHouse=new THREE.Group();
@@ -1069,68 +1074,98 @@ let storyGlow;
   H.position.copy(STORY_POS); H.rotation.y=Math.atan2(STORY_DIR.x,STORY_DIR.z);
   H.traverse(o=>{ o.userData.portal='story'; });
   world.add(H);
-  const sign=signpost(...I18N.en.storySign,0x2bb6a0);
-  const sp=STORY_POS.clone().addScaledVector(STORY_DIR,2.2).add(new THREE.Vector3(STORY_DIR.z,0,-STORY_DIR.x).multiplyScalar(2.1));
-  sign.position.copy(sp); sign.lookAt(0,1.6,0); world.add(sign);
-  const mk=emojiSprite('📖',0x2bb6a0); mk.position.set(STORY_POS.x,4.6,STORY_POS.z);
-  mk.userData.baseY=4.6; mk.userData.ph=1.3; scene.add(mk); markers.push(mk);
+
 }
 /* the rocket pad gets its own sign + marker so visitors find the Galaxy game */
 {
   const toC=new THREE.Vector3(-ROCKET_PAD.x,0,-ROCKET_PAD.z).normalize();
-  const sign=signpost(...I18N.en.galaxySign,0x7a4fd0);
-  sign.position.copy(ROCKET_PAD).addScaledVector(toC,2.0).add(new THREE.Vector3(toC.z,0,-toC.x).multiplyScalar(-1.9));
-  sign.lookAt(0,1.6,0); world.add(sign);
-  const mk=emojiSprite('🌌',0x7a4fd0); mk.position.set(ROCKET_PAD.x,5.1,ROCKET_PAD.z);
-  mk.userData.baseY=5.1; mk.userData.ph=2.4; scene.add(mk); markers.push(mk); rocketMarker=mk;
+  const sign=signpost(...I18N.en.galaxySign,0x7a4fd0,'🚀');sign.position.copy(ROCKET_PAD).setY(4.9);
+  sign.traverse(o=>o.userData.portal='rocket');sign.userData.baseY=4.9;sign.userData.ph=2.4;world.add(sign);markers.push(sign);rocketMarker=sign;
 }
 
-/* a pirate ship moored in a little harbour between Number Land and Builder's Corner:
-   walk up to it to play Pirate Ships, Make Ten */
-const PIRATE_SPOT=(()=>{const [x,z]=polar(-25,14);return new THREE.Vector3(x,0,z);})();
-const pirateShip=new THREE.Group();
+/* ---- Hero Base, right-hand lawn: a Plasma Spark Tower with a properly proportioned
+        full-body Ultraman and a floating family label; its glowing step leads to heroes.html ---- */
+const HERO_POS=(()=>{ const g=zoneGroups.herobase; g.updateMatrixWorld(true);
+  return g.localToWorld(new THREE.Vector3(6,0,-2.8)).setY(0); })();   /* right of the round stage, just behind Megatron, Captain America and Sun Wukong */
+const HERO_DIR=new THREE.Vector3(-HERO_POS.x,0,-HERO_POS.z).normalize();
+const HERO_S=.75;   /* keep the tower beside the cast without hiding their silhouettes */
+const HERO_COLLISION=1.9*HERO_S+.3;
+const HERO_DOOR=HERO_POS.clone().addScaledVector(HERO_DIR,2.1*HERO_S);
+const heroBase=new THREE.Group();
+let heroGlow, heroSpark;
 {
-  const water=new THREE.Mesh(new THREE.CircleGeometry(2.1,32),new THREE.MeshLambertMaterial({color:0x63b8e8}));
-  water.rotation.x=-Math.PI/2; water.position.set(PIRATE_SPOT.x,.03,PIRATE_SPOT.z); world.add(water);
-  const rim=new THREE.Mesh(new THREE.RingGeometry(2.1,2.35,32),mat(0xe9d8a6)); rim.rotation.x=-Math.PI/2; rim.position.set(PIRATE_SPOT.x,.031,PIRATE_SPOT.z); world.add(rim);
-  const S=pirateShip, wood=mat(0x9a6038), dark=mat(0x6e4024);
-  const hull=new THREE.Mesh(new THREE.BoxGeometry(1.9,.5,.8),wood); hull.position.y=.3; hull.castShadow=true; S.add(hull);
-  const bow=new THREE.Mesh(new THREE.ConeGeometry(.42,.7,4),wood); bow.rotation.z=-Math.PI/2; bow.rotation.x=Math.PI/4; bow.scale.set(1,1,.95); bow.position.set(1.28,.3,0); S.add(bow);
-  const deck=new THREE.Mesh(new THREE.BoxGeometry(1.95,.06,.84),dark); deck.position.y=.57; S.add(deck);
-  const mast=new THREE.Mesh(new THREE.CylinderGeometry(.045,.055,1.9,8),dark); mast.position.set(-.1,1.5,0); mast.castShadow=true; S.add(mast);
-  const sc=makeCanvas(256,256), sx=sc.getContext('2d');
-  sx.fillStyle='#fffaf0'; sx.fillRect(0,0,256,256); sx.fillStyle='#e0453a'; sx.font='900 120px "Baloo 2",sans-serif'; sx.textAlign='center'; sx.textBaseline='middle'; sx.fillText('10',128,138);
-  const sail=new THREE.Mesh(new THREE.PlaneGeometry(1.05,1.05),new THREE.MeshLambertMaterial({map:canvasTexture(sc),side:THREE.DoubleSide}));
-  sail.position.set(-.1,1.55,.06); S.add(sail);
-  const fc=makeCanvas(64,40), fx=fc.getContext('2d'); fx.fillStyle='#2b2b33'; fx.fillRect(0,0,64,40); fx.fillStyle='#fff'; fx.font='26px sans-serif'; fx.textAlign='center'; fx.textBaseline='middle'; fx.fillText('☠',32,22);
-  const flag=new THREE.Mesh(new THREE.PlaneGeometry(.42,.26),new THREE.MeshLambertMaterial({map:canvasTexture(fc),side:THREE.DoubleSide})); flag.position.set(.12,2.33,0); S.add(flag);
-  S.position.copy(PIRATE_SPOT); S.lookAt(0,0,0);   /* broadside to the plaza, so the "10" sail shows */
-  S.traverse(o=>{ o.userData.portal='pirates'; });
-  world.add(S);
-  const mk=emojiSprite('🏴‍☠️',0xeaa83a); mk.position.set(PIRATE_SPOT.x,3.4,PIRATE_SPOT.z);
-  mk.userData.baseY=3.4; mk.userData.ph=.7; scene.add(mk); markers.push(mk);
-}
-
-/* a sand table with a toy river, a dam and a little house, between Builder's Corner and the
-   Sports Park: walk up to it to play Flood Fixers */
-const FLOOD_SPOT=(()=>{const [x,z]=polar(36,13.6);return new THREE.Vector3(x,0,z);})();
-const floodTable=new THREE.Group();
-{
-  const F=floodTable;
-  const legM=mat(0x9a6a43);
-  [[-1,-.6],[1,-.6],[-1,.6],[1,.6]].forEach(([x,z])=>{ const l=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.7,6),legM); l.position.set(x,.35,z); F.add(l); });
-  const top=new THREE.Mesh(new THREE.BoxGeometry(2.4,.16,1.6),mat(0xe2c27e)); top.position.y=.74; top.castShadow=true; top.receiveShadow=true; F.add(top);
-  const river=new THREE.Mesh(new THREE.BoxGeometry(.32,.05,1.56),mat(0x3b9be0)); river.position.set(-.9,.84,0); F.add(river);
-  const channel=new THREE.Mesh(new THREE.BoxGeometry(1.2,.04,.18),mat(0x4aa8ea)); channel.position.set(-.15,.84,-.3); F.add(channel);
-  const pond=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.05,20),mat(0x4aa8ea)); pond.position.set(.72,.84,-.3); F.add(pond);
-  const dam=new THREE.Mesh(new THREE.BoxGeometry(.1,.18,.5),mat(0x9aa2ad)); dam.position.set(.4,.9,-.3); F.add(dam);
-  const house=new THREE.Mesh(new THREE.BoxGeometry(.3,.24,.3),mat(0xe87070)); house.position.set(.2,.94,.4); F.add(house);
-  const roof=new THREE.Mesh(new THREE.ConeGeometry(.26,.2,4),mat(0x9a5fe0)); roof.position.set(.2,1.16,.4); roof.rotation.y=Math.PI/4; F.add(roof);
-  F.position.copy(FLOOD_SPOT); F.lookAt(0,0,0);
-  F.traverse(o=>{ o.userData.portal='flood'; });
-  world.add(F);
-  const mk=emojiSprite('🌊',0x9a5fe0); mk.position.set(FLOOD_SPOT.x,2.6,FLOOD_SPOT.z);
-  mk.userData.baseY=2.6; mk.userData.ph=1.9; scene.add(mk); markers.push(mk);
+  const H=heroBase, silver=mat(0xdfe5ef);
+  [[1.9,.3,0],[1.45,.3,.3]].forEach(([r,h,y])=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r*1.06,h,6),silver);
+    m.position.y=y+h/2; m.castShadow=true; m.receiveShadow=true; H.add(m); });
+  const crystal=new THREE.MeshLambertMaterial({ color:0x9fd8ff, emissive:0x2a6fd0, emissiveIntensity:.5, transparent:true, opacity:.88 });
+  const spire=new THREE.Mesh(new THREE.CylinderGeometry(.16,.6,4.2,6),crystal); spire.position.y=2.7; spire.castShadow=true; H.add(spire);
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(.16,.5,6),crystal); tip.position.y=5.05; H.add(tip);
+  for(let i=0;i<6;i++){
+    const a=i/6*Math.PI*2+.52, h=1+(i%3)*.35;
+    const c=new THREE.Mesh(new THREE.CylinderGeometry(.04,.18,h,6),crystal);
+    c.position.set(Math.cos(a)*1.15,.6+h/2,Math.sin(a)*1.15); c.rotation.set(-Math.sin(a)*.18,0,Math.cos(a)*.18); c.castShadow=true; H.add(c);
+  }
+  /* the Plasma Spark: a bright crystal that spins on top */
+  heroSpark=new THREE.Mesh(new THREE.OctahedronGeometry(.4,0),new THREE.MeshBasicMaterial({color:0xfff3a8})); heroSpark.position.y=5.75; H.add(heroSpark);
+  /* An opaque, permanent Ultraman landmark stays legible in daylight and at night. */
+  const ultra=new THREE.Group();ultra.position.set(0,0,1.0);H.add(ultra);
+  const armor=new THREE.MeshStandardMaterial({color:0xe1e8f0,metalness:.3,roughness:.36,emissive:0x607b96,emissiveIntensity:.28});
+  const scarlet=new THREE.MeshStandardMaterial({color:0xdc2537,metalness:.2,roughness:.45});
+  const inset=mat(0x526575),eyeLight=new THREE.MeshBasicMaterial({color:0xffedaf});
+  const ell=(parent,x,y,z,sx,sy,sz,material)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;parent.add(o);return o;};
+  // A full figure: small head, tapered torso and long continuous legs.
+  function segment(x,y,z,rTop,rBottom,length,material){
+    const o=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBottom,length,24),material);o.position.set(x,y,z);o.castShadow=true;ultra.add(o);return o;
+  }
+  // The silver chest marking is painted into the torso's surface, with no raised pieces.
+  const torso=ell(ultra,0,2.73,0,.59,.64,.285,scarlet.clone());
+  const chestCanvas=makeCanvas(1024,512),cx=chestCanvas.getContext('2d'),ink=cx.createImageData(1024,512);
+  for(let row=0;row<512;row++)for(let col=0;col<1024;col++){
+    const theta=(row+.5)/512*Math.PI,phi=(col+.5)/1024*Math.PI*2;
+    const x=Math.abs(Math.cos(phi)*Math.sin(theta)),y=Math.cos(theta),z=Math.sin(phi)*Math.sin(theta);
+    const silver=clamp(.5+(y-.12-.4*x)*320,0,1)*clamp(.5+(z+.25)*320,0,1),i=(row*1024+col)*4;
+    ink.data[i]=220+5*silver;ink.data[i+1]=37+195*silver;ink.data[i+2]=55+185*silver;ink.data[i+3]=255;
+  }
+  cx.putImageData(ink,0,0);torso.material.color.set(0xffffff);torso.material.map=canvasTexture(chestCanvas);
+  ell(ultra,0,2.22,0,.35,.38,.245,armor);
+  ell(ultra,0,1.97,0,.39,.25,.24,scarlet);
+  [-1,1].forEach(sd=>{
+    segment(sd*.24,1.61,0,.165,.125,.64,scarlet);ell(ultra,sd*.24,1.31,.012,.127,.13,.13,armor);
+    segment(sd*.265,.98,.015,.125,.095,.64,armor);
+    ell(ultra,sd*.265,.62,.13,.135,.115,.265,armor);
+    // Red suit panels follow the legs, with silver boots clearly separated below the knee.
+    ell(ultra,sd*.24,1.63,.132,.092,.29,.035,scarlet);
+    ell(ultra,sd*.57,2.99,0,.205,.23,.24,armor);
+    segment(sd*.68,2.66,.015,.135,.105,.5,scarlet).rotation.z=sd*.12;
+    ell(ultra,sd*.71,2.39,.015,.105,.115,.105,armor);
+    segment(sd*.73,2.15,.025,.1,.085,.4,armor).rotation.z=sd*-.05;
+    ell(ultra,sd*.74,1.88,.045,.09,.13,.105,armor);
+  });
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.135,.15,.22,24),armor);neck.position.y=3.33;ultra.add(neck);
+  const face=new THREE.Group();face.position.y=3.79;face.scale.setScalar(.56);ultra.add(face);
+  ell(face,0,0,0,.59,.72,.43,armor);
+  [-1,1].forEach(sd=>{
+    const rim=ell(face,sd*.235,.09,.372,.225,.145,.08,inset);rim.rotation.z=sd*.22;
+    const eye=ell(face,sd*.235,.098,.426,.194,.115,.048,eyeLight);eye.rotation.z=sd*.22;
+    ell(face,sd*.56,-.045,0,.065,.16,.15,armor);
+    const cheek=ell(face,sd*.21,-.26,.34,.2,.25,.075,armor);cheek.rotation.z=sd*-.18;
+  });
+  const finShape=new THREE.Shape();finShape.moveTo(-.32,.44);finShape.quadraticCurveTo(-.35,.88,-.13,.93);finShape.lineTo(.27,.58);finShape.lineTo(.39,.12);finShape.lineTo(.21,.14);finShape.closePath();
+  const finGeo=new THREE.ExtrudeGeometry(finShape,{depth:.075,bevelEnabled:true,bevelSize:.018,bevelThickness:.015,bevelSegments:3,curveSegments:24});finGeo.rotateY(Math.PI/2);finGeo.translate(-.0375,0,0);
+  face.add(new THREE.Mesh(finGeo,armor));
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.065,.29,4),armor);nose.position.set(0,-.11,.46);nose.rotation.x=.1;face.add(nose);
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(.22,.035,.025),inset);mouth.position.set(0,-.385,.355);face.add(mouth);
+  const lip=new THREE.Mesh(new THREE.BoxGeometry(.19,.025,.025),armor);lip.position.set(0,-.416,.356);face.add(lip);
+  const timerRim=new THREE.Mesh(new THREE.TorusGeometry(.115,.024,12,32),armor);timerRim.position.set(0,2.91,.302);ultra.add(timerRim);
+  ell(ultra,0,2.91,.308,.09,.09,.035,new THREE.MeshBasicMaterial({color:0x33caff}));
+  heroGlow=new THREE.Mesh(new THREE.RingGeometry(.8,.98,40),new THREE.MeshBasicMaterial({color:0x7fd4ff,transparent:true,opacity:.5,side:THREE.DoubleSide}));
+  heroGlow.rotation.x=-Math.PI/2; heroGlow.position.set(0,.04,2.1); H.add(heroGlow);
+  H.position.copy(HERO_POS); H.rotation.y=Math.atan2(HERO_DIR.x,HERO_DIR.z); H.scale.setScalar(HERO_S);
+  H.traverse(o=>{ o.userData.portal='heroes'; });
+  world.add(H);
+  const markerY=5.75*HERO_S+.6;
+  const label=signpost('Ultraman Family','奧特曼家族',0x318db4,'⚡');label.position.copy(HERO_POS).addScaledVector(new THREE.Vector3(HERO_DIR.z,0,-HERO_DIR.x),-.45).setY(markerY);
+  label.traverse(o=>o.userData.portal='heroes');label.userData.baseY=markerY;label.userData.ph=.6;world.add(label);markers.push(label);
 }
 
 /* night lights: lanterns by the cottage door, the rocket pad and the plaza, and fireflies */
@@ -1144,8 +1179,8 @@ const glowSprite=(size)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({ 
   [-1,1].forEach(sd=>{ const g=glowSprite(.9); g.position.copy(STORY_POS).addScaledVector(STORY_DIR,1.3).addScaledVector(side,sd*.75).setY(1.9); nightGlows.push(g); });
   const w=glowSprite(1.7); w.position.copy(STORY_POS).addScaledVector(STORY_DIR,1.25).setY(1.2); nightGlows.push(w);   /* warm doorway */
   for(let i=0;i<6;i++){ const a=i/6*Math.PI*2, g=glowSprite(.6); g.position.set(ROCKET_PAD.x+Math.cos(a)*1.15,.35,ROCKET_PAD.z+Math.sin(a)*1.15); nightGlows.push(g); }
+  const sp=glowSprite(1.4); sp.position.copy(HERO_POS).setY(5.75*HERO_S); nightGlows.push(sp);   /* the Plasma Spark lights up the night */
   /* little lamp posts around the plaza */
-  /* one in each gap between the paths, so none stands where a path leaves the plaza */
   const pathA=zoneDefs.map(z=>((z.angle%360)+360)%360).sort((a,b)=>a-b);
   pathA.forEach((p,i)=>{
     const q=i+1<pathA.length ? pathA[i+1] : pathA[0]+360;
@@ -1167,10 +1202,11 @@ nightK=nightGoal; applyNight(nightK);
         Disable with ?nomerge for A/B comparison. ---- */
 if(!location.search.includes('nomerge')){
   const skipSet=new Set([
-    rocket, storyHouse, pirateShip, floodTable, millHub, welcomeGroup.userData.balloon,
+    rocket, storyHouse, heroBase, millHub, welcomeGroup.userData.balloon,
     ...ducks.map(d=>d.g),
     ...beeSwarms.flatMap(s=>s.bees.map(b=>b.m)),
     ...markers, ...flames, ...heartMeshes,
+    ...Object.values(zoneGroups).flatMap(g=>g.userData.animated||[]),
   ]);
   const zoneRoots=new Set(Object.values(zoneGroups));
   zoneRoots.forEach(g=>mergeStatic(g,{skip:skipSet}));
@@ -1331,7 +1367,7 @@ function buildAvatar(cfg){
   const tg=add(mouth,new THREE.CircleGeometry(.04,24),flat(0xf28a8a),0,-.05,.001); tg.scale.set(1.15,.6,1);
 
   /* name tag */
-  const tag=textSprite('MAX ⭐',{fs:40,color:'#4f7fe0',stroke:'#dbe6ff',scale:.62});
+  const tag=textSprite('MAX ⭐',{fs:34,color:'#4f7fe0',stroke:'#dbe6ff',scale:.48});
   tag.position.y=2.16; g.add(tag);
   g.traverse(o=>{ if(o.isMesh && !(o.material.transparent)) o.castShadow=true; o.userData.zone='welcome'; });
   /* space helmet (worn for the rocket trip to the Galaxy game) */
@@ -1661,6 +1697,13 @@ function handleTap(x,y){
   if(started===false || panelOpen) return;
   raycaster.setFromCamera(new THREE.Vector2(x/innerWidth*2-1, -(y/innerHeight)*2+1), camera);
   const hits=raycaster.intersectObjects([world,max.g],true);
+  /* a tappable plug-in object (e.g. a hero) wins even behind Max or his name tag */
+  for(const h of hits) for(let q=h.object;q;q=q.parent) if(q.userData && q.userData.onTap){
+    let zq=q; while(zq && !(zq.userData && zq.userData.zone)) zq=zq.parent;
+    const zp=zones[zq.userData.zone].pos;
+    if(max.g.position.distanceTo(new THREE.Vector3(zp.x,0,zp.z)) < 6.4+2.4) q.userData.onTap(); else toast(T().walkCloser);
+    return;
+  }
   for(const h of hits){
     let o=h.object, zid=null;
     let ro=h.object;
@@ -1691,6 +1734,7 @@ const starEls=[];
 function updateStars(){
   starEls.forEach((s,i)=>s.classList.toggle('on', i<visited.size));
   $('#starlbl').textContent=T().explored(visited.size,ZONE_COUNT);
+  $('#stars').setAttribute('role','progressbar');$('#stars').setAttribute('aria-label',lang==='en'?'World exploration':'世界探索進度');$('#stars').setAttribute('aria-valuemin','0');$('#stars').setAttribute('aria-valuemax',ZONE_COUNT);$('#stars').setAttribute('aria-valuenow',visited.size);
 }
 
 function toast(msg){
@@ -1712,7 +1756,7 @@ function openPanel(id){
   $('#panelbody').textContent=z.body;
   const chips=$('#panelchips'); chips.innerHTML='';
   z.chips.forEach(c=>{ const s=document.createElement('span'); s.className='chip'; s.textContent=c; chips.appendChild(s); });
-  const gal=$('#panelgal'); gal.innerHTML='';
+  const gal=$('#panelgal'); gal.innerHTML='';gal.classList.toggle('literacy-hub',id==='reading'||id==='numbers');
   if(id==='gallery'){
     ARTWORKS.forEach((a,i)=>{
       const d=document.createElement('div'); d.className='art';
@@ -1723,28 +1767,42 @@ function openPanel(id){
       gal.appendChild(d);
     });
   }
-  if(id==='numbers'){   /* the pirate make-ten game */
-    const a=document.createElement('button'); a.className='dirtour';
-    a.style.cssText='background:linear-gradient(135deg,#eaa83a,#e0453a);grid-column:1/-1;margin:0';
-    a.textContent=T().pirateBtn; a.onclick=()=>openGame('pirates'); gal.appendChild(a);
-  }
-  if(id==='builder'){   /* the flood-diversion game */
-    const a=document.createElement('button'); a.className='dirtour';
-    a.style.cssText='background:linear-gradient(135deg,#3b9be0,#9a5fe0);grid-column:1/-1;margin:0';
-    a.textContent=T().floodBtn; a.onclick=()=>openGame('flood'); gal.appendChild(a);
-  }
   if(id==='welcome'){   /* where Max has lived and travelled */
     const a=document.createElement('a'); a.className='dirtour'; a.href='earth.html';
     a.style.cssText='background:linear-gradient(135deg,#1f6fb8,#3fae6a);text-decoration:none;grid-column:1/-1;margin:0';
     a.textContent=T().footprints; gal.appendChild(a);
   }
-  if(id==='reading'){   /* a peek at the Story House shelf */
-    [['b1','滿滿和會變色的情緒怪獸'],['b2','滿滿腦子裏的紅黃綠小隊'],['b3','小綠的兩種練習'],['','']].forEach(([b,t])=>{
-      const d=document.createElement('a'); d.className='art book'; d.href='stories.html'+(b?'#'+b:'');
-      const img=document.createElement('img'); img.src=b?`stories/img/${b}/cover.webp`:'stories/img/s01/cover.webp'; img.alt=t; img.loading='lazy';
-      const cap=document.createElement('div'); cap.className='cap'; cap.textContent=b?t:(lang==='zh'?'📖 全部 21 本故事 ▶':'📖 All 21 stories ▶');
-      d.appendChild(img); d.appendChild(cap); gal.appendChild(d);
+  if(id==='numbers'){
+    const zh=lang==='zh',choices=document.createElement('div');choices.className='literacy-choices math-choices';
+    const detail=document.createElement('section');detail.id='math-detail';detail.className='math-detail';detail.hidden=true;
+    [['numbers','🔢',zh?'數字玩法':'Number play',zh?'數數、比較，和海盜船一起湊十。':'Count, compare and make ten with pirate ships.',T().zones.numberPlay],['builder','🧱',zh?'搭建玩法':'Building play',zh?'用 LEGO 看懂河流，挑戰分洪小工程師。':'Explore the LEGO river and play Flood Fixers.',T().zones.builder]].forEach(([key,icon,title,desc,content])=>{
+      const card=document.createElement('button');card.id='math-'+key;card.type='button';card.className='literacy-choice';card.setAttribute('aria-expanded','false');card.setAttribute('aria-controls','math-detail');
+      const ic=document.createElement('span');ic.className='literacy-icon';ic.textContent=icon;const name=document.createElement('strong');name.textContent=title;const sub=document.createElement('small');sub.textContent=desc;const arrow=document.createElement('span');arrow.className='literacy-arrow';arrow.textContent='↓';card.append(ic,name,sub,arrow);
+      card.onclick=()=>{if(card.getAttribute('aria-expanded')==='true'){card.setAttribute('aria-expanded','false');card.classList.remove('selected');detail.hidden=true;return;}choices.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-expanded',String(b===card));b.classList.toggle('selected',b===card);});detail.replaceChildren();detail.hidden=false;
+        const h=document.createElement('h3');h.textContent=content.t;const text=document.createElement('p');text.textContent=content.body;const chips=document.createElement('div');chips.className='math-chips';content.chips.forEach(label=>{const chip=document.createElement('span');chip.textContent=label;chips.append(chip);});
+        const view=document.createElement('button');view.className='math-view';view.textContent=zh?(key==='numbers'?'去看看數字朋友 →':'去看看搭建模型 →'):(key==='numbers'?'See the number friends →':'See the building project →');view.onclick=()=>{
+          closePanel();const group=zoneGroups.numbers;const at=group.localToWorld(new THREE.Vector3(key==='numbers'?-2.25:2.55,0,3.8));max.g.position.copy(at);state.vy=0;max.g.rotation.y=group.rotation.y+Math.PI;
+        };const play=document.createElement('button');play.className='math-view';play.id='math-play-'+key;play.textContent=key==='numbers'?T().pirateBtn:T().floodBtn;play.onclick=()=>openGame(key==='numbers'?'pirates':'flood');detail.append(h,text,chips,play,view);detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+      };choices.append(card);
+    });gal.append(choices,detail);
+  }
+  if(id==='reading'){
+    const zh=lang==='zh',choices=document.createElement('div');choices.className='literacy-choices';
+    const library=document.createElement('section');library.className='literacy-library';library.hidden=true;
+    const data=[['📖',zh?'聽故事':'Listen to stories',zh?'選一本滿滿的故事，聽朗讀。':'Choose a story and listen along.','stories.html'],['📚',zh?'閱讀小角落':'Reading nook',zh?'翻翻書架，挑一本自己讀。':'Browse the shelf and pick a book.',null],['🔤',zh?'文字遊戲':'Word game',zh?'和小黃一起認字、複習。':'Practise Chinese characters with Little Yellow.','words.html']];
+    data.forEach(([icon,title,desc,href],i)=>{
+      const card=document.createElement(href?'a':'button');card.className='literacy-choice';
+      if(href)card.href=href;else{card.type='button';card.setAttribute('aria-expanded','false');card.setAttribute('aria-controls','literacy-library');card.onclick=()=>{library.hidden=!library.hidden;card.setAttribute('aria-expanded',String(!library.hidden));if(!library.hidden)library.scrollIntoView({behavior:'smooth',block:'nearest'});};}
+      const ic=document.createElement('span');ic.className='literacy-icon';ic.textContent=icon;const heading=document.createElement('strong');heading.textContent=title;const detail=document.createElement('small');detail.textContent=desc;const arrow=document.createElement('span');arrow.className='literacy-arrow';arrow.textContent=href?'↗':'↓';
+      card.append(ic,heading,detail,arrow);choices.append(card);
     });
+    const readingIntro=document.createElement('p');readingIntro.textContent=T().zones.readingNook.body;library.append(readingIntro);
+    library.id='literacy-library';const title=document.createElement('h3');title.textContent=zh?'選一本來讀':'Choose a book to read';library.append(title);
+    const shelf=document.createElement('div');shelf.className='literacy-shelf';
+    [['b1','滿滿和會變色的情緒怪獸','The Colour-changing Emotion Monster'],['b2','滿滿腦子裏的紅黃綠小隊','The Red, Yellow and Green Team'],['b3','小綠的兩種練習',"Little Green's Two Practices"]].forEach(([id,cn,en])=>{
+      const book=document.createElement('a');book.className='art book';book.href='stories.html#'+id;const img=document.createElement('img');img.src='stories/img/'+id+'/cover.webp';img.alt=zh?cn:en;img.loading='lazy';const caption=document.createElement('div');caption.className='cap';caption.textContent=img.alt;book.append(img,caption);shelf.append(book);
+    });
+    const all=document.createElement('a');all.href='stories.html';all.className='literacy-all';all.textContent=zh?'查看全部故事 →':'Browse all stories →';library.append(shelf,all);gal.append(choices,library);
   }
   $('#tournext').style.display = tour.active ? 'block' : 'none';
   if(tour.active) $('#tournext').textContent=T().tourNext;
@@ -1775,7 +1833,7 @@ function updateTourHud(){
 }
 function startTour(){
   tour.active=true;
-  tour.queue=[...zoneDefs.map(z=>z.id),'story','rocket'];   /* ends at the Story House, then the rocket */
+  tour.queue=[...zoneDefs.map(z=>z.id),'heroes','rocket'];   /* Story & Words is visited once as a zone; finish with the Ultra entrance and rocket. */
   tour.zone=null; tour.target=null;
   updateTourHud();
   nextTourStop();
@@ -1784,22 +1842,24 @@ function nextTourStop(){
   const id=tour.queue.shift();
   if(!id){ endTour(); toast(T().thanks); return; }
   tour.zone=id;
-  if(id==='story'||id==='rocket'){
-    const at=id==='story'?STORY_DOOR:ROCKET_PAD;
-    tour.target=at.clone().addScaledVector(new THREE.Vector3(-at.x,0,-at.z).normalize(),id==='story'?1.0:2.0);
+  if(PORTAL_AT[id]){
+    const at=PORTAL_AT[id]();
+    tour.target=at.clone().addScaledVector(new THREE.Vector3(-at.x,0,-at.z).normalize(),id==='rocket'?2.0:1.0);
     return;
   }
   const p=zones[id].pos;
   tour.target=new THREE.Vector3(p.x*.8,0,p.z*.8);
 }
 function endTour(){ tour.active=false; tour.target=null; tour.zone=null; updateTourHud(); hideInvite(); }
-/* tour stop at the Story House / rocket: ask whether to go in */
+/* walk-up places and where they stand */
+const PORTAL_AT={ story:()=>STORY_DOOR, heroes:()=>HERO_DOOR, rocket:()=>ROCKET_PAD };
+/* tour stop at the Story House / Hero Base / rocket: ask whether to go in */
 const inviteSpeech=(k,lg)=>{ const v=I18N[lg].invite[k]; return v.t+(/[。！？!?.]$/.test(v.t)?'':(lg==='zh'?'。':'.'))+(lg==='zh'?'':' ')+v.body; };
 function showInvite(k){
   const v=T().invite[k];
   $('#invic').textContent=v.icon; $('#invt').textContent=v.t; $('#invb').textContent=v.body;
   $('#invgo').textContent=v.go; $('#invnext').textContent=v.next;
-  $('#invgo').onclick=()=>{ endTour(); k==='story' ? enterStories() : boardRocket(); };
+  $('#invgo').onclick=()=>{ endTour(); enterPortal(k); };
   $('#invnext').onclick=()=>{ hideInvite(); if(k==='rocket'){ endTour(); toast(T().thanks); } else nextTourStop(); };
   $('#invite').style.display='block';
   narrator.speak(inviteSpeech(k,lang));
@@ -1810,37 +1870,52 @@ $('#tourhud').onclick=()=>{ tour.active ? endTour() : startTour(); };
 
 /* jump Max to a zone and open its card (map, gallery links) */
 function goToZone(id){
+  flyT=1; // A map jump takes over from the introductory camera flight.
+  const legacyBuilder=id==='builder';if(legacyBuilder)id='numbers';
   if(panelOpen) closePanel();
   if(id==='welcome') max.g.position.set(0,0,2.2);
   else{ const p=zones[id].pos; max.g.position.set(p.x*.8,0,p.z*.8); }
   state.vy=0;
-  setTimeout(()=>openPanel(id),450);
+  if(id==='reading'||id==='numbers'){const p=zones[id].pos;cam.theta=Math.atan2(-p.x,-p.z);cam.phi=1.05;cam.dist=Math.max(10,Math.min(17,(id==='numbers'?10:8)/Math.max(camera.aspect,.55)));}
+  setTimeout(()=>legacyBuilder?openMathSection('builder'):openPanel(id),450);
 }
-/* walk-up places: stand Max by the Story House door or the rocket */
+/* walk-up places: stand Max by the Story House door, the Hero Base or the rocket */
 function goToPortal(id){
   if(panelOpen) closePanel();
-  const p=id==='story' ? STORY_DOOR.clone().addScaledVector(STORY_DIR,1.0)
-                       : ROCKET_PAD.clone().addScaledVector(new THREE.Vector3(-ROCKET_PAD.x,0,-ROCKET_PAD.z).normalize(),2.0);
+  const at=PORTAL_AT[id]();
+  const p=at.clone().addScaledVector(new THREE.Vector3(-at.x,0,-at.z).normalize(),id==='rocket'?2.0:1.0);
   max.g.position.set(p.x,0,p.z); state.vy=0;
-  const at=id==='story'?STORY_DOOR:ROCKET_PAD;
   max.g.rotation.y=Math.atan2(at.x-p.x,at.z-p.z);
+}
+/* Shared direct-action shortcuts: functional destinations before island spaces. */
+function launchActivityGame(kind){
+  $('#dirwrap').style.display='none';
+  if(!started) $('#startbtn').click();
+  $('#overlay').style.display='none';flyT=1;
+  const p=zones.numbers.pos;max.g.position.set(p.x*.8,0,p.z*.8);state.vy=0;
+  cam.theta=Math.atan2(-p.x,-p.z);cam.phi=1.05;cam.dist=14;
+  openGame(kind);
+}
+function renderActivityCards(parent){
+  parent.replaceChildren();
+  T().activities.forEach(([key,icon,title,desc,href,tone])=>{
+    const card=document.createElement(href?'a':'button');card.className='ow '+tone;card.dataset.activity=key;
+    if(href)card.href=href;else{card.type='button';card.onclick=()=>launchActivityGame(key);}
+    const i=document.createElement('span');i.className='i';i.textContent=icon;
+    const name=document.createElement('b');name.textContent=title;
+    const detail=document.createElement('small');detail.textContent=desc;
+    card.append(i,name,detail);parent.append(card);
+  });
 }
 /* zone directory — tap the M logo to jump anywhere */
 function openDir(){
   $('#dirtitle').textContent=T().dirTitle;
   const list=$('#dirlist'); list.innerHTML='';
-  const tb=document.createElement('button'); tb.className='dirtour'; tb.textContent=T().tourBtn;
-  tb.onclick=()=>{ $('#dirwrap').style.display='none'; startTour(); };
-  list.appendChild(tb);
-  [['story',T().owStories,'linear-gradient(135deg,#f0a35e,#e0703a)'],['rocket',T().owGalaxy,'linear-gradient(135deg,#26306e,#7a4fd0)']].forEach(([id,[ic,name],bg])=>{
-    const pb=document.createElement('button'); pb.className='dirtour'; pb.style.background=bg;
-    pb.textContent=`${ic} ${name}`;
-    pb.onclick=()=>{ $('#dirwrap').style.display='none'; goToPortal(id); };
-    list.appendChild(pb);
-  });
-  const eb=document.createElement('a'); eb.className='dirtour'; eb.href='earth.html';   /* Max's Footprints, after the Galaxy */
-  eb.style.cssText='background:linear-gradient(135deg,#1f6fb8,#3fae6a);text-decoration:none';
-  eb.textContent=T().footprints; list.appendChild(eb);
+  const tb=document.createElement('button');tb.className='dirtour';tb.textContent=T().tourBtn;
+  tb.onclick=()=>{$('#dirwrap').style.display='none';startTour();};list.append(tb);
+  const activityHeading=document.createElement('h4');activityHeading.className='dir-section';activityHeading.textContent=T().activityTitle;list.append(activityHeading);
+  const activities=document.createElement('div');activities.className='activity-grid';renderActivityCards(activities);list.append(activities);
+  const islandHeading=document.createElement('h4');islandHeading.className='dir-section';islandHeading.textContent=T().islandTitle;list.append(islandHeading);
   ['welcome',...zoneDefs.map(z=>z.id)].forEach(id=>{
     const z=T().zones[id];
     const b=document.createElement('button'); b.className='diritem';
@@ -1848,10 +1923,17 @@ function openDir(){
       (id==='welcome'?'':`<span class="st2${visited.has(id)?' on':''}">★</span>`);
     b.onclick=()=>{ $('#dirwrap').style.display='none'; goToZone(id); };
     list.appendChild(b);
+    if(id==='herobase'){   /* the Ultra Tower stands on the lawn beside the Hero Base */
+      const u=document.createElement('button'); u.className='diritem'; u.style.paddingLeft='28px';
+      u.innerHTML=`<span class="ic">${T().owUltra[0]}</span><span>${T().owUltra[1]}</span>`;
+      u.onclick=()=>{ $('#dirwrap').style.display='none'; goToPortal('heroes'); };
+      list.appendChild(u);
+    }
   });
   $('#dirwrap').style.display='flex';
 }
 $('#logo').onclick=()=>{ if(started && !panelOpen) openDir(); };
+$('#logo').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#logo').click();}});
 $('#dirwrap').addEventListener('pointerdown',e=>{ if(e.target.id==='dirwrap') $('#dirwrap').style.display='none'; });
 $('#panelclose').onclick=closePanel;
 $('#panelspeak').onclick=()=>{ if(narrator.isSpeaking()) narrator.stop(); else { ensureAudio(); narrator.speak(panelSpeech,true); } };
@@ -1884,7 +1966,7 @@ $('#lbnext').onclick=e=>{ e.stopPropagation(); showArt(artAt+1); };
 
 /* interact + jump */
 let activeZone=null;
-function tryInteract(){ if(!started||leaving||gameOpen) return; if(portalNear){ portalNear.go(); return; } if(activeZone) openPanel(activeZone); }
+function tryInteract(){ if(!started||leaving) return; if(portalNear){ portalNear.go(); return; } if(activeZone) openPanel(activeZone); }
 function tryJump(){ if(!started||panelOpen||riding) return; if(state.onGround){ state.vy=6.3; state.onGround=false; } }
 $('#actbtn').onclick=()=>tryInteract();
 $('#jumpbtn').onclick=()=>tryJump();
@@ -1894,19 +1976,21 @@ $('#hint').onclick=()=>tryInteract();
 function setLang(l){
   lang=l;
   $('#otag').innerHTML=T().otag;
+  $('#autotourbtn').textContent=l==='zh'?'🚶 帶我逛逛 · 自動導覽':'🚶 Take a tour';
+  $('#autotourhint').textContent=l==='zh'?'跟著 Max，慢慢認識他的小世界。':'Follow Max around his little world.';
   $('#octr').innerHTML=isTouch?T().octrMob:T().octrDesk;
   $('#startbtn').textContent=started ? (l==='zh'?'繼續探索':'Keep Exploring') : T().start;
-  $('#owt').textContent=T().owTitle;
-  /* tolerant on purpose: a card or its text may be missing while a page is mid-update */
-  [['#owsto',T().owStories],['#owart',T().owArt],['#owgal',T().owGalaxy]].forEach(([id,v])=>{
-    const a=$(id); if(!a||!v) return;
-    a.querySelector('.i').textContent=v[0]; a.querySelector('b').textContent=v[1]; a.querySelector('small').textContent=v[2]; });
+  $('#owt').textContent=T().activityTitle;
+  renderActivityCards($('#quickactivities'));
   if(portalNear) $('#hinttext').textContent=portalNear.label();
   document.querySelectorAll('#olang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
   $('#langbtn').textContent = l==='en'?'中文':'EN';
+  wayfindingLabels.forEach(g=>g.userData.redrawLabel());
+  $('#maplabel').textContent=l==='en'?'Explore':'探索地圖';$('#logo').setAttribute('aria-label',l==='en'?'Open world map':'打開探索地圖');
+  $('#ohelp').textContent=l==='en'?'How to explore':'怎樣探索';$('#storybtn').setAttribute('aria-label',l==='en'?'Story & Words':'故事與文字');
   updateTourHud();
   updateStars();
-  if(activeZone) $('#hinttext').textContent=`${T().zones[activeZone].icon} ${T().zones[activeZone].t}`;
+  if(activeZone && !portalNear) $('#hinttext').textContent=`${T().zones[activeZone].icon} ${T().zones[activeZone].t}`;
   if(panelOpen && currentPanel) openPanel(currentPanel);
   document.documentElement.lang = l==='en'?'en':'zh-Hant';
   saveGame();
@@ -1932,16 +2016,16 @@ $('#startbtn').onclick=()=>{
   startMusic();
   $('#tourhud').style.display='flex';
 };
-/* "Art Gallery" card: start, land Max in the gallery and open its drawings */
-$('#owart').onclick=e=>{
-  e.preventDefault();
-  const first=!started;
+$('#autotourbtn').onclick=()=>{
+  if(panelOpen) closePanel();
   $('#startbtn').click();
-  const p=zones.gallery.pos; max.g.position.set(p.x*.82,0,p.z*.82);
-  if(first){ flyT=1; cam.dist=isTouch?9.4:7.8; cam.phi=1.02; cam.theta=Math.atan2(-p.x,-p.z); }
-  max.g.rotation.y=Math.atan2(p.x,p.z);
-  setTimeout(()=>openPanel('gallery'),first?700:300);
+  startTour();
 };
+/* The toolbar opens the shared Story & Words neighbourhood. */
+function openLiteracy(e){
+  e.preventDefault();if(!started){$('#startbtn').click();flyT=1;}goToZone('reading');
+}
+$('#storybtn').onclick=openLiteracy;
 $('#helpbtn').onclick=()=>{
   $('#startbtn').textContent = lang==='zh'?'繼續探索':'Keep Exploring';
   $('#overlay').style.display='flex';
@@ -1976,8 +2060,8 @@ function tick(){
     const dirv=_tv.subVectors(tour.target,max.g.position); dirv.y=0;
     if(dirv.length()<.45){
       tour.target=null;
-      if(tour.zone==='story'||tour.zone==='rocket'){
-        const at=tour.zone==='story'?STORY_DOOR:ROCKET_PAD;
+      if(PORTAL_AT[tour.zone]){
+        const at=PORTAL_AT[tour.zone]();
         max.g.rotation.y=Math.atan2(at.x-max.g.position.x,at.z-max.g.position.z);
         showInvite(tour.zone);
       }else openPanel(tour.zone);
@@ -2075,6 +2159,8 @@ function tick(){
     prevBallLocalZ=lb.z;
   }
 
+  EXTRA_SCENES.forEach(s=>{ if(s.update) s.update(dt,t); });
+
   /* ---- zone proximity ---- */
   let nearest=null,nd=1e9;
   for(const id in zones){
@@ -2086,22 +2172,22 @@ function tick(){
   if(nearest!==activeZone){
     activeZone=nearest;
     if(activeZone){
-      $('#hinttext').textContent=`${T().zones[activeZone].icon} ${T().zones[activeZone].t}`;
+      if(!portalNear) $('#hinttext').textContent=`${T().zones[activeZone].icon} ${T().zones[activeZone].t}`;
       $('#hint').style.display='flex';
       $('#hint').querySelector('.key').style.display=isTouch?'none':'inline-block';
       glowRing.material.color.set(zones[activeZone].color||0xffffff);
       glowRing.position.set(zones[activeZone].pos.x,.04,zones[activeZone].pos.z);
       const sc=(zones[activeZone].radius||6.4)/6.1;
       glowRing.scale.set(sc,sc,1);
-    }else{
+    }else if(!portalNear){
       $('#hint').style.display='none';
     }
   }
   glowRing.material.opacity=activeZone?(.3+Math.sin(t*3.5)*.14):0;
 
-  /* rocket / Story House hint (only when no zone hint is showing) */
+  /* rocket / Story House / Ultra Tower hint (a doorway wins over the zone hint around it) */
   { let near=null;
-    if(started && !activeZone && !panelOpen && !leaving){
+    if(started && !panelOpen && !leaving){
       for(const p of PORTALS){ const at=p.at(); if(p.ok() && Math.hypot(max.g.position.x-at.x,max.g.position.z-at.z)<p.r){ near=p; break; } }
     }
     if(near!==portalNear){
@@ -2110,17 +2196,21 @@ function tick(){
         $('#hinttext').textContent=near.label();
         $('#hint').style.display='flex';
         $('#hint').querySelector('.key').style.display=isTouch?'none':'inline-block';
-      }else if(!activeZone) $('#hint').style.display='none';
+      }else if(activeZone){ $('#hinttext').textContent=`${T().zones[activeZone].icon} ${T().zones[activeZone].t}`; $('#hint').style.display='flex'; }
+      else $('#hint').style.display='none';
     }
   }
   storyGlow.material.opacity=portalNear?.id==='story' ? .9 : .35+Math.sin(t*2.6)*.2;
+  heroGlow.material.opacity=portalNear?.id==='heroes' ? .9 : .35+Math.sin(t*2.6+1)*.2;
+  heroSpark.rotation.y=t*1.6; heroSpark.scale.setScalar(1+Math.sin(t*4)*.12);
   /* the cottage is solid: nudge Max back out of its walls */
   { const dx=max.g.position.x-STORY_POS.x, dz=max.g.position.z-STORY_POS.z, d=Math.hypot(dx,dz);
     if(d<2.0 && d>1e-3){ max.g.position.x=STORY_POS.x+dx/d*2.0; max.g.position.z=STORY_POS.z+dz/d*2.0; } }
+  { const dx=max.g.position.x-HERO_POS.x, dz=max.g.position.z-HERO_POS.z, d=Math.hypot(dx,dz);
+    if(d<HERO_COLLISION && d>1e-3){ max.g.position.x=HERO_POS.x+dx/d*HERO_COLLISION; max.g.position.z=HERO_POS.z+dz/d*HERO_COLLISION; } }
 
   /* ---- ambient animations ---- */
   clouds.rotation.y+=dt*.0045;
-  pirateShip.position.y=Math.sin(t*1.6)*.05; pirateShip.rotation.z=Math.sin(t*1.1)*.04;
   if(nightK!==nightGoal){ nightK=nightGoal>nightK?Math.min(nightGoal,nightK+dt/1.6):Math.max(nightGoal,nightK-dt/1.6); applyNight(nightK); }
   if(nightK>0) fireflies.forEach((f,i)=>{ const a=t*f.sp+f.ph;
     f.s.position.set(f.x+Math.cos(a)*f.r, f.y+Math.sin(t*1.3+f.ph)*.35, f.z+Math.sin(a*1.3)*f.r);
@@ -2187,7 +2277,11 @@ function tick(){
   }
   if(riding && rocketPhase!==4){ max.g.position.copy(rocket.position); state.vy=0; }
   if(rocketMarker) rocketMarker.visible=rocketPhase===0;
-  markers.forEach(mk=>{ mk.position.y=mk.userData.baseY+Math.sin(t*1.7+mk.userData.ph)*.28; });
+  markers.forEach(mk=>{
+    mk.position.y=mk.userData.baseY+Math.sin(t*1.3+mk.userData.ph)*.055;
+    const label=mk.userData.waypointLabel;
+    if(label){const d=mk.position.distanceTo(max.g.position);label.material.opacity=started?THREE.MathUtils.lerp(1,.2,clamp((d-13)/19,0,1)):.5;}
+  });
   waterTexes.forEach(w=>w.offset.x-=dt*.22);
   flames.forEach((f,i)=>{ f.scale.y=1+Math.sin(t*11+i*2)*.2; f.scale.x=f.scale.z=1+Math.sin(t*13+i)*.1; });
   heartMeshes.forEach(h=>{ h.rotation.y=h.userData.sway+Math.sin(t*1.2+h.userData.sway)*.35; });
@@ -2268,23 +2362,26 @@ document.addEventListener('gesturestart',e=>e.preventDefault());
 
 /* debug/test hooks */
 /* every zone card's spoken text, for tools/make_voice.py */
-const gameLines={};
 async function voiceLines(){
-  const [p,f]=await Promise.all([GAMES.pirates(),GAMES.flood()]); gameLines.pirates=p.pirateLines; gameLines.flood=f.floodLines;
+  const [p,f]=await Promise.all([GAMES.pirates(),GAMES.flood()]);
   const out=[];
   ['en','zh'].forEach(lg=>{
     const zs=I18N[lg].zones;
     for(const id in zs){ const z=zs[id], text=speechOf(z,lg); out.push({id:'world:'+id,lang:lg,key:textKey(text),text}); }
-    ['story','rocket'].forEach(k=>{ const text=inviteSpeech(k,lg); out.push({id:'world:invite-'+k,lang:lg,key:textKey(text),text}); });
-    (gameLines.pirates?.(lg)||[]).forEach((text,i)=>out.push({id:'world:pirate-'+i,lang:lg,key:textKey(text),text}));
-    (gameLines.flood?.(lg)||[]).forEach((text,i)=>out.push({id:'world:flood-'+i,lang:lg,key:textKey(text),text}));
+    ['story','heroes','rocket'].forEach(k=>{ const text=inviteSpeech(k,lg); out.push({id:'world:invite-'+k,lang:lg,key:textKey(text),text}); });
   });
+  ['en','zh'].forEach(lg=>{
+    p.pirateLines(lg).forEach((text,i)=>out.push({id:'world:pirate-'+i,lang:lg,key:textKey(text),text}));
+    f.floodLines(lg).forEach((text,i)=>out.push({id:'world:flood-'+i,lang:lg,key:textKey(text),text}));
+  });
+  EXTRA_SCENES.forEach(s=>{ if(s.lines) s.lines().forEach(l=>out.push({...l,key:textKey(l.text)})); });
   return out;
 }
 window.__max={
   voiceLines,
-  teleport(id){ const p=zones[id].pos; max.g.position.set(p.x*.82,0,p.z*.82); },
+  teleport(id){ if(id==='builder')id='numbers';const p=zones[id].pos; max.g.position.set(p.x*.82,0,p.z*.82); },
   setPos(x,z){ max.g.position.set(x,0,z); },
+  showMax(v){ max.g.visible=v; },
   openPanel, closePanel, setLang, cam,
   start(){ $('#startbtn').click(); },
   skipFly(){ flyT=1; },
@@ -2296,7 +2393,7 @@ window.__max={
 /* boot: restore saved language + progress */
 let saved={};
 try{ saved=JSON.parse(localStorage.getItem(SAVE_KEY))||{}; }catch(e){}
-(saved.visited||[]).forEach(id=>{ if(zones[id]) visited.add(id); });
+(saved.visited||[]).forEach(old=>{const id=old==='builder'?'numbers':old;if(zones[id])visited.add(id);});
 if(visited.size>=ZONE_COUNT) celebrated=true;
 soundOn = saved.sound!==false;
 updateSndBtn();
@@ -2307,7 +2404,7 @@ updateStars();
 {
   const qs=new URLSearchParams(location.search), from=qs.get('from');
   const art=ARTWORKS.findIndex(a=>a.id===qs.get('art'));   /* ?art=bumblebee: show that drawing */
-  if(from==='galaxy' || from==='stories' || from==='earth'){
+  if(from==='galaxy' || from==='stories' || from==='words' || from==='heroes' || from==='earth'){
     history.replaceState(null,'',location.pathname);
     started=true; flyT=1;
     $('#overlay').style.display='none'; $('#tourhud').style.display='flex';
@@ -2319,11 +2416,16 @@ updateStars();
     if(from==='earth'){   /* dived down from the globe: drop out of the sky onto the plaza */
       flyT=0; flyFrom={dist:150,phi:.04,theta:0};
       setTimeout(()=>toast(T().backFromEarth),1600);
-    }else if(from==='stories'){
+    }else if(from==='stories'||from==='words'){
       const p=STORY_DOOR.clone().addScaledVector(STORY_DIR,2.6);   /* just outside the door hint, so a stray tap does not go straight back in */
       max.g.position.set(p.x,0,p.z); max.g.rotation.y=Math.atan2(STORY_DIR.x,STORY_DIR.z);
       cam.theta=Math.atan2(STORY_DIR.x,STORY_DIR.z);
-      setTimeout(()=>toast(T().backFromStories),400);
+      setTimeout(()=>{toast(T().backFromStories);openPanel('reading');},500);
+    }else if(from==='heroes'){   /* step out of the light, just past the door hint */
+      const p=HERO_DOOR.clone().addScaledVector(HERO_DIR,2.6);
+      max.g.position.set(p.x,0,p.z); max.g.rotation.y=Math.atan2(HERO_DIR.x,HERO_DIR.z);
+      cam.theta=Math.atan2(HERO_DIR.x,HERO_DIR.z);
+      setTimeout(()=>toast(T().backFromHeroes),400);
     }else{
       riding=true; max.g.visible=false; max.helmet.visible=true;
       rocketPhase=3; rocketT=0;

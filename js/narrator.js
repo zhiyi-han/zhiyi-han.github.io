@@ -31,7 +31,7 @@ export function createNarrator({ getLang, isSoundOn, onSpeaking, zhVoice = /zh[-
   const canSpeak = 'speechSynthesis' in window;
   let voiceSet = null, speaking = false, voiceText = '', curU = null;
 
-  fetch(VOICE_DIR + 'manifest.json').then(r => r.ok ? r.json() : null)
+  fetch(VOICE_DIR + 'manifest.json?v=online-sync-v1').then(r => r.ok ? r.json() : null)
     .then(m => { if (m) voiceSet = { en: new Set(m.en || []), zh: new Set(m.zh || []) }; }).catch(() => {});
 
   const setSpeaking = on => { if (speaking !== on) { speaking = on; onSpeaking(on); } };

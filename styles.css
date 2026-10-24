@@ -173,13 +173,15 @@
   #tournext:active{transform:scale(.96)}
   #oworlds{margin-top:16px}
   #owt{font-size:12.5px;font-weight:800;color:#8b8f9e;margin-bottom:8px}
-  .owrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .owrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media(max-width:420px){ .owrow{grid-template-columns:repeat(2,1fr)} }
   .ow{display:flex;flex-direction:column;align-items:center;gap:2px;padding:11px 6px 10px;border-radius:18px;text-decoration:none;color:#fff;
     box-shadow:0 8px 20px rgba(30,40,90,.22);transition:transform .15s}
   .ow:active{transform:scale(.95)}
   .ow.gal{background:linear-gradient(150deg,#26306e,#5b3ea8 60%,#8a4fd0)}
   .ow.sto{background:linear-gradient(150deg,#f0a35e,#e0703a)}
   .ow.art{background:linear-gradient(150deg,#f08cb4,#d9578f)}
+  .ow.hero{background:linear-gradient(150deg,#e0483a,#c8202c 55%,#f2a73a)}
   .ow .i{font-size:26px;line-height:1.1}
   .ow b{font-size:14px;font-weight:800;line-height:1.25}
   .ow small{font-size:11px;font-weight:700;opacity:.9;line-height:1.3}
@@ -193,6 +195,8 @@
   #warp.space .ico:before{content:"🚀";font-size:64px;display:block;animation:warpUp 1s ease-in forwards}
   #warp.book{background:#fbf4e6;transition-duration:.6s}
   #warp.book .ico:before{content:"📖";font-size:80px;display:block;animation:warpBook .7s ease-out forwards}
+  #warp.hero{background:radial-gradient(circle at 50% 50%,#ffffff,#bfe4ff 35%,#4f7fe0 80%);transition-duration:.7s}
+  #warp.hero .ico:before{content:"⚡";font-size:80px;display:block;animation:warpBook .8s ease-out forwards}
   @keyframes warpUp{from{transform:translateY(40px) scale(.7)}to{transform:translateY(-30px) scale(1.15)}}
   @keyframes warpBook{from{transform:scale(.4) rotate(-8deg)}to{transform:scale(1.25) rotate(0)}}
   #ocard .url{margin-top:12px;font-size:12px;font-weight:800;color:#b8bcc8;letter-spacing:1px}
@@ -209,3 +213,77 @@
 
   #fallback{display:none;position:fixed;inset:0;z-index:80;background:linear-gradient(150deg,#2bb6c4,#4f7fe0,#7a4fd0);
     color:#fff;padding:40px;text-align:center;align-items:center;justify-content:center;font-size:18px;line-height:1.8}
+
+/* A quieter entrance and compact wayfinding HUD. */
+#overlay{background:radial-gradient(ellipse at 18% 20%,rgba(218,243,240,.85),transparent 65%),linear-gradient(135deg,rgba(243,248,252,.84),rgba(235,242,252,.82));backdrop-filter:blur(8px);padding:24px}
+#ocard{max-width:780px;padding:30px 34px 22px;border:1px solid rgba(255,255,255,.95);border-radius:30px;background:rgba(255,255,255,.96);box-shadow:0 24px 70px rgba(35,68,105,.16);text-align:left}
+.intro-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+#ocard .mlogo{width:52px;height:52px;font-size:29px;margin:0;border-radius:18px;box-shadow:0 6px 16px rgba(45,151,177,.2)}
+#olang{margin:0;background:#f0f5f8}#olang button{padding:7px 14px}
+.intro-layout{display:grid;grid-template-columns:1.05fr 1fr;gap:34px;align-items:start}
+#ocard h1{font-size:38px;line-height:1.12;margin:0 0 14px;letter-spacing:-.8px;background:none;-webkit-text-fill-color:#223c52;color:#223c52}
+#ocard .tag{font-size:14.5px;line-height:1.7;font-weight:500;color:#657686;margin:0}
+#startbtn{margin-top:24px;border-radius:15px;padding:14px 18px;text-align:left;font-size:17px;letter-spacing:0;background:linear-gradient(120deg,#219da9,#398ad3);box-shadow:0 8px 18px rgba(41,139,169,.2)}
+#startbtn:after{content:'↗';float:right;font-size:22px;line-height:1}
+.intro-help{margin-top:14px;color:#75899b;font-size:12px}.intro-help summary{cursor:pointer;list-style:none}.intro-help summary:before{content:'⌨ ';opacity:.7}.intro-help[open] summary{color:#31819c}
+#ocard .ctr{background:#f5f8fa;margin-top:9px;padding:10px;font-size:11px;display:block}
+#oworlds{margin:0}#owt{font-size:12px;letter-spacing:.3px;margin:0 0 12px;color:#83929f}
+.owrow{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ow{position:relative;align-items:flex-start;padding:15px 13px 13px;gap:5px;border:1px solid #e6edf2;border-radius:17px;box-shadow:none;min-height:119px;color:#324a60;transition:transform .15s,border-color .15s,box-shadow .15s}
+.ow:hover{transform:translateY(-2px);border-color:#b9d4e1;box-shadow:0 5px 15px rgba(36,84,111,.08)}
+.ow.sto{background:#fff7ec}.ow.art{background:#fff2f6}.ow.gal{background:#f1f0fc}.ow.hero{background:#eff7fc}
+.ow .i{font-size:25px;margin-bottom:3px}.ow b{font-size:14px;line-height:1.3}.ow small{font-size:10.5px;line-height:1.4;color:#7b8995;font-weight:500;opacity:1}
+#ocard .url{border-top:1px solid #eef2f5;padding-top:16px;margin-top:24px;text-align:center;font-size:10px;letter-spacing:2px;color:#a3b0ba}
+#logo{box-shadow:0 4px 15px rgba(35,65,100,.12)}#logo b{font-size:14px;display:block}
+.roundbtn{box-shadow:0 4px 14px rgba(35,65,100,.1)}#stars{box-shadow:none;background:rgba(255,255,255,.82)}
+@media(max-width:760px){
+  #storybtn,#galbtn{display:none}
+  #ocard{max-width:430px;padding:23px 24px 18px;border-radius:26px}
+  .intro-head{margin-bottom:22px}.intro-layout{grid-template-columns:1fr;gap:24px}
+  #ocard h1{font-size:34px;margin-bottom:10px}#ocard .tag{font-size:13px;line-height:1.6}
+  #startbtn{margin-top:18px}.intro-help{margin-top:10px}
+  .ow{min-height:99px;padding:12px 13px;gap:3px}.ow .i{font-size:23px;margin:0}.ow b{font-size:13px}
+  #ocard .url{margin-top:18px;padding-top:12px}#owt{margin-bottom:9px}
+  #logo{padding:6px 12px 6px 7px;gap:6px}#logo b{font-size:12px}
+  #topbtns{gap:6px}.roundbtn{height:40px;min-width:40px;padding:0 11px}
+  #stars{padding:6px 11px}#stars .st{font-size:13px}#stars .lbl{font-size:10px}
+}
+@media(max-height:700px) and (max-width:760px){#overlay{padding:14px}#ocard{padding:18px 20px 14px}.intro-head{margin-bottom:14px}#ocard .mlogo{width:42px;height:42px;font-size:24px}#ocard h1{font-size:29px}.intro-layout{gap:18px}#ocard .url{margin-top:14px}.ow{min-height:90px}#startbtn{margin-top:14px;padding:12px 16px}}
+:focus-visible{outline:3px solid #268bba;outline-offset:4px}
+
+#stars .st{display:none}#stars:before{content:'★';color:#e5a733;font-size:16px;line-height:1}#stars .lbl{font-size:11px;color:#62768a;margin-left:2px}#stars{gap:6px;padding:7px 12px}
+
+/* One shared entrance for stories, reading and character play. */
+#panelgal.literacy-hub{display:block}.literacy-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.literacy-choice{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:19px 16px 30px;border:1px solid #dce9ec;border-radius:19px;background:#f3faf8;text-align:left;text-decoration:none;color:#29495b;font-family:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.literacy-choice:nth-child(1){background:#fff6e9}.literacy-choice:nth-child(3){background:#f1f0fc}.literacy-choice:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(44,89,103,.1)}
+.literacy-icon{font-size:29px}.literacy-choice strong{font-size:16px;line-height:1.4}.literacy-choice small{font-size:12px;color:#778792;line-height:1.6}.literacy-arrow{position:absolute;right:15px;bottom:11px;color:#658e99;font-size:19px}
+.literacy-library{margin-top:22px;padding-top:18px;border-top:1px solid #e8eef0}.literacy-library[hidden]{display:none}.literacy-library h3{font-size:16px;margin-bottom:12px}.literacy-shelf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.literacy-all{display:inline-block;margin-top:14px;font-size:13px;color:#2c8798;text-decoration:none;font-weight:700}
+@media(max-width:540px){.literacy-choices{grid-template-columns:1fr;gap:9px}.literacy-choice{display:grid;grid-template-columns:38px 1fr;gap:2px 12px;padding:14px 35px 14px 14px}.literacy-icon{grid-row:1/3;font-size:27px;align-self:center}.literacy-choice strong{font-size:15px}.literacy-arrow{top:21px;bottom:auto}.literacy-shelf{gap:8px}#panelgal .art .cap{font-size:10px}}
+
+.literacy-choices.math-choices{grid-template-columns:repeat(2,minmax(0,1fr))}.math-choices .literacy-choice:nth-child(2){background:#f3f0fc}.math-choices .selected{border-color:#79afbb;box-shadow:0 0 0 2px rgba(88,157,173,.12)}
+.math-detail{margin-top:20px;padding:18px;border:1px solid #e4edef;border-radius:16px;background:#fafcfd}.math-detail[hidden]{display:none}.math-detail h3{font-size:18px;margin-bottom:10px}.math-detail p{font-size:14px;line-height:1.8;color:#647582}.math-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.math-chips span{font-size:11px;padding:5px 9px;border-radius:20px;background:#edf4f6;color:#58808d}.math-view{margin-top:18px;padding:10px 0;border:0;background:none;font-family:inherit;font-size:13px;font-weight:700;color:#29869a;cursor:pointer}
+@media(max-width:540px){.literacy-choices.math-choices{grid-template-columns:1fr}}
+
+/* Activities have direct buttons; island spaces remain in the directory below. */
+#overlay{align-items:flex-start}#ocard{margin:auto}
+#quickactivities .ow,.activity-grid .ow{font-family:inherit;cursor:pointer;text-align:left;width:100%;font-size:inherit}
+.ow.pirate{background:#fff7df}.ow.flood{background:#edf8fc}.ow.footprints{background:#edf8ef}
+#owt{font-size:14px;font-weight:800;color:#324a60}
+.activity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.activity-grid .ow{min-height:96px;padding:12px 11px;gap:3px}
+.activity-grid .ow .i{font-size:23px}.activity-grid .ow b{font-size:13px}.activity-grid .ow small{font-size:10px}
+.dir-section{font-size:12px;color:#718394;margin:18px 0 9px;letter-spacing:.3px}.dir-section:first-child{margin-top:0}
+#quickactivities .ow{min-height:108px}
+@media(max-width:760px){#quickactivities .ow{min-height:91px;padding:10px 11px;gap:2px}#quickactivities .ow .i{font-size:22px}.intro-layout{gap:20px}.intro-head{margin-bottom:17px}}
+
+.intro-wander{grid-column:1/-1;border-top:1px solid #eef2f5;padding-top:15px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.intro-wander #startbtn{margin:0;padding:11px 16px;font-size:14px;min-width:150px;box-shadow:none;background:#edf4f8;color:#3e6b86}
+.intro-wander #startbtn:after{font-size:17px;margin-left:18px}.intro-wander .intro-help{margin:0;flex:1;min-width:120px}
+#ocard .url{margin-top:15px;padding-top:12px}
+
+/* Let visitors meet the world through a guided walk before choosing an activity. */
+#autotourbtn{width:100%;margin-top:22px;padding:15px 18px;border:0;border-radius:16px;background:linear-gradient(120deg,#219da9,#398ad3);color:#fff;font:800 16px "Noto Sans TC",sans-serif;text-align:left;cursor:pointer;box-shadow:0 8px 18px rgba(41,139,169,.2)}
+#autotourbtn:after{content:'→';float:right;margin-left:10px}#autotourbtn:hover{filter:brightness(1.04)}#autotourbtn:active{transform:scale(.98)}
+#autotourhint{font-size:11px;color:#718899;line-height:1.5;margin:9px 0 0}
+@media(max-width:760px){#autotourbtn{margin-top:17px;padding:14px 15px;font-size:15px}.intro-layout{gap:19px}}
