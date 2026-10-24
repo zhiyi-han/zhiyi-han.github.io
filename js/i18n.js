@@ -45,8 +45,8 @@ export const I18N = {
     liftoff: "🚀 Blast off!",
     galaxySign: ["Galaxy Adventure","銀河大冒險"],
     storyHint: "Explore Story & Words",
-    pirateHint: "Play Pirate Ships: Make Ten",
-    pirateBtn: "🏴‍☠️ Play: Pirate Ships, Make Ten",
+    pirateHint: "Play Pirate Ships: Add & Subtract",
+    pirateBtn: "🏴‍☠️ Play: Pirate Ships, Add & Subtract",
     floodHint: "Play Flood Fixers",
     floodBtn: "🌊 Play: Flood Fixers — dig a diversion channel",
     heroHint: "Meet the Ultraman family",
@@ -101,8 +101,8 @@ export const I18N = {
     liftoff: "🚀 出發！",
     galaxySign: ["Galaxy Adventure","銀河大冒險"],
     storyHint: "進入故事與文字",
-    pirateHint: "玩海盜船湊十",
-    pirateBtn: "🏴‍☠️ 玩遊戲：海盜船湊十",
+    pirateHint: "玩海盜船算一算",
+    pirateBtn: "🏴‍☠️ 玩遊戲：海盜船算一算",
     floodHint: "玩分洪小工程師",
     floodBtn: "🌊 玩遊戲：分洪小工程師——挖一條分洪道",
     heroHint: "進入奧特曼家族",
@@ -156,6 +156,6 @@ I18N.zh.activityTitle='想玩什麼？直接開始';
 I18N.en.activityTitle='Choose an activity';
 I18N.zh.islandTitle='也可以逛逛主島';
 I18N.en.islandTitle='Explore the island';
-I18N.zh.activities=[['stories','📖','聽故事','21 本故事與繪本・普通話朗讀','stories.html','sto'],['words','🔤','和小黃認字','認字、聽讀、複習','words.html','art'],['pirates','🏴‍☠️','海盜船湊十','找一找，還差幾個湊成 10',null,'pirate'],['flood','🌊','分洪小工程師','挖水道，保護小村莊',null,'flood'],['galaxy','🚀','銀河大冒險','飛到太空，探索星球','galaxy.html','gal'],['footprints','🌍','Max 的足跡','轉轉地球，看 Max 去過哪裡','earth.html','footprints']];
-I18N.en.activities=[['stories','📖','Listen to stories','21 stories & picture books, in Mandarin','stories.html','sto'],['words','🔤','Words with Little Yellow','Read, listen and practise Chinese','words.html','art'],['pirates','🏴‍☠️','Pirate Ships','Find the missing number to make ten',null,'pirate'],['flood','🌊','Flood Fixers','Dig a channel and save the village',null,'flood'],['galaxy','🚀','Galaxy Adventure','Fly into space and explore the planets','galaxy.html','gal'],['footprints','🌍',"Max’s Footprints",'Spin the globe and see his travels','earth.html','footprints']];
+I18N.zh.activities=[['stories','📖','聽故事','21 本故事與繪本・普通話朗讀','stories.html','sto'],['words','🔤','和小黃認字','認字、聽讀、複習','words.html','art'],['pirates','🏴‍☠️','海盜船算一算','100 以內加減，選出答案小船',null,'pirate'],['flood','🌊','分洪小工程師','挖水道，保護小村莊',null,'flood'],['galaxy','🚀','銀河大冒險','飛到太空，探索星球','galaxy.html','gal'],['footprints','🌍','Max 的足跡','轉轉地球，看 Max 去過哪裡','earth.html','footprints']];
+I18N.en.activities=[['stories','📖','Listen to stories','21 stories & picture books, in Mandarin','stories.html','sto'],['words','🔤','Words with Little Yellow','Read, listen and practise Chinese','words.html','art'],['pirates','🏴‍☠️','Pirate Ships','Add and subtract within 100',null,'pirate'],['flood','🌊','Flood Fixers','Dig a channel and save the village',null,'flood'],['galaxy','🚀','Galaxy Adventure','Fly into space and explore the planets','galaxy.html','gal'],['footprints','🌍',"Max’s Footprints",'Spin the globe and see his travels','earth.html','footprints']];
 I18N.zh.start='逛逛主島';I18N.en.start='Explore the island';

@@ -467,7 +467,7 @@ const PORTALS=[
 ];
 let portalNear=null;
 /* zone mini-games, loaded only when first opened so the island itself stays light:
-   Number Land's Pirate Ships (make ten) and Builder's Corner's Flood Fixers */
+   Number Land's Pirate Ships (add and subtract within 100) and Builder's Corner's Flood Fixers */
 const GAMES={ pirates:()=>import('./minigames/pirates.js'), flood:()=>import('./minigames/flood.js') };
 let gameOpen=false;
 async function openGame(kind){
@@ -1775,7 +1775,7 @@ function openPanel(id){
   if(id==='numbers'){
     const zh=lang==='zh',choices=document.createElement('div');choices.className='literacy-choices math-choices';
     const detail=document.createElement('section');detail.id='math-detail';detail.className='math-detail';detail.hidden=true;
-    [['numbers','🔢',zh?'數字玩法':'Number play',zh?'數數、比較，和海盜船一起湊十。':'Count, compare and make ten with pirate ships.',T().zones.numberPlay],['builder','🧱',zh?'搭建玩法':'Building play',zh?'用 LEGO 看懂河流，挑戰分洪小工程師。':'Explore the LEGO river and play Flood Fixers.',T().zones.builder]].forEach(([key,icon,title,desc,content])=>{
+    [['numbers','🔢',zh?'數字玩法':'Number play',zh?'數數、比較，和海盜船一起算 100 以內的加減。':'Count, compare and add or subtract within 100 with pirate ships.',T().zones.numberPlay],['builder','🧱',zh?'搭建玩法':'Building play',zh?'用 LEGO 看懂河流，挑戰分洪小工程師。':'Explore the LEGO river and play Flood Fixers.',T().zones.builder]].forEach(([key,icon,title,desc,content])=>{
       const card=document.createElement('button');card.id='math-'+key;card.type='button';card.className='literacy-choice';card.setAttribute('aria-expanded','false');card.setAttribute('aria-controls','math-detail');
       const ic=document.createElement('span');ic.className='literacy-icon';ic.textContent=icon;const name=document.createElement('strong');name.textContent=title;const sub=document.createElement('small');sub.textContent=desc;const arrow=document.createElement('span');arrow.className='literacy-arrow';arrow.textContent='↓';card.append(ic,name,sub,arrow);
       card.onclick=()=>{if(card.getAttribute('aria-expanded')==='true'){card.setAttribute('aria-expanded','false');card.classList.remove('selected');detail.hidden=true;return;}choices.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-expanded',String(b===card));b.classList.toggle('selected',b===card);});detail.replaceChildren();detail.hidden=false;

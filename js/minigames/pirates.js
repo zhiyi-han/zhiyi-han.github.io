@@ -1,38 +1,96 @@
 /* ============================================================
-   海盜船湊十 · Pirate Ships: Make Ten   (Number Land mini-game)
+   海盜船算一算 · Pirate Ships: Add & Subtract   (Number Land mini-game)
 
    Max invented a pirate friend who sails big ships and small boats to
-   learn adding and taking away, and "making ten" (湊十法). Here the big
-   ship has ten seats in a ten-frame; some pirates are already aboard,
-   and you pick the small boat that brings exactly enough to fill it.
-   Five ships a round, a gold coin for each; no timer, no typing.
-   Spoken lines come from pirateLines() so they can be pre-recorded.
+   learn adding and taking away. The ship's sail shows a sum within 100
+   (34 + 25, 67 − 23 …); the crew on deck is drawn in tens and ones so
+   the numbers can be seen, and you pick the small boat that carries the
+   right answer. Five ships a round, a gold coin for each; no timer, no
+   typing. Sums that carry or borrow across the tens come up only now
+   and then (CARRY_RATE, at most CARRY_MAX a round).
+   Spoken lines come from pirateLines() so the fixed ones can be
+   pre-recorded; the lines that contain the numbers use the device voice.
    ============================================================ */
 
 const TEXT = {
   en: {
-    title: 'Pirate Ships: Make Ten', coins: n => `🪙 ${n}/5`, again: '↺ Play again', back: '← Back to Number Land',
-    intro: "I'm your Pirate Pal! The big ship has ten seats — let's fill it up!",
-    q: n => `There ${n === 1 ? 'is 1 pirate' : `are ${n} pirates`} on the ship. How many more do we need to make ten?`,
-    right: (n, m) => `Yes! ${n} plus ${m} makes ten! Set sail!`,
-    hint: 'Almost! Count the empty seats on the ship.',
+    title: 'Pirate Ships: Add & Subtract', coins: n => `🪙 ${n}/5`, again: '↺ Play again', back: '← Back to Number Land',
+    intro: "I'm your Pirate Pal! Read the sum on the sail and pick the boat with the right answer!",
+    qAdd: (a, b) => `There are ${a} pirates on the ship, and ${b} more come aboard. How many pirates are there now?`,
+    qSub: (a, b) => `There are ${a} pirates on the ship, and ${b} go ashore. How many pirates are left?`,
+    right: (a, op, b, c) => `Yes! ${a} ${op === '+' ? 'plus' : 'minus'} ${b} is ${c}! Set sail!`,
+    hint: 'Almost! Try again — count the ones first, then the tens.',
     end: 'Hooray! You helped five ships set sail!',
   },
   zh: {
-    title: '海盜船湊十', coins: n => `🪙 ${n}/5`, again: '↺ 再玩一次', back: '← 回到數字樂園',
-    intro: '我是海盜好朋友！大船有十個座位，我們一起把它坐滿吧！',
-    q: n => `船上已經有${n}個海盜。還要幾個海盜上船，才能湊成十個？`,
-    right: (n, m) => `答對了！${n}加${m}等於十！起航啦！`,
-    hint: '差一點點！數一數，船上還有幾個空位？',
+    title: '海盜船算一算', coins: n => `🪙 ${n}/5`, again: '↺ 再玩一次', back: '← 回到數字樂園',
+    intro: '我是海盜好朋友！看看帆上的算式，選出答案正確的小船吧！',
+    qAdd: (a, b) => `船上有${a}個海盜，又來了${b}個。現在一共有幾個海盜？`,
+    qSub: (a, b) => `船上有${a}個海盜，有${b}個上岸去了。船上還剩幾個海盜？`,
+    right: (a, op, b, c) => `答對了！${a}${op === '+' ? '加' : '減'}${b}等於${c}！起航啦！`,
+    hint: '差一點點！再算一算，先看個位，再看十位。',
     end: '太棒了！你幫海盜們開走了五艘大船！',
   },
 };
 
-/* every line the game can say, for tools/make_voice.py */
+/* the fixed lines the game can say, for tools/make_voice.py
+   (question and answer lines contain the numbers, so they are read by the device voice) */
 export function pirateLines(lang){
-  const t = TEXT[lang], out = [t.intro, t.hint, t.end];
-  for (let n = 1; n <= 9; n++) out.push(t.q(n), t.right(n, 10 - n));
-  return out;
+  const t = TEXT[lang];
+  return [t.intro, t.hint, t.end];
+}
+
+/* ---------- questions: add and subtract within 100 ---------- */
+export const CARRY_RATE = 0.25;   /* share of sums that carry / borrow across the tens */
+export const CARRY_MAX = 2;       /* and never more than this many in a round of five */
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const chance = p => Math.random() < p;
+
+/* does a ± b cross the tens? */
+export const crosses = (a, op, b) => op === '+' ? a % 10 + b % 10 >= 10 : a % 10 < b % 10;
+
+/* one random sum of a kid-friendly shape: two-digit ± two-digit, two-digit ± one-digit, or whole tens */
+function draw(op){
+  const shape = Math.random();
+  let a, b;
+  if (shape < .15) {                      /* whole tens: 30 + 40, 70 − 20 */
+    a = ri(1, 9) * 10; b = ri(1, 9) * 10;
+  } else if (shape < .55) {               /* two-digit and one-digit: 34 + 5, 48 − 6 */
+    a = ri(10, 99); b = ri(1, 9);
+  } else {                                /* two-digit and two-digit: 34 + 25, 67 − 23 */
+    a = ri(10, 99); b = ri(10, 99);
+  }
+  if (op === '+' && a + b > 100) return null;
+  if (op === '−' && b >= a) [a, b] = [b, a];
+  if (op === '−' && b >= a) return null;  /* equal: nothing left, skip */
+  return { a, op, b, c: op === '+' ? a + b : a - b, carry: crosses(a, op, b) };
+}
+
+/* a question that does / doesn't cross the tens, unseen this round */
+export function makeQuestion(wantCarry, used = new Set()){
+  const op = chance(.5) ? '+' : '−';   /* chosen once, so adding and taking away come up equally */
+  for (let i = 0; i < 500; i++) {
+    const q = draw(op);
+    if (!q || q.carry !== wantCarry) continue;
+    const key = `${q.a}${q.op}${q.b}`;
+    if (used.has(key)) continue;
+    used.add(key);
+    return q;
+  }
+  return { a: 20, op: '+', b: 30, c: 50, carry: false };
+}
+
+/* four boats: the answer plus the three most tempting wrong ones */
+export function makeOptions(q){
+  const { a, op, b, c } = q;
+  const swap = c >= 10 ? (c % 10) * 10 + Math.floor(c / 10) : null;
+  const near = [c + 1, c - 1, c + 10, c - 10, c + 2, c - 2, swap, op === '+' ? a - b : a + b, a, b]
+    .filter(v => v !== null && v >= 0 && v <= 100 && v !== c);
+  const opts = new Set([c]);
+  const pool = [...new Set(near)];
+  while (opts.size < 4 && pool.length) opts.add(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  while (opts.size < 4) { const v = c + ri(-12, 12); if (v >= 0 && v <= 100) opts.add(v); }
+  return [...opts].sort((x, y) => x - y);
 }
 
 /* a little pirate: round face, red bandana, eye patch */
@@ -54,31 +112,39 @@ const CSS = `
   font-size:18px;font-weight:800;line-height:1.45;box-shadow:0 8px 22px rgba(0,30,80,.18);min-height:56px}
 #pg .say .pal{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:44px;height:44px}
 #pg .sea{flex:1;width:100%;position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:0}
-#pg .ship{position:relative;width:min(88vw,520px);margin-bottom:6vh;transition:transform 1.6s cubic-bezier(.5,0,.8,.4)}
+#pg .ship{--sh:clamp(64px,13vh,100px);position:relative;width:min(88vw,520px);margin-bottom:5vh;transition:transform 1.6s cubic-bezier(.5,0,.8,.4)}
 #pg .ship.sail{transform:translateX(120vw) rotate(4deg)}
 #pg .ship.bob{animation:bob 2.4s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(-6px) rotate(-1deg)}}
-#pg .mast{position:absolute;left:50%;bottom:58%;width:8px;height:120%;background:#8a5a35;transform:translateX(-50%);border-radius:4px}
-#pg .sail{position:absolute;left:50%;bottom:76%;width:46%;height:70%;transform:translateX(-50%);background:#fffaf0;border-radius:10px 10px 40% 40%;
-  box-shadow:inset 0 -10px 0 rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center;font-size:clamp(28px,7vw,46px)}
-#pg .flag{position:absolute;left:50%;bottom:calc(58% + 120%);width:44px;height:26px;background:#2b2b33;color:#fff;font-size:16px;
+#pg .mast{position:absolute;left:50%;bottom:50%;width:8px;height:calc(50% + var(--sh) + 30px);background:#8a5a35;transform:translateX(-50%);border-radius:4px}
+#pg .sail{position:absolute;left:50%;bottom:calc(100% + 4px);width:72%;height:var(--sh);transform:translateX(-50%);background:#fffaf0;border-radius:10px 10px 40% 40%;
+  box-shadow:inset 0 -10px 0 rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center;gap:.18em;
+  font-size:clamp(26px,7vw,46px);font-weight:900;color:#1d3d66;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+#pg .sail .op{color:#e0453a}#pg .sail .q{color:#c47d2a}
+#pg .flag{position:absolute;left:50%;bottom:calc(100% + var(--sh) + 30px);width:44px;height:26px;background:#2b2b33;color:#fff;font-size:16px;
   display:flex;align-items:center;justify-content:center;border-radius:2px 8px 8px 2px}
-#pg .hull{position:relative;background:linear-gradient(#a8693d,#7c4a28);border-radius:14px 14px 50% 50%/14px 14px 60% 60%;padding:14px 18px 34px;
+#pg .hull{position:relative;background:linear-gradient(#a8693d,#7c4a28);border-radius:14px 14px 50% 50%/14px 14px 60% 60%;padding:12px 16px 30px;
   box-shadow:0 14px 0 rgba(0,40,90,.25)}
-#pg .frame{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;background:#f2d8a8;border-radius:12px;padding:8px}
-#pg .seat{aspect-ratio:1;border-radius:50%;background:#e7c48a;box-shadow:inset 0 3px 6px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center}
-#pg .seat.empty.blink{animation:blink .6s ease-in-out 4}
-@keyframes blink{50%{background:#fff3b0;box-shadow:0 0 0 4px #ffd84d}}
-#pg .seat .pp{width:86%;height:86%}
-#pg .seat .pp.new{animation:hop .45s ease-out}
-@keyframes hop{0%{transform:translateY(-60px) scale(.6);opacity:0}70%{transform:translateY(4px)}100%{transform:none;opacity:1}}
+#pg .deck{--s:clamp(11px,2.7vw,15px);display:flex;gap:10px;align-items:flex-start;justify-content:center;background:#f2d8a8;border-radius:12px;padding:8px;min-height:calc(var(--s) * 2 + 32px)}
+#pg .rods{display:flex;flex-direction:column;gap:2px}
+#pg .rod{display:flex;gap:1px;background:#e7c48a;border-radius:6px;padding:2px 3px}
+#pg .rod .pp{width:var(--s);height:var(--s);flex:none}
+#pg .ones{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:#e7c48a;border-radius:8px;padding:4px}
+#pg .seat{width:calc(var(--s) * 1.9);aspect-ratio:1;border-radius:50%;background:#dcb77a;box-shadow:inset 0 2px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center}
+#pg .seat .pp{width:92%;height:92%}
+#pg .pp.go{filter:saturate(.2) opacity(.45)}
+#pg .deck.blink .pp.go{animation:wave .5s ease-in-out 4}
+@keyframes wave{50%{transform:translateY(-3px) rotate(-12deg);filter:none}}
+#pg .pp.new{animation:hop .45s ease-out both}
+@keyframes hop{0%{transform:translateY(-40px) scale(.6);opacity:0}70%{transform:translateY(3px)}100%{transform:none;opacity:1}}
+#pg .pp.bye{animation:bye .5s ease-in both}
+@keyframes bye{to{transform:translateY(30px) scale(.4);opacity:0}}
 #pg .boats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:min(94vw,600px);padding:0 10px calc(16px + env(safe-area-inset-bottom))}
-#pg .boat{border:none;border-radius:18px 18px 40% 40%;background:linear-gradient(#ffd27a,#f0a84a);padding:8px 4px 14px;cursor:pointer;
+#pg .boat{border:none;border-radius:18px 18px 40% 40%;background:linear-gradient(#ffd27a,#f0a84a);padding:14px 4px 18px;cursor:pointer;
   box-shadow:0 8px 0 #c47d2a,0 12px 18px rgba(0,30,80,.25);display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit}
 #pg .boat:active{transform:translateY(4px);box-shadow:0 4px 0 #c47d2a}
-#pg .boat b{font-size:28px;font-weight:900;color:#5a3412;line-height:1}
-#pg .boat .crew{display:flex;flex-wrap:wrap;justify-content:center;gap:1px;min-height:22px}
-#pg .boat .crew .pp{width:20px;height:20px}
+#pg .boat b{font-size:32px;font-weight:900;color:#5a3412;line-height:1;font-variant-numeric:tabular-nums}
+#pg .boat .pp{width:22px;height:22px}
 #pg .boat.no{animation:shake .45s}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 #pg .boat.used{opacity:.35;pointer-events:none}
@@ -89,7 +155,7 @@ const CSS = `
 #pg .done button{display:block;width:100%;margin-top:8px;border:none;border-radius:14px;padding:12px;font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;
   color:#fff;background:linear-gradient(135deg,#2bb6c4,#4f7fe0)}
 #pg .done button.alt{background:#eef0f5;color:#2b2b33}
-@media(max-height:620px){ #pg .say{font-size:16px} #pg .ship{width:min(70vw,420px);margin-bottom:3vh} }
+@media(max-height:620px){ #pg .say{font-size:16px} #pg .ship{--sh:56px;width:min(70vw,420px);margin-bottom:3vh} #pg .deck{--s:10px} }
 `;
 
 let root = null, ctx = null, state = null;
@@ -102,8 +168,8 @@ function build(){
     <div class="say">${pirate('pal')}<span class="txt"></span></div>
     <div class="sea">
       <div class="ship bob">
-        <div class="mast"></div><div class="flag">☠</div><div class="sail">10</div>
-        <div class="hull"><div class="frame"></div></div>
+        <div class="mast"></div><div class="flag">☠</div><div class="sail"></div>
+        <div class="hull"><div class="deck"></div></div>
       </div>
       <div class="done"><div class="card"><div class="big">🪙🪙🪙🪙🪙</div><h3></h3><button class="again"></button><button class="alt back"></button></div></div>
     </div>
@@ -120,7 +186,7 @@ const T = () => TEXT[ctx.lang()];
 function say(line){ if (!state) return; state.line = line; root.querySelector('.txt').textContent = line; ctx.speak(line); }
 
 function startRound(){
-  state = { coins:0, asked:0, line:'', busy:false, used:new Set() };
+  state = { coins:0, asked:0, carries:0, line:'', busy:false, used:new Set() };
   root.querySelector('.done').style.display = 'none';
   root.querySelector('h2').textContent = T().title;
   root.querySelector('.again').textContent = T().again;
@@ -131,49 +197,87 @@ function startRound(){
 }
 function updateCoins(){ root.querySelector('.coins').textContent = T().coins(state.coins); }
 
-/* a new ship: n pirates aboard (each number used once a round), four boats to choose from */
+/* the crew on deck, drawn in tens (rods of ten) and ones (seats);
+   the last `leaving` pirates are greyed out — they are about to go ashore;
+   pirates from index `fresh` on have just hopped aboard */
+function renderDeck(n, { leaving = 0, fresh = Infinity } = {}){
+  const deck = root.querySelector('.deck'); deck.innerHTML = '';
+  const tens = Math.floor(n / 10), ones = n % 10, all = [];
+  const rods = document.createElement('div'); rods.className = 'rods';
+  for (let r = 0; r < tens; r++) {
+    const rod = document.createElement('div'); rod.className = 'rod';
+    for (let i = 0; i < 10; i++) { rod.insertAdjacentHTML('beforeend', pirate()); all.push(rod.lastElementChild); }
+    rods.appendChild(rod);
+  }
+  if (tens) deck.appendChild(rods);
+  if (ones || !tens) {
+    const seats = document.createElement('div'); seats.className = 'ones';
+    for (let i = 0; i < 10; i++) {
+      const s = document.createElement('div'); s.className = 'seat';
+      if (i < ones) { s.innerHTML = pirate(); all.push(s.firstElementChild); }
+      seats.appendChild(s);
+    }
+    deck.appendChild(seats);
+  }
+  all.forEach((p, i) => {
+    if (i >= n - leaving) p.classList.add('go');
+    if (i >= fresh) { p.classList.add('new'); p.style.animationDelay = `${Math.min(i - fresh, 30) * 40}ms`; }
+  });
+}
+
+/* a new ship with a sum on its sail and four boats to choose from */
 function nextShip(){
   if (!root || root.style.display !== 'flex') return;
   if (state.asked >= 5) return finish();
   state.asked++; state.busy = false;
-  let n; do { n = 1 + Math.floor(Math.random() * 9); } while (state.used.has(n)); state.used.add(n);
-  state.n = n; const need = 10 - n;
+  const wantCarry = state.carries < CARRY_MAX && Math.random() < CARRY_RATE;
+  const q = makeQuestion(wantCarry, state.used);
+  if (q.carry) state.carries++;
+  state.q = q;
   const ship = root.querySelector('.ship'); ship.classList.remove('sail'); ship.classList.add('bob');
-  const frame = root.querySelector('.frame'); frame.innerHTML = '';
-  for (let i = 0; i < 10; i++) { const s = document.createElement('div'); s.className = 'seat' + (i < n ? '' : ' empty'); if (i < n) s.innerHTML = pirate(); frame.appendChild(s); }
-  const opts = new Set([need]);
-  while (opts.size < 4) { const k = 1 + Math.floor(Math.random() * 9); if (Math.abs(k - need) <= 4) opts.add(k); }
+  root.querySelector('.sail').innerHTML = `<span>${q.a}</span><span class="op">${q.op}</span><span>${q.b}</span><span class="op">=</span><span class="q">?</span>`;
+  renderDeck(q.a, { leaving: q.op === '−' ? q.b : 0 });
   const boats = root.querySelector('.boats'); boats.innerHTML = '';
-  [...opts].sort((a, b) => a - b).forEach(k => {
+  makeOptions(q).forEach(k => {
     const b = document.createElement('button'); b.className = 'boat';
-    b.innerHTML = `<b>${k}</b><div class="crew">${pirate().repeat(k)}</div>`;
+    b.innerHTML = `<b>${k}</b>${pirate()}`;
     b.onclick = () => pick(k, b);
     boats.appendChild(b);
   });
-  say(T().q(n));
+  say(q.op === '+' ? T().qAdd(q.a, q.b) : T().qSub(q.a, q.b));
 }
 
 function pick(k, btn){
   if (!state || state.busy) return;
-  const need = 10 - state.n;
-  if (k !== need) {
+  const q = state.q;
+  if (k !== q.c) {
     btn.classList.remove('no'); void btn.offsetWidth; btn.classList.add('no'); btn.classList.add('used');
     ctx.sfx.miss();
-    root.querySelectorAll('.seat.empty').forEach(s => { s.classList.remove('blink'); void s.offsetWidth; s.classList.add('blink'); });
+    const deck = root.querySelector('.deck'); deck.classList.remove('blink'); void deck.offsetWidth; deck.classList.add('blink');
     say(T().hint);
     return;
   }
   state.busy = true;
   root.querySelectorAll('.boat').forEach(b => { if (b !== btn) b.classList.add('used'); });
-  const empties = [...root.querySelectorAll('.seat.empty')];
-  empties.forEach((s, i) => setTimeout(() => { if (!state) return; s.classList.remove('empty', 'blink'); s.innerHTML = pirate('new'); ctx.sfx.hop(i); }, 160 * i));
+  let wait;
+  if (q.op === '+') {               /* the new crew hops aboard, regrouped into tens and ones */
+    renderDeck(q.c, { fresh: q.a });
+    const hops = Math.min(q.b, 30);
+    for (let i = 0; i < hops; i++) setTimeout(() => { if (state) ctx.sfx.hop(i % 10); }, 40 * i);
+    wait = 40 * hops + 500;
+  } else {                          /* the greyed-out pirates go ashore, then the deck is tidied */
+    root.querySelectorAll('.pp.go').forEach((p, i) => { p.style.animationDelay = `${Math.min(i, 30) * 25}ms`; p.classList.add('bye'); });
+    for (let i = 0; i < Math.min(q.b, 10); i++) setTimeout(() => { if (state) ctx.sfx.hop(9 - i); }, 60 * i);
+    wait = Math.min(q.b, 30) * 25 + 700;
+    setTimeout(() => { if (state) renderDeck(q.c); }, wait - 150);
+  }
   setTimeout(() => {
     if (!state) return;   /* closed meanwhile */
     state.coins++; updateCoins(); ctx.sfx.win();
-    say(T().right(state.n, need));
+    say(T().right(q.a, q.op, q.b, q.c));
     const ship = root.querySelector('.ship'); ship.classList.remove('bob'); ship.classList.add('sail');
     setTimeout(nextShip, 4200);
-  }, 160 * empties.length + 300);
+  }, wait);
 }
 
 function finish(){
