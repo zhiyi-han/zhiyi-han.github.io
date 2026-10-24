@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e9f5ee">
+<title>滿滿背單詞 · Max English</title>
+<meta name="description" content="Max's English vocabulary game: the Cambridge Starters, Movers and Flyers word lists, $1 for every word learned, pets to buy. 滿滿的英文背單詞遊戲。">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://zhiyihan.com/english.html">
+<meta property="og:site_name" content="Max's World">
+<meta property="og:title" content="滿滿背單詞 · Max English">
+<meta property="og:description" content="Max's English vocabulary game. 滿滿的英文背單詞遊戲。">
+<meta property="og:image" content="https://zhiyihan.com/assets/og-cover.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%234f7fe0'/><text x='50' y='68' font-size='52' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="english.css">
+</head>
+<body>
+<header id="top">
+  <a class="pill" href="words.html">← <span>認字遊戲</span></a>
+  <h1>🔠 滿滿背單詞 <small>Max English</small></h1>
+  <button id="wallet" class="pill money" title="錢包"><b>$</b><span id="money">0</span></button>
+</header>
+
+<main id="home">
+  <section class="hero">
+    <button id="petbtn" class="pet" aria-label="我的寵物"><span id="pet">🥚</span></button>
+    <div>
+      <p class="intro">劍橋少兒英語 Starters、Movers、Flyers 的全部單詞。看單詞，選意思；<b>第一次自己答對，就賺 $1</b>；之後隔幾天再考，三次都記得就是「熟練」，再加 $2。賺到的錢可以去寵物店換小精靈，陪滿滿一起背單詞。</p>
+      <p id="task" class="task"></p>
+      <div class="go">
+        <button id="start" class="big">開始</button>
+        <button id="resume" class="big alt" hidden>繼續上次</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="petsec">
+    <h2>我的寵物 <small id="petcount"></small></h2>
+    <div id="pets" class="pets"></div>
+    <div class="go"><button id="shop-btn" class="big gold">🛒 寵物店</button></div>
+  </section>
+
+  <section>
+    <h2>進度 <small id="total"></small></h2>
+    <div id="bars"></div>
+    <div id="due"></div>
+  </section>
+
+  <details id="all">
+    <summary>看全部單詞</summary>
+    <p class="tip">點一個單詞，可以看它的意思、例句和最近的回答。</p>
+    <div id="grid"></div>
+  </details>
+
+  <details id="prefs">
+    <summary>家長設定</summary>
+    <div class="set">
+      <span>學哪些級別</span>
+      <button data-lv="1">Starters</button><button data-lv="2">Movers</button><button data-lv="3">Flyers</button>
+    </div>
+    <div class="set">
+      <span>每次新單詞</span>
+      <button data-new="5">5</button><button data-new="8">8</button><button data-new="12">12</button><button data-new="20">20</button>
+    </div>
+    <div class="set">
+      <span>英文讀音</span>
+      <button data-acc="GB">英式</button><button data-acc="US">美式</button>
+    </div>
+    <div class="set">
+      <span>進度只存在這部機上</span>
+      <button id="export">下載備份</button>
+      <label class="btn">還原備份<input id="import" type="file" accept="application/json,.json" hidden></label>
+      <button id="reset" class="danger">清除全部進度</button>
+    </div>
+  </details>
+</main>
+
+<div id="play" hidden>
+  <div id="pbar">
+    <button id="end" class="endbtn">結束本次</button>
+    <div id="pcount"></div>
+    <div class="pill money"><b>$</b><span id="money2">0</span></div>
+  </div>
+  <div id="pad">
+    <div id="card">
+      <div id="tag"></div>
+      <button id="say" aria-label="讀出來" title="讀出來（空白鍵）">🔊</button>
+      <div id="word"></div>
+      <div id="ans" hidden>
+        <p id="azh"></p>
+        <p id="aen"></p>
+        <p id="aex"></p>
+      </div>
+      <div id="buddy" aria-hidden="true"><span id="bubble"></span><span id="bpet"></span></div>
+      <div id="coin" aria-hidden="true"></div>
+    </div>
+    <div id="opts"></div>
+    <button id="dunno">🤔 不認識</button>
+    <div id="verdict" hidden></div>
+    <button id="next" hidden>下一個 ▶</button>
+  </div>
+</div>
+
+<main id="done" hidden>
+  <h2>本次完成 🎉</h2>
+  <p id="dsum"></p>
+  <div id="dcounts"></div>
+  <h3>今天背會的單詞</h3>
+  <div id="dlearn" class="chips"></div>
+  <h3>下次再看</h3>
+  <div id="dnext" class="chips"></div>
+  <div class="go">
+    <button id="again" class="big">再玩一次</button>
+    <button id="shop-btn2" class="big gold">🛒 寵物店</button>
+    <button id="home-btn" class="big alt">回到首頁</button>
+  </div>
+</main>
+
+<dialog id="info"></dialog>
+<dialog id="shop">
+  <div class="shophead"><h2>🛒 寵物店</h2><div class="pill money"><b>$</b><span id="money3">0</span></div></div>
+  <p class="tip">背會單詞賺的錢，可以換一隻小精靈。買到的寵物會陪滿滿一起背單詞。</p>
+  <div id="shoplist"></div>
+  <button class="close">關閉</button>
+</dialog>
+
+<script type="module" src="js/english.js"></script>
+</body>
+</html>
