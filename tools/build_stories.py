@@ -29,6 +29,9 @@ FONT = glob.glob('/System/Library/AssetsV2/com_apple_MobileAsset_Font*/*/AssetDa
 FONT = FONT[0] if FONT else '/System/Library/Fonts/Hiragino Sans GB.ttc'
 
 S2HK = opencc.OpenCC('s2hk')
+TYPOS = [('拿出一顆小小的星星。皿', '拿出一顆小小的星星。'),   # stray keys in the Word files (stories 5 and 13)
+         ('平靜地說：抓、', '平靜地說：')]
+
 def trad(s):
     """the after-reading notes mix in simplified characters; the stories use HK forms"""
     s = S2HK.convert(s).replace('什麼', '甚麼')
@@ -119,6 +122,8 @@ def text_story(docx, covers):
         lines = lines[1:]
     cut = next((i for i, l in enumerate(lines) if BODY_END.match(l.strip())), len(lines))
     body = [trad(l.strip().replace('\u2028', '')) for l in lines[:cut]]
+    for a, b in TYPOS:
+        body = [l.replace(a, b) for l in body]
     sid = f's{n:02d}'
     cov = next(c for c in covers if re.match(rf'0?{n}_', c.name))
     webp(cov, OUT / 'img' / sid / 'cover.webp', 540)

@@ -118,6 +118,11 @@ const CSS = `
 `;
 
 let root = null, ctx = null, st = null;
+/* every delayed step goes through later(), so closing or restarting cancels the old round's timers */
+const timers = new Set();
+function later(fn, ms){ const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; }
+function cancelTimers(){ timers.forEach(clearTimeout); timers.clear(); }
+
 const T = () => TEXT[ctx.lang()];
 const ICON = { '#':'🪨', T:'🌳', H:'🏠' };
 
@@ -144,6 +149,7 @@ function build(){
 function say(line){ if (!st) return; st.line = line; root.querySelector('.say').textContent = line; ctx.speak(line); }
 
 function startGame(){
+  cancelTimers();
   st = { level:0, busy:false, line:'' };
   root.querySelector('.done').style.display = 'none';
   root.querySelector('h2').textContent = T().title;
@@ -153,7 +159,7 @@ function startGame(){
   root.querySelector('.back').textContent = T().back;
   loadLevel(0);
   say(T().intro);
-  setTimeout(() => { if (st && st.level === 0 && !st.busy) say(T()[LEVELS[0].tip]); }, 9000);
+  later(() => { if (st && st.level === 0 && !st.busy) say(T()[LEVELS[0].tip]); }, 9000);
 }
 
 function loadLevel(i, keepQuiet){
@@ -201,14 +207,14 @@ function rain(){
     }
   }
   let t = 1600;
-  order.forEach(c => { setTimeout(() => { if (st) c.el.classList.add('water'); }, t); t += 180; });
+  order.forEach(c => { later(() => { if (st) c.el.classList.add('water'); }, t); t += 180; });
   if (won) {
-    setTimeout(() => {
+    later(() => {
       if (!st) return;
       st.cells.flat().find(c => c.ch === 'W').el.classList.add('full');
       st.cells.flat().filter(c => c.ch === 'H').forEach(c => c.el.classList.add('safe'));
       ctx.sfx.win(); say(T().win);
-      setTimeout(() => {
+      later(() => {
         if (!st) return;
         if (st.level < LEVELS.length - 1) loadLevel(st.level + 1);
         else finish();
@@ -216,7 +222,7 @@ function rain(){
     }, t + 300);
   } else {
     /* the overflow spreads over the grass toward the nearest house */
-    setTimeout(() => {
+    later(() => {
       if (!st) return;
       const from = order, seen2 = new Set(from), q2 = [...from], prev = new Map();
       let house = null;
@@ -231,11 +237,11 @@ function rain(){
       }
       const path = []; for (let c = house; c && !from.includes(c); c = prev.get(c)) path.unshift(c);
       let t2 = 0;
-      path.forEach(c => { setTimeout(() => { if (!st) return; c.el.classList.add(c.ch === 'H' ? 'wet' : 'water'); }, t2); t2 += 160; });
-      setTimeout(() => {
+      path.forEach(c => { later(() => { if (!st) return; c.el.classList.add(c.ch === 'H' ? 'wet' : 'water'); }, t2); t2 += 160; });
+      later(() => {
         if (!st) return;
         ctx.sfx.miss(); say(T().fail);
-        setTimeout(() => {   /* dry off, keep what was dug */
+        later(() => {   /* dry off, keep what was dug */
           if (!st) return;
           root.classList.remove('rainy');
           st.cells.flat().forEach(c => c.el.classList.remove('water', 'wet'));
@@ -259,6 +265,7 @@ export function openFlood(c){
   startGame();
 }
 function close(){
+  cancelTimers();
   if (!root) return;
   root.style.display = 'none'; root.classList.remove('rainy'); st = null;
   ctx?.onClose?.();

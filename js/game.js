@@ -2413,7 +2413,9 @@ updateStars();
     const wake=()=>{ ensureAudio(); narrator.unlock(); startMusic();
       ['pointerdown','keydown'].forEach(ev=>removeEventListener(ev,wake,true)); };
     ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,wake,true));
-    if(from==='earth'){   /* dived down from the globe: drop out of the sky onto the plaza */
+    if(art>=0){   /* a link to one drawing (from a story or the globe): straight to the gallery, nothing else */
+      goToZone('gallery'); setTimeout(()=>showArt(art),900);
+    }else if(from==='earth'){   /* dived down from the globe: drop out of the sky onto the plaza */
       flyT=0; flyFrom={dist:150,phi:.04,theta:0};
       setTimeout(()=>toast(T().backFromEarth),1600);
     }else if(from==='stories'||from==='words'){
@@ -2432,7 +2434,6 @@ updateStars();
       cam.theta=Math.atan2(-ROCKET_PAD.x,-ROCKET_PAD.z);
     }
     camTargetSmooth.copy(max.g.position).y+=1.15;
-    if(art>=0){ goToZone('gallery'); setTimeout(()=>showArt(art),900); }
   }
 }
 tick();

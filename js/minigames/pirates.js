@@ -159,6 +159,11 @@ const CSS = `
 `;
 
 let root = null, ctx = null, state = null;
+/* every delayed step goes through later(), so closing or restarting cancels the old round's timers */
+const timers = new Set();
+function later(fn, ms){ const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; }
+function cancelTimers(){ timers.forEach(clearTimeout); timers.clear(); }
+
 
 function build(){
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -186,6 +191,7 @@ const T = () => TEXT[ctx.lang()];
 function say(line){ if (!state) return; state.line = line; root.querySelector('.txt').textContent = line; ctx.speak(line); }
 
 function startRound(){
+  cancelTimers();
   state = { coins:0, asked:0, carries:0, line:'', busy:false, used:new Set() };
   root.querySelector('.done').style.display = 'none';
   root.querySelector('h2').textContent = T().title;
@@ -193,7 +199,7 @@ function startRound(){
   root.querySelector('.back').textContent = T().back;
   updateCoins();
   say(T().intro);
-  setTimeout(nextShip, 2600);
+  later(nextShip, 2600);
 }
 function updateCoins(){ root.querySelector('.coins').textContent = T().coins(state.coins); }
 
@@ -263,20 +269,20 @@ function pick(k, btn){
   if (q.op === '+') {               /* the new crew hops aboard, regrouped into tens and ones */
     renderDeck(q.c, { fresh: q.a });
     const hops = Math.min(q.b, 30);
-    for (let i = 0; i < hops; i++) setTimeout(() => { if (state) ctx.sfx.hop(i % 10); }, 40 * i);
+    for (let i = 0; i < hops; i++) later(() => { if (state) ctx.sfx.hop(i % 10); }, 40 * i);
     wait = 40 * hops + 500;
   } else {                          /* the greyed-out pirates go ashore, then the deck is tidied */
     root.querySelectorAll('.pp.go').forEach((p, i) => { p.style.animationDelay = `${Math.min(i, 30) * 25}ms`; p.classList.add('bye'); });
-    for (let i = 0; i < Math.min(q.b, 10); i++) setTimeout(() => { if (state) ctx.sfx.hop(9 - i); }, 60 * i);
+    for (let i = 0; i < Math.min(q.b, 10); i++) later(() => { if (state) ctx.sfx.hop(9 - i); }, 60 * i);
     wait = Math.min(q.b, 30) * 25 + 700;
-    setTimeout(() => { if (state) renderDeck(q.c); }, wait - 150);
+    later(() => { if (state) renderDeck(q.c); }, wait - 150);
   }
-  setTimeout(() => {
+  later(() => {
     if (!state) return;   /* closed meanwhile */
     state.coins++; updateCoins(); ctx.sfx.win();
     say(T().right(q.a, q.op, q.b, q.c));
     const ship = root.querySelector('.ship'); ship.classList.remove('bob'); ship.classList.add('sail');
-    setTimeout(nextShip, 4200);
+    later(nextShip, 4200);
   }, wait);
 }
 
@@ -293,6 +299,7 @@ export function openPirates(c){
   startRound();
 }
 function close(){
+  cancelTimers();
   if (!root) return;
   root.style.display = 'none'; state = null;
   ctx?.onClose?.();

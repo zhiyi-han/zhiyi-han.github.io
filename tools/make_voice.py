@@ -11,7 +11,9 @@ Usage
        galaxy.html:  copy(JSON.stringify(await __galaxy.voiceLines()))  -> galaxy_lines.json
        index.html:   copy(JSON.stringify(__max.voiceLines()))           -> world_lines.json
        earth.html:   copy(JSON.stringify(__earth.voiceLines()))         -> earth_lines.json
-  3. python tools/make_voice.py galaxy_lines.json world_lines.json earth_lines.json
+       heroes.html:  copy(JSON.stringify(__heroes.voiceLines()))        -> hero_lines.json
+     (index.html's __max.voiceLines() is async: await it before copying)
+  3. python tools/make_voice.py galaxy_lines.json world_lines.json earth_lines.json hero_lines.json
      (pass every file: clips not listed in any of them are deleted)
 
 Only cards whose text changed (new hash key) are generated; files for
