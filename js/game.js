@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js?v=tour-first-v1';
-import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js';
-import { EXTRA_SCENES } from './scenes/registry.js?v=tour-first-v1';
-import { mergeStatic } from './perf.js';
-import { createNarrator, textKey, silentWavURL } from './narrator.js?v=tour-first-v1';
+import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js?v=318caff1';
+import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js?v=318caff1';
+import { EXTRA_SCENES } from './scenes/registry.js?v=318caff1';
+import { mergeStatic } from './perf.js?v=318caff1';
+import { createNarrator, textKey, silentWavURL } from './narrator.js?v=318caff1';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -468,7 +468,7 @@ const PORTALS=[
 let portalNear=null;
 /* zone mini-games, loaded only when first opened so the island itself stays light:
    Number Land's Pirate Ships (add and subtract within 100) and Builder's Corner's Flood Fixers */
-const GAMES={ pirates:()=>import('./minigames/pirates.js'), flood:()=>import('./minigames/flood.js') };
+const GAMES={ pirates:()=>import('./minigames/pirates.js?v=318caff1'), flood:()=>import('./minigames/flood.js?v=318caff1') };
 let gameOpen=false;
 async function openGame(kind){
   if(leaving||gameOpen) return;
@@ -1011,6 +1011,18 @@ zoneDefs.forEach(z=>{
   sign.userData.baseY=sign.position.y;sign.userData.ph=0;
   tagZone(sign,z.id);world.add(sign);markers.push(sign);
 });
+/* perf: tiny parts (buttons, eyes, trims) cast shadows nobody can see, yet each one is drawn
+   again for the shadow map — the hero figures alone had ~430 of them */
+{
+  const sc=new THREE.Vector3();
+  world.updateMatrixWorld(true);
+  Object.values(zoneGroups).forEach(g=>g.traverse(o=>{
+    if(!o.isMesh || !o.castShadow) return;
+    if(!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+    o.getWorldScale(sc);
+    if(o.geometry.boundingSphere.radius*Math.max(sc.x,sc.y,sc.z)<.12) o.castShadow=false;
+  }));
+}
 
 /* ---- Story House: a cottage with an open-book roof; its door leads to stories.html ---- */
 const STORY_POS=(()=>{const g=zoneGroups.reading;g.updateMatrixWorld(true);return g.localToWorld(new THREE.Vector3(-1.65,0,-.85)).setY(0);})();
@@ -1452,7 +1464,11 @@ function unlockAudio(){
   if(soundOn && started) startMusic();
 }
 ['pointerdown','touchend','click'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden && actx && actx.state==='suspended') actx.resume(); });
+/* in the background: music and narration pause; back in front they carry on */
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ if(actx && actx.state==='running') actx.suspend(); narrator.stop(); }
+  else if(actx && actx.state==='suspended') actx.resume();
+});
 function note(freq,t0,dur=.16,type='triangle',vol=.12){
   if(!actx || !soundOn) return;
   const o=actx.createOscillator(), gn=actx.createGain();
@@ -2037,7 +2053,11 @@ const sportsGroup=zoneGroups.sports;
 let prevBallLocalZ=0, goalCooldown=0;
 const clock=new THREE.Clock();
 let t=0;
-let perfChecked=false, perfAcc=0, perfN=0;   /* adaptive quality for low-end devices */
+let frameN=0;
+/* scratch vectors reused every frame (no garbage → no GC hitches on low-end phones) */
+const _ONE=new THREE.Vector3(1,1,1), _UP=new THREE.Vector3(0,1,0), _HOME=new THREE.Vector3(0,1.5,0), _LIFT=new THREE.Vector3(0,1.15,0);
+const _fwd=new THREE.Vector3(), _right=new THREE.Vector3(), _move=new THREE.Vector3(), _dir=new THREE.Vector3(), _look=new THREE.Vector3(), _tgt=new THREE.Vector3(), _cp=new THREE.Vector3();
+let perfChecked=false, perfAcc=0, perfN=0, perfT0=0, perfLast=0;   /* adaptive quality for low-end devices */
 const camTargetSmooth=new THREE.Vector3(0,1.1,2.2);
 
 function tick(){
@@ -2076,9 +2096,9 @@ function tick(){
   }
 
   if(state.moving && inputMag>.06){
-    const fwd=new THREE.Vector3().subVectors(camTargetSmooth,camera.position); fwd.y=0; fwd.normalize();
-    const right=new THREE.Vector3().crossVectors(fwd,new THREE.Vector3(0,1,0)).negate();
-    const move=new THREE.Vector3().addScaledVector(fwd,-iy).addScaledVector(right,-ix);
+    const fwd=_fwd.subVectors(camTargetSmooth,camera.position); fwd.y=0; fwd.normalize();
+    const right=_right.crossVectors(fwd,_UP).negate();
+    const move=_move.set(0,0,0).addScaledVector(fwd,-iy).addScaledVector(right,-ix);
     if(move.lengthSq()>0){
       move.normalize();
       const speed=4.4*inputMag;
@@ -2109,7 +2129,7 @@ function tick(){
       max.inner.scale.set(1.14,.8,1.14);
     }
   }
-  max.inner.scale.lerp(new THREE.Vector3(1,1,1),Math.min(1,9*dt));
+  max.inner.scale.lerp(_ONE,Math.min(1,9*dt));
 
   /* walk / idle animation */
   if(state.moving && state.onGround){
@@ -2159,7 +2179,8 @@ function tick(){
     prevBallLocalZ=lb.z;
   }
 
-  EXTRA_SCENES.forEach(s=>{ if(s.update) s.update(dt,t); });
+  /* plug-in scenes animate only when the camera is near enough to see the detail */
+  EXTRA_SCENES.forEach(s=>{ if(s.update && camera.position.distanceTo(zones[s.id].pos)<34) s.update(dt,t); });
 
   /* ---- zone proximity ---- */
   let nearest=null,nd=1e9;
@@ -2291,10 +2312,9 @@ function tick(){
     const u=b.userData;
     const px=Math.cos(t*u.sp+u.ph)*u.r, pz=Math.sin(t*u.sp*1.27+u.ph)*u.r*.82;
     const py=u.h+Math.sin(t*1.8+u.ph)*.5;
-    b.userData.prev=b.position.clone();
+    _dir.set(px-b.position.x,py-b.position.y,pz-b.position.z);
     b.position.set(px,py,pz);
-    const dir=new THREE.Vector3().subVectors(b.position,u.prev||b.position);
-    if(dir.lengthSq()>1e-6){ b.lookAt(b.position.clone().add(dir)); }
+    if(_dir.lengthSq()>1e-6){ b.lookAt(_look.copy(b.position).add(_dir)); }
     const flap=Math.sin(t*17+u.ph)*.85;
     u.wl.rotation.set(0,flap,0); u.wr.rotation.set(0,-flap,0);
   });
@@ -2312,7 +2332,7 @@ function tick(){
   /* ---- camera ---- */
   if(!started){
     cam.theta+=dt*.11; cam.dist=26; cam.phi=.52;
-    camTargetSmooth.lerp(new THREE.Vector3(0,1.5,0),Math.min(1,3*dt));
+    camTargetSmooth.lerp(_HOME,Math.min(1,3*dt));
   }else{
     if(flyT<1){
       flyT=Math.min(1,flyT+dt/(flyFrom.dist>100?2.6:1.7));
@@ -2321,10 +2341,10 @@ function tick(){
       cam.phi=THREE.MathUtils.lerp(flyFrom.phi,1.02,e);
       cam.theta=lerpAngle(flyFrom.theta,0,e);
     }
-    const target=max.g.position.clone().add(new THREE.Vector3(0,1.15,0));
+    const target=_tgt.copy(max.g.position).add(_LIFT);
     camTargetSmooth.lerp(target,Math.min(1,10*dt));
   }
-  const cp=new THREE.Vector3(
+  const cp=_cp.set(
     camTargetSmooth.x+cam.dist*Math.sin(cam.phi)*Math.sin(cam.theta),
     camTargetSmooth.y+cam.dist*Math.cos(cam.phi),
     camTargetSmooth.z+cam.dist*Math.sin(cam.phi)*Math.cos(cam.theta)
@@ -2333,9 +2353,14 @@ function tick(){
   camera.lookAt(camTargetSmooth);
 
   /* adaptive quality: if the device struggles, lower resolution once */
-  if(!perfChecked && started){
-    if(t>4 && t<7){ perfAcc+=dt; perfN++; }
-    else if(t>=7 && perfN>5){
+  /* measured on real frame times (dt is capped), over the 3 s that start 1.5 s after exploring begins */
+  if(!perfChecked && started && document.visibilityState==='visible'){
+    const now=performance.now();
+    if(!perfT0) perfT0=now;
+    const since=(now-perfT0)/1000;
+    if(since>1.5 && since<4.5 && perfLast){ perfAcc+=(now-perfLast)/1000; perfN++; }
+    perfLast=now;
+    if(since>=4.5 && perfN>5){
       perfChecked=true;
       const avg=perfAcc/perfN;
       if(avg>.05){
@@ -2349,7 +2374,8 @@ function tick(){
     }
   }
 
-  renderer.render(scene,camera);
+  /* behind the intro card the island is only a backdrop: draw it at half rate to save battery */
+  if(started || (frameN++&1)===0) renderer.render(scene,camera);
 }
 
 /* resize */

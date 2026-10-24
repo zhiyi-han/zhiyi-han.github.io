@@ -27,12 +27,18 @@ export function silentWavURL(){
 /* getLang(): 'en' | 'zh'; isSoundOn(): bool; onSpeaking(bool): UI + music ducking */
 /* zhVoice / zhLang: which device voice reads Chinese when there is no recording
    (Cantonese by default; the Story House asks for Mandarin) */
+let SILENT = null;   /* one silent clip, made once and reused by every unlock */
 export function createNarrator({ getLang, isSoundOn, onSpeaking, zhVoice = /zh[-_]HK|yue/i, zhLang = 'zh-HK' }){
   const canSpeak = 'speechSynthesis' in window;
   let voiceSet = null, speaking = false, voiceText = '', curU = null;
 
-  fetch(VOICE_DIR + 'manifest.json?v=online-sync-v1').then(r => r.ok ? r.json() : null)
-    .then(m => { if (m) voiceSet = { en: new Set(m.en || []), zh: new Set(m.zh || []) }; }).catch(() => {});
+  let listed = false;   /* the list of recordings has arrived (or failed) */
+  const ready = Promise.race([
+    fetch(VOICE_DIR + 'manifest.json?v=318caff1').then(r => r.ok ? r.json() : null)
+      .then(m => { if (m) voiceSet = { en: new Set(m.en || []), zh: new Set(m.zh || []) }; }).catch(() => {}),
+    new Promise(r => setTimeout(r, 2000)),
+  ]).then(() => { listed = true; });
+  let waiting = null;
 
   const setSpeaking = on => { if (speaking !== on) { speaking = on; onSpeaking(on); } };
 
@@ -64,6 +70,7 @@ export function createNarrator({ getLang, isSoundOn, onSpeaking, zhVoice = /zh[-
     });
   }
   function stop(){
+    waiting = null;
     curU = null; if (canSpeak) speechSynthesis.cancel();
     if (voiceText) { voiceText = ''; voiceEl.pause(); }
     setSpeaking(false);
@@ -71,6 +78,11 @@ export function createNarrator({ getLang, isSoundOn, onSpeaking, zhVoice = /zh[-
   /* force: an explicit tap on the speaker button reads even when sound is muted */
   function speak(text, force){
     if (!text || (!isSoundOn() && !force)) return;
+    if (!listed) {   /* too early to know if there is a recording: wait for the list (max 2 s) rather than use the device voice */
+      waiting = text; ready.then(() => { if (waiting === text) { waiting = null; speak(text, force); } });
+      return;
+    }
+    waiting = null;
     stop();
     const key = textKey(text), lang = getLang();
     if (voiceSet && voiceSet[lang] && voiceSet[lang].has(key)) {
@@ -83,7 +95,7 @@ export function createNarrator({ getLang, isSoundOn, onSpeaking, zhVoice = /zh[-
   }
   /* call inside a tap: iOS only lets audio start later if it was started once by the user */
   function unlock(){
-    try { voiceEl.src = silentWavURL(); voiceEl.play().then(() => voiceEl.pause()).catch(() => {}); } catch (e) {}
+    try { voiceEl.src = SILENT || (SILENT = silentWavURL()); voiceEl.play().then(() => voiceEl.pause()).catch(() => {}); } catch (e) {}
     if (!canSpeak) return;
     const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u);
     speechSynthesis.getVoices();

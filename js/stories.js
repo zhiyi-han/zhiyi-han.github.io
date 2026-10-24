@@ -7,7 +7,7 @@
    pages without a clip fall back to the device's speech engine.
    Data comes from stories/data (tools/build_stories.py).
    ============================================================ */
-import { createNarrator, textKey } from './narrator.js?v=online-sync-v1';
+import { createNarrator, textKey } from './narrator.js?v=318caff1';
 
 const $ = s => document.querySelector(s);
 const SAVE_KEY = 'maxstories.v1';
@@ -102,7 +102,7 @@ function itemSpeech(it){   /* must match item_text() in tools/make_story_voice.p
 
 async function openBook(id){
   const meta = shelf.find(b => b.id === id); if (!meta) return;
-  const r = await fetch(`stories/data/${id}.json?v=online-sync-v1`); if (!r.ok) return;
+  const r = await fetch(`stories/data/${id}.json?v=318caff1`); if (!r.ok) return;
   book = await r.json();
   views = book.kind === 'book'
     ? book.pages.map(p => ({ type: 'pic', img: p.img, say: p.say }))
@@ -230,8 +230,8 @@ addEventListener('hashchange', route);
 
 /* ---------------- boot ---------------- */
 Promise.all([
-  fetch('stories/data/index.json?v=online-sync-v1').then(r => r.json()),
-  fetch(VOICE + 'index.json?v=online-sync-v1').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+  fetch('stories/data/index.json?v=318caff1').then(r => r.json()),
+  fetch(VOICE + 'index.json?v=318caff1').then(r => r.ok ? r.json() : {}).catch(() => ({})),
 ]).then(([s, v]) => {
   shelf = s; clips = new Set(v.clips || []); marks = v.marks || {};
   drawShelf(); route();

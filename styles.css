@@ -269,6 +269,9 @@
 #overlay{align-items:flex-start}#ocard{margin:auto}
 #quickactivities .ow,.activity-grid .ow{font-family:inherit;cursor:pointer;text-align:left;width:100%;font-size:inherit}
 .ow.pirate{background:#fff7df}.ow.flood{background:#edf8fc}.ow.footprints{background:#edf8ef}
+.ow.eng{background:#f0f4ff}
+/* an odd number of activity cards: the last one spans the row */
+.owrow>.ow:last-child:nth-child(odd){grid-column:1/-1}
 #owt{font-size:14px;font-weight:800;color:#324a60}
 .activity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .activity-grid .ow{min-height:96px;padding:12px 11px;gap:3px}

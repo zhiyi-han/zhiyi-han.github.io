@@ -8,9 +8,9 @@
    device's speech engine until then). Tap ⚡ to see the hero's special
    move. Seeing every card earns the Land of Light certificate.
    ============================================================ */
-import { createNarrator, textKey } from '../narrator.js';
-import { HEROES, SERIES, REL, CATEGORIES } from './data.js?v=catalog-63b';
-import { drawHero } from './draw.js?v=catalog-63b';
+import { createNarrator, textKey } from '../narrator.js?v=318caff1';
+import { HEROES, SERIES, REL, CATEGORIES } from './data.js?v=318caff1';
+import { drawHero } from './draw.js?v=318caff1';
 
 const $ = s => document.querySelector(s);
 const WORLD_KEY = 'maxworld.v1', SAVE_KEY = 'maxheroes.v1';

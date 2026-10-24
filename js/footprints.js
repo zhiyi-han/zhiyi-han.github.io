@@ -8,8 +8,8 @@
    Only cities are shown, and ages instead of dates.
    ============================================================ */
 import * as THREE from 'three';
-import { rand, makeCanvas, canvasTexture } from './helpers.js';
-import { createNarrator, textKey } from './narrator.js';
+import { rand, makeCanvas, canvasTexture } from './helpers.js?v=318caff1';
+import { createNarrator, textKey } from './narrator.js?v=318caff1';
 
 const $ = s => document.querySelector(s);
 const SAVE_KEY = 'maxworld.v1';   /* shares the language choice with Max's World */
@@ -159,7 +159,7 @@ function smoothPath(x, pts, P){
 /* real coastlines: Natural Earth 1:110m land (public domain), TopoJSON from world-atlas@2 */
 async function loadCoasts(){
   try{
-    const t = await (await fetch('assets/geo/land-110m.json')).json();
+    const t = await (await fetch('assets/geo/land-110m.json?v=318caff1')).json();
     const [sx, sy] = t.transform.scale, [tx, ty] = t.transform.translate;
     const arcs = t.arcs.map(a => { let x = 0, y = 0; return a.map(([dx, dy]) => { x += dx; y += dy; return [x * sx + tx, y * sy + ty]; }); });
     const arc = i => i >= 0 ? arcs[i] : arcs[~i].slice().reverse();

@@ -1,5 +1,5 @@
-import { buildOrbit } from './orbit.js';
-import { buildSurface } from './surface.js';
+import { buildOrbit } from './orbit.js?v=318caff1';
+import { buildSurface } from './surface.js?v=318caff1';
 
 export function createEarth(api){
   const { THREE, rand, makeCanvas, canvasTexture, GLOW, LOW, sphere, rockyTex } = api;

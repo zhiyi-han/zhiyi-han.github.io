@@ -1,6 +1,6 @@
-import { buildOrbit } from './orbit.js';
-import { createDive } from './dive.js';
-import { buildSurface } from './surface.js';
+import { buildOrbit } from './orbit.js?v=318caff1';
+import { createDive } from './dive.js?v=318caff1';
+import { buildSurface } from './surface.js?v=318caff1';
 
 export function createUranus(api){
   const { THREE, rand, makeCanvas, canvasTexture, rockyTex, bandTex } = api;
