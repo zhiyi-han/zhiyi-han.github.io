@@ -1,6 +1,6 @@
 // 滿滿背單詞 · Max English — the English vocabulary game (english.html).
 // Cambridge YLE Starters / Movers / Flyers words. Each card shows a word and four meanings
-// (emoji + Traditional Chinese); Max picks one. The first time he picks the right meaning
+// (emoji + a simple English definition, Traditional Chinese underneath as a helper); Max picks one. The first time he picks the right meaning
 // by himself the word is 背會 and earns $1; it then comes back after 1, 2, 4, 8… days and
 // becomes 熟練 (+$2) when he still knows it on three later days. Money buys pets.
 // Progress lives in localStorage on this device only.
@@ -49,11 +49,20 @@ const active = () => BANK.filter(e => S.lv.includes(e.lv));
 const esc = s => s.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
 
 // ---------- speech ----------
+// macOS/iOS list novelty voices (Albert, Bad News, Bubbles…) before the real ones, so prefer known good
+// voices for each accent, then any ordinary voice of that accent, and only then the rest.
+const GOOD = { US: /Samantha|Ava|Allison|Nicky|Joelle|Zoe|Evan|Tom|Aaron|Nathan|Siri|Google US|Aria|Jenny|Guy/i,
+               GB: /Daniel|Kate|Oliver|Serena|Jamie|Stephanie|Martha|Arthur|Siri|Google UK|Sonia|Ryan|Libby/i };
+const NOVELTY = /Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Junior|Kathy|Organ|Ralph|Fred|Rocko|Shelley|Superstar|Trinoids|Whisper|Wobble|Zarvox|Eddy|Flo|Grandma|Grandpa|Reed|Sandy/i;
 function voice(lang) {
   const vs = speechSynthesis.getVoices();
-  const want = lang === 'en' ? (S.acc === 'US' ? [/en[-_]US/i, /en[-_]GB/i, /^en/i] : [/en[-_]GB/i, /^en/i])
-    : [/zh[-_](TW|Hant)/i, /zh[-_](CN|Hans)|cmn/i, /^zh/i];
-  for (const re of want) { const v = vs.find(v => re.test(v.lang)); if (v) return v; }
+  if (lang === 'en') {
+    const acc = S.acc === 'US' ? 'US' : 'GB', re = new RegExp(`en[-_]${acc}`, 'i');
+    const mine = vs.filter(v => re.test(v.lang));
+    return mine.find(v => GOOD[acc].test(v.name)) || mine.find(v => !NOVELTY.test(v.name)) || mine[0]
+      || vs.find(v => /^en/i.test(v.lang) && !NOVELTY.test(v.name)) || vs.find(v => /^en/i.test(v.lang)) || null;
+  }
+  for (const re of [/zh[-_](TW|Hant)/i, /zh[-_](CN|Hans)|cmn/i, /^zh/i]) { const v = vs.find(v => re.test(v.lang)); if (v) return v; }
   return null;
 }
 function say(text, lang = 'en', rate = .85) {
@@ -152,7 +161,7 @@ function show(c) {
   $('word').innerHTML = esc(e.w) + (e.alt ? ` <small>/ ${esc(e.alt)}</small>` : '');
   $('word').classList.toggle('long', e.w.length > 11);
   $('ans').hidden = true;
-  $('opts').innerHTML = c.opts.map((w, i) => `<button class="opt" data-w="${esc(w)}"><span class="e">${BY[w].e}</span><span>${esc(BY[w].zh.split('；')[0])}</span></button>`).join('');
+  $('opts').innerHTML = c.opts.map(w => `<button class="opt" data-w="${esc(w)}"><span class="e">${BY[w].e}</span><span class="t"><b>${esc(BY[w].en)}</b><small>${esc(BY[w].zh.split('；')[0])}</small></span></button>`).join('');
   $('dunno').hidden = false; $('verdict').hidden = true; $('next').hidden = true;
   $('buddy').classList.remove('pop');
   $('pcount').textContent = `還有 ${C.q.length} 個`;
@@ -191,7 +200,7 @@ function answer(w) {
   $('money').textContent = $('money2').textContent = S.money;
   if (pay) ['money', 'money2'].forEach(id => { const p = $(id).parentElement; p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump'); });
   if (!ok) { const el = $('card'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
-  clearTimeout(speakT); speakT = setTimeout(() => say(`${e.w}. ${e.ex}`, 'en', .9), ok ? 500 : 900);
+  clearTimeout(speakT); speakT = setTimeout(() => say(`${e.w}. ${e.en} ${e.ex}`, 'en', .9), ok ? 500 : 900);
 }
 
 const mark = (s, w) => { const re = new RegExp(`\\b(${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\w*)`, 'i'); return esc(s).replace(re, '<em>$1</em>'); };
@@ -304,7 +313,7 @@ function info(w) {
   const hist = r ? r.h.slice(-8).map(([, k]) => (k ? '✅' : '❌')).join(' ') : '—';
   $('info').innerHTML = `${e.e ? `<div class="ie">${e.e}</div>` : ''}<div class="iw">${esc(e.w)}${e.alt ? ` <small>/ ${esc(e.alt)}</small>` : ''}</div>
     <button class="say" data-say="${esc(e.w)}">🔊</button>
-    <div class="iz">${esc(e.zh)}</div><div class="id">${esc(e.en)}</div>
+    <div class="id">${esc(e.en)}</div><div class="iz">${esc(e.zh)}</div>
     <div class="is">${mark(e.ex, e.w)} <button class="xsay" data-say="${esc(e.ex)}" style="border:none;background:none;font-size:18px">🔊</button></div>
     <dl><dt>級別</dt><dd>${LV[e.lv]} · ${e.pos.map(p => POS[p] || p).join('、')}${e.note ? `（${esc(e.note)}）` : ''}</dd>
     <dt>類別</dt><dd>${CATS[e.cat] || e.cat}</dd>
@@ -353,7 +362,10 @@ function wire() {
     S.lv = on ? S.lv.filter(x => x !== lv) : S.lv.concat(lv).sort(); save(); home();
   }));
   document.querySelectorAll('[data-new]').forEach(b => (b.onclick = () => { S.newN = +b.dataset.new; save(); home(); }));
-  document.querySelectorAll('[data-acc]').forEach(b => (b.onclick = () => { S.acc = b.dataset.acc; save(); home(); say('Hello, Max!'); }));
+  document.querySelectorAll('[data-acc]').forEach(b => (b.onclick = () => {
+    S.acc = b.dataset.acc; save(); home();
+    say(S.acc === 'US' ? 'Hi Max! This is the American voice. Tomato, water, banana.' : 'Hello Max! This is the British voice. Tomato, water, banana.');
+  }));
   document.addEventListener('click', e => {
     const o = e.target.closest('.opt'); if (o && !o.disabled) return answer(o.dataset.w);
     if (e.target.closest('.zsay')) return say(BY[card.w].zh.replace(/；/g, '，'), 'zh', .9);
