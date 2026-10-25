@@ -45,9 +45,10 @@
   #hint{bottom:calc(96px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:rgba(255,255,255,.95);border-radius:999px;padding:11px 20px;box-shadow:var(--shadow);
     font-weight:800;font-size:15.5px;display:none;align-items:center;gap:8px;pointer-events:auto;cursor:pointer;
-    animation:bob 1.6s ease-in-out infinite;white-space:nowrap}
+    white-space:nowrap}
   #hint .key{background:var(--blue);color:#fff;border-radius:8px;padding:1px 8px;font-size:13px}
-  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-5px)}}
+  /* on touch devices the bottom band holds the D-pad, jump buttons and tour button: show the hint under the star bar instead */
+  body.touch #hint{bottom:auto;top:calc(116px + env(safe-area-inset-top));padding:9px 16px;font-size:14.5px}
 
   #toast{top:calc(70px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
     background:rgba(43,43,51,.88);color:#fff;border-radius:999px;padding:10px 20px;font-weight:700;font-size:14.5px;

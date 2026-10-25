@@ -1,4 +1,4 @@
-import { EXTRA_HEROES } from './roster.js?v=0c90647d';
+import { EXTRA_HEROES } from './roster.js?v=6d9d6096';
 /* ============================================================
    滿滿英雄基地 · Max's Hero Base — hero data
 

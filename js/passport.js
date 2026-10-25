@@ -6,7 +6,7 @@
    pressed the first time its goal is met, and remembered with the date;
    all nine unlock a printable Explorer Certificate.
    ============================================================ */
-import { readProgress } from './progress.js?v=0c90647d';
+import { readProgress } from './progress.js?v=6d9d6096';
 
 const $ = s => document.querySelector(s);
 const read = k => { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } };

@@ -18,8 +18,8 @@
    scene.update(dt,t) runs every frame.
    ============================================================ */
 import * as THREE from 'three';
-import { clamp, makeCanvas, canvasTexture, rand } from '../helpers.js?v=0c90647d';
-import { DETAIL, figMat } from './hero-materials.js?v=0c90647d';
+import { clamp, makeCanvas, canvasTexture, rand } from '../helpers.js?v=6d9d6096';
+import { DETAIL, figMat } from './hero-materials.js?v=6d9d6096';
 
 const TAU=Math.PI*2, H=Math.PI/2;
 const ease=k=>k*k*(3-2*k);

@@ -34,7 +34,7 @@ export function createNarrator({ getLang, isSoundOn, onSpeaking, zhVoice = /zh[-
 
   let listed = false;   /* the list of recordings has arrived (or failed) */
   const ready = Promise.race([
-    fetch(VOICE_DIR + 'manifest.json?v=0c90647d').then(r => r.ok ? r.json() : null)
+    fetch(VOICE_DIR + 'manifest.json?v=6d9d6096').then(r => r.ok ? r.json() : null)
       .then(m => { if (m) voiceSet = { en: new Set(m.en || []), zh: new Set(m.zh || []) }; }).catch(() => {}),
     new Promise(r => setTimeout(r, 2000)),
   ]).then(() => { listed = true; });

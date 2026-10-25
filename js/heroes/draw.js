@@ -1,4 +1,4 @@
-import {MODERN_LOOKS, modernChest, modernHelmet, modernShoulders} from './portraits.js?v=0c90647d';
+import {MODERN_LOOKS, modernChest, modernHelmet, modernShoulders} from './portraits.js?v=6d9d6096';
 /* Ultra portrait system. Self-contained vector art shared by cards,
    family tree, certificate and the world's hologram. Keep animation hooks. */
 const INK='#344355', RED='#c91e35';

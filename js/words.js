@@ -372,7 +372,7 @@ function finishQuiet() {
 }
 
 async function init() {
-  const d = await (await fetch('words/bank.json?v=0c90647d')).json();
+  const d = await (await fetch('words/bank.json?v=6d9d6096')).json();
   WORKS = d.works;
   BANK = d.chars.map(([c, lv, lesson, nworks, freq, w, wpy, cpy, s, src, wk]) => ({ c, lv, lesson, nworks, freq, w, wpy, cpy, s, src, wk }));
   BANK.sort((a, b) => a.lv - b.lv || b.freq - a.freq);

@@ -11,7 +11,7 @@
    Spoken lines come from pirateLines() so the fixed ones can be
    pre-recorded; the lines that contain the numbers use the device voice.
    ============================================================ */
-import { bump } from '../progress.js?v=0c90647d';
+import { bump } from '../progress.js?v=6d9d6096';
 
 const TEXT = {
   en: {

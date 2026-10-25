@@ -19,7 +19,7 @@
          // ctx = { mat }  — shared cached-material helper.
          // Import THREE and helpers directly in your module:
          //   import * as THREE from 'three';
-         //   import { rand, makeCanvas, canvasTexture } from '../helpers.js?v=0c90647d';
+         //   import { rand, makeCanvas, canvasTexture } from '../helpers.js?v=6d9d6096';
          const g = new ctx.THREE.Group();
          // …meshes…
          return g;
@@ -28,7 +28,7 @@
 
    Then register it below:
 
-     import { spaceScene } from './space.js?v=0c90647d';
+     import { spaceScene } from './space.js?v=6d9d6096';
      export const EXTRA_SCENES = [spaceScene];
 
    Everything else is automatic: signpost, stepping-stone path,
@@ -36,5 +36,5 @@
    the M-menu entry and the auto tour all pick it up.
    ============================================================ */
 
-import { heroesScene } from './heroes.js?v=0c90647d';
+import { heroesScene } from './heroes.js?v=6d9d6096';
 export const EXTRA_SCENES = [heroesScene];

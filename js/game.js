@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js?v=0c90647d';
-import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js?v=0c90647d';
-import { EXTRA_SCENES } from './scenes/registry.js?v=0c90647d';
-import { mergeStatic } from './perf.js?v=0c90647d';
-import { createNarrator, textKey, silentWavURL } from './narrator.js?v=0c90647d';
+import { SITE_URL, AVATAR, ARTWORKS, I18N } from './i18n.js?v=6d9d6096';
+import { rand, clamp, lerpAngle, makeCanvas, canvasTexture, rr, crayon, crayonCircle } from './helpers.js?v=6d9d6096';
+import { EXTRA_SCENES } from './scenes/registry.js?v=6d9d6096';
+import { mergeStatic } from './perf.js?v=6d9d6096';
+import { createNarrator, textKey, silentWavURL } from './narrator.js?v=6d9d6096';
 
 let lang = 'en';
 const T = () => I18N[lang];
@@ -468,7 +468,7 @@ const PORTALS=[
 let portalNear=null;
 /* zone mini-games, loaded only when first opened so the island itself stays light:
    Number Land's Pirate Ships (add and subtract within 100) and Builder's Corner's Flood Fixers */
-const GAMES={ pirates:()=>import('./minigames/pirates.js?v=0c90647d'), flood:()=>import('./minigames/flood.js?v=0c90647d') };
+const GAMES={ pirates:()=>import('./minigames/pirates.js?v=6d9d6096'), flood:()=>import('./minigames/flood.js?v=6d9d6096') };
 let gameOpen=false;
 async function openGame(kind){
   if(leaving||gameOpen) return;

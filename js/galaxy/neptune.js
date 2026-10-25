@@ -1,5 +1,5 @@
-import { buildOrbit } from './orbit.js?v=0c90647d';
-import { buildSurface } from './surface.js?v=0c90647d';
+import { buildOrbit } from './orbit.js?v=6d9d6096';
+import { buildSurface } from './surface.js?v=6d9d6096';
 
 export function createNeptune(api){
   const { THREE, rand, makeCanvas, canvasTexture, GLOW, LOW, sphere, bandTex } = api;
